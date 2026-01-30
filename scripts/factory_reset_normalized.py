@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-# Ajustamos la ruta para que siempre apunte a la raíz, sin importar desde dónde se llame
+# Ajustamos la ruta para que siempre apunte a la raíz
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
 
@@ -12,7 +12,7 @@ def ejecutar_sql(cursor, sql, params=()):
         print(f"❌ Error SQL: {e} | Query: {sql}")
 
 def factory_reset_normalized():
-    print(f"💎 INICIANDO PROTOCOLO DE NORMALIZACIÓN (S.I.G.A.P.)...")
+    print(f"💎 INICIANDO PROTOCOLO DE NORMALIZACIÓN V2.0 (S.I.G.A.P.)...")
     print(f"    Target DB: {DB_FILE}")
 
     conn = sqlite3.connect(DB_FILE)
@@ -24,18 +24,11 @@ def factory_reset_normalized():
     cursor.execute("PRAGMA foreign_keys = OFF;")
 
     tablas = [
-        # Tablas Operativas
-        'movimientos', 'movimientos_v2', 'agenda_pagos', 'auditoria_compliance',
-
-        # Tablas de Parametría
+        'movimientos', 'agenda_pagos', 'auditoria_compliance',
         'param_subcategorias', 'param_categorias',
         'param_medios_pago', 'param_centros_costo',
-
-        # Tablas de Gobernanza
         'reglas_vinculos', 'reglas_catalogo',
-
-        # Limpieza de legacy
-        'reglas_gobierno', 'centros_costo', 'movimientos_old_text'
+        'diccionario_terminos' # <--- NUEVA TABLA DE SINÓNIMOS
     ]
 
     for tabla in tablas:
@@ -53,13 +46,13 @@ def factory_reset_normalized():
     # ---------------------------------------------------------
     print("🏗️  LEVANTANDO ESTRUCTURA NORMALIZADA...")
 
-    # --- A. GOBERNANZA (EL CEREBRO) ---
+    # --- A. GOBERNANZA ---
     cursor.execute("""
     CREATE TABLE reglas_catalogo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         descripcion TEXT NOT NULL,
-        tipo_alerta TEXT DEFAULT 'BLOQUEANTE' -- BLOQUEANTE / ADVERTENCIA
+        tipo_alerta TEXT DEFAULT 'BLOQUEANTE'
     );
     """)
 
@@ -67,7 +60,7 @@ def factory_reset_normalized():
     CREATE TABLE reglas_vinculos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_regla INTEGER NOT NULL,
-        entidad_target TEXT NOT NULL, -- Nombre de la tabla destino (Ej: 'param_categorias')
+        entidad_target TEXT NOT NULL,
         FOREIGN KEY (id_regla) REFERENCES reglas_catalogo(id),
         UNIQUE(id_regla, entidad_target)
     );
@@ -107,7 +100,17 @@ def factory_reset_normalized():
     );
     """)
 
-    # --- C. OPERATIVAS ---
+    # --- C. INTELIGENCIA (SINÓNIMOS) ---
+    cursor.execute("""
+    CREATE TABLE diccionario_terminos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        termino TEXT NOT NULL UNIQUE, -- Ej: 'Sushi', 'Rotiseria'
+        id_subcategoria INTEGER NOT NULL,
+        FOREIGN KEY (id_subcategoria) REFERENCES param_subcategorias(id)
+    );
+    """)
+
+    # --- D. OPERATIVAS ---
     cursor.execute("""
     CREATE TABLE agenda_pagos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,8 +118,9 @@ def factory_reset_normalized():
         fecha_vencimiento TEXT NOT NULL,
         descripcion TEXT NOT NULL,
         monto_estimado REAL DEFAULT 0,
-        estado TEXT DEFAULT 'PENDIENTE',
+        estado TEXT DEFAULT 'PENDIENTE', -- PENDIENTE, PAGADO, ANULADO
         prioridad TEXT DEFAULT 'NORMAL',
+        url_pago TEXT, -- Para guardar link de pago
         FOREIGN KEY (id_centro_costo) REFERENCES param_centros_costo(id)
     );
     """)
@@ -131,16 +135,15 @@ def factory_reset_normalized():
         descripcion TEXT,
         monto REAL NOT NULL,
         num_referencia TEXT UNIQUE,
-        es_amortizable BOOLEAN DEFAULT 0 CHECK (es_amortizable IN (0, 1)),
+        es_amortizable BOOLEAN DEFAULT 0,
         meses_amortizacion INTEGER DEFAULT 0,
-        fecha_fin_amortizacion DATE,
         FOREIGN KEY(id_centro_costo) REFERENCES param_centros_costo(id),
         FOREIGN KEY(id_medio_pago) REFERENCES param_medios_pago(id),
         FOREIGN KEY(id_subcategoria) REFERENCES param_subcategorias(id)
     );
     """)
 
-    # --- D. AUDITORÍA (La Caja Negra) ---
+    # --- E. AUDITORÍA ---
     cursor.execute("""
     CREATE TABLE auditoria_compliance (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -153,38 +156,32 @@ def factory_reset_normalized():
     );
     """)
 
-    print("✅ Estructura Normalizada Desplegada (incluye Auditoría).")
+    print("✅ Estructura Normalizada Desplegada.")
 
     # ---------------------------------------------------------
-    # 3. SEMBRADO DE DATOS (SEED INTELIGENTE)
+    # 3. SEMBRADO DE DATOS (SEED FINAL)
     # ---------------------------------------------------------
     print("🌱 SEMBRANDO DATOS...")
 
-    # --- SEED DE GOBERNANZA ---
-    print("   🔹 Cargando Catálogo de Reglas y Vínculos...")
-    reglas_data = [
-        ('Regla de Segregación Patrimonial', 'Aislar gestión de gastos (costo de vida separado).', 'BLOQUEANTE', ['param_centros_costo']),
-        ('Regla de Abstracción', 'La Categoría define el concepto, no el comercio.', 'BLOQUEANTE', ['param_categorias']),
-        ('Regla de Generalidad', 'No usar nombres de marcas comerciales ni detalles irrelevantes.', 'BLOQUEANTE', ['param_categorias', 'param_subcategorias']),
-        ('Regla del Impacto', 'Solo crear SC si el gasto es significativo. Si no -> Varios.', 'ADVERTENCIA', ['param_subcategorias']),
-        ('Regla de Ejecución', 'Todo MP debe identificar el origen real de los fondos.', 'BLOQUEANTE', ['param_medios_pago']),
-        ('Regla de Unicidad', 'Evitar duplicados bancarios mediante num_referencia.', 'BLOQUEANTE', ['movimientos'])
-    ]
+    # --- GOBERNANZA BÁSICA ---
+    cursor.execute("INSERT INTO reglas_catalogo (nombre, descripcion, tipo_alerta) VALUES (?, ?, ?)",
+                   ('Regla de Unicidad', 'Evitar duplicados bancarios.', 'BLOQUEANTE'))
+    cursor.execute("INSERT INTO reglas_vinculos (id_regla, entidad_target) VALUES (?, ?)",
+                   (cursor.lastrowid, 'movimientos'))
 
-    for nombre, desc, tipo, targets in reglas_data:
-        cursor.execute("INSERT INTO reglas_catalogo (nombre, descripcion, tipo_alerta) VALUES (?, ?, ?)", (nombre, desc, tipo))
-        id_regla = cursor.lastrowid
-        for target in targets:
-            cursor.execute("INSERT INTO reglas_vinculos (id_regla, entidad_target) VALUES (?, ?)", (id_regla, target))
-
-    # --- DATOS MAESTROS ---
+    # --- CENTROS DE COSTO ---
     for cc in ['Personal', 'Familia', 'Mamá']:
         ejecutar_sql(cursor, "INSERT INTO param_centros_costo (nombre) VALUES (?)", (cc,))
 
+    # --- MEDIOS DE PAGO ---
     mps = [
         ('Efectivo', 'EFECTIVO'),
+        ('Efectivo USD', 'EFECTIVO'), # Caja chica en dolares
         ('MercadoPago', 'CUENTA'),
         ('Santander', 'CUENTA'),
+        ('Santander Mama', 'CUENTA'), # ¡NUEVO!
+        ('BPN', 'CUENTA'),            # ¡NUEVO!
+        ('Lemon Cash', 'CUENTA'),     # ¡NUEVO!
         ('Santander Visa', 'TARJETA_CREDITO'),
         ('Santander Amex', 'TARJETA_CREDITO'),
         ('MercadoPago Mastercard', 'TARJETA_CREDITO')
@@ -192,10 +189,21 @@ def factory_reset_normalized():
     for n, t in mps:
         ejecutar_sql(cursor, "INSERT INTO param_medios_pago (nombre, tipo) VALUES (?, ?)", (n, t))
 
+    # --- CATEGORÍAS ---
     cats = [
-        ('Ingresos', 'INGRESO'), ('Vivienda', 'EGRESO'), ('Transporte', 'EGRESO'),
-        ('Alimentos', 'EGRESO'), ('Salud', 'EGRESO'), ('Servicios', 'EGRESO'),
-        ('Educación', 'EGRESO'), ('Tecnología', 'EGRESO'), ('Varios', 'EGRESO')
+        ('Ingresos', 'INGRESO'),
+        ('Casa', 'EGRESO'),           # Ex Vivienda
+        ('Terreno', 'EGRESO'),        # ¡NUEVO! Separado de Casa
+        ('Auto', 'EGRESO'),           # Ex Transporte
+        ('Alimentos', 'EGRESO'),
+        ('Salud', 'EGRESO'),
+        ('Tecnología', 'EGRESO'),
+        ('Entretenimiento', 'EGRESO'), # Ex Ocio
+        ('Indumentaria', 'EGRESO'),
+        ('Educación', 'EGRESO'),
+        ('Impuestos', 'EGRESO'),      # Personales (AFIP)
+        ('Movimientos Internos', 'EGRESO'),
+        ('Varios', 'EGRESO')
     ]
     for n, t in cats:
         ejecutar_sql(cursor, "INSERT INTO param_categorias (nombre, tipo) VALUES (?, ?)", (n, t))
@@ -205,27 +213,98 @@ def factory_reset_normalized():
         res = cursor.fetchone()
         return res[0] if res else None
 
+    # --- SUBCATEGORÍAS ---
     subcats_map = {
-        'Ingresos': ['Sueldo', 'Honorarios', 'Intereses'],
-        'Vivienda': ['Alquiler', 'Expensas', 'Mantenimiento'],
-        'Transporte': ['Combustible', 'Seguro Auto', 'Patente', 'Uber/Taxi'],
-        'Alimentos': ['Supermercado', 'Restaurante', 'Delivery'],
-        'Salud': ['Farmacia', 'Obra Social', 'Médico/Dentista', 'Gimnasio'],
-        'Servicios': ['Luz', 'Gas', 'Internet', 'Celular'],
-        'Tecnología': ['Hardware', 'Software', 'Suscripciones'],
-        'Varios': ['Gastos Generales']
+        'Ingresos': [
+            'Sueldo', 'Aguinaldo', 'Honorarios',
+            'Jubilación', 'Acreditación Benef. Prev.', # Mamá
+            'Ayuda Estatal', 'Colaboración Eny',       # Familia
+            'Alquiler', 'Rentas',
+            'Devoluciones', 'Reintegro Adicional OSDE', 'Venta Dólares'
+        ],
+        'Casa': [
+            'Luz', 'Gas', 'Agua', 'Internet', # Servicios Granulares
+            'Impuesto Inmobiliario', 'Tasas Municipales',
+            'Expensas', 'Seguro Hogar',
+            'Mantenimiento', 'Mejoras',
+            'Mascotas' # ¡Movido aquí!
+        ],
+        'Terreno': [ # Categoría Nueva para separar gastos de inversión
+            'Impuesto Inmobiliario', 'Tasas Municipales',
+            'Expensas', 'Mantenimiento', 'Mejoras'
+        ],
+        'Auto': [
+            'Combustible', 'Seguro', 'Patente',
+            'Mecánica/Service', 'Repuestos', 'Limpieza',
+            'Peajes/Estacionamiento'
+        ],
+        'Alimentos': [
+            'Supermercado',
+            'Comida Preparada', # Ex Delivery
+            'Bebidas/Kiosco', 'Almuerzos Laborales'
+        ],
+        'Salud': [
+            'Farmacia', 'Obra Social', 'Consulta Médica',
+            'Psicólogo', 'Psiquiatra', 'Médico/Dentista',
+            'Gimnasio',
+            'Pañales/Cuidados' # Mamá
+        ],
+        'Tecnología': [
+            'Celular', 'Hardware', 'Software',
+            'Suscripciones Digitales', 'Seguro Equipos'
+        ],
+        'Entretenimiento': [
+            'DCS World', # ¡Específico!
+            'Videojuegos', 'Streaming', 'Salidas', 'Vacaciones'
+        ],
+        'Indumentaria': ['Ropa', 'Calzado', 'Accesorios'],
+        'Educación': ['Cuota Escolar', 'Útiles/Libros', 'Cursos/Capacitación'],
+        'Impuestos': ['AFIP', 'Ingresos Brutos', 'Bienes Personales'],
+        'Movimientos Internos': ['Transferencia Propia', 'Pago Tarjeta', 'Inversión'],
+        'Varios': ['Regalos', 'Donaciones', 'Costos Bancarios']
     }
 
     for cat_nombre, lista_subcats in subcats_map.items():
         cat_id = get_cat_id(cat_nombre)
         if cat_id:
             for sub in lista_subcats:
-                ejecutar_sql(cursor, "INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (cat_id, sub))
+                try:
+                    ejecutar_sql(cursor, "INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (cat_id, sub))
+                except sqlite3.IntegrityError:
+                    pass # Evitar error si duplicamos nombre en listas
+        else:
+            print(f"⚠️ Alerta: Categoría '{cat_nombre}' no encontrada.")
+
+    # --- SEMBRADO DE SINÓNIMOS (EJEMPLO) ---
+    # Aquí cargamos tu lógica de inteligencia
+    print("   🔹 Cargando Sinónimos Inteligentes...")
+
+    # Helper para buscar ID de subcategoria
+    def get_subcat_id(nombre_sub):
+        cursor.execute("SELECT id FROM param_subcategorias WHERE nombre = ?", (nombre_sub,))
+        res = cursor.fetchone()
+        return res[0] if res else None
+
+    sinonimos = [
+        ('Comida Preparada', ['Sushi', 'Rotiseria', 'Delivery', 'PedidosYa', 'Pizza']),
+        ('Supermercado', ['Despensa', 'Verduleria', 'Chino', 'La Anonima', 'Coto']),
+        ('Combustible', ['Nafta', 'YPF', 'Shell', 'Axion']),
+        ('Mascotas', ['Veterinaria', 'Alimento Perro', 'Piyito']),
+        ('DCS World', ['Eagle Dynamics', 'Modulo Avion', 'Mapa DCS'])
+    ]
+
+    for subcat, terms in sinonimos:
+        sid = get_subcat_id(subcat)
+        if sid:
+            for term in terms:
+                try:
+                    ejecutar_sql(cursor, "INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (term, sid))
+                except sqlite3.IntegrityError:
+                    pass
 
     conn.commit()
     conn.close()
-    print("🚀 ¡S.I.G.A.P. BASE DE DATOS RESTAURADA (VERSION DIAMOND)! LISTO.")
+    print("🚀 ¡S.I.G.A.P. BASE DE DATOS RESTAURADA (VERSION 2.0 DIAMOND)! LISTO.")
 
 if __name__ == "__main__":
-    # Si se ejecuta directo, corre la función
     factory_reset_normalized()
