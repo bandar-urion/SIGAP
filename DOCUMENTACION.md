@@ -100,6 +100,11 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
 * **Motor de Base de Datos:** SQLite 3.
 * **Lenguaje de Scripting:** Python 3.
 
+### **4.4. ESTÁNDARES DE VERSIONADO**
+El proyecto adhiere estrictamente a **Conventional Commits** y **Semantic Versioning**.
+Para ver la guía completa de tipos, alcances y ejemplos, consultar el anexo técnico:
+👉 [GUIA_GIT.md](docs/GUIA_GIT.md)
+
 ---
 
 # **5. REGLAS DE NEGOCIO (GOBERNANZA)**
@@ -127,7 +132,9 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
 **Definición:** Es el instrumento financiero o canal utilizado para abonar una transacción.
 
 * **Regla de Ejecución:** Todo movimiento debe tener asociado un Medio de Pago (MP) que identifique el origen de los fondos.
-* **Regla de Vinculación:** Un MP puede ser utilizado para financiar gastos de cualquier Centro de Costos (CC). *Ejemplo: MP propiedad de ‘Personal’ puede ser utilizado para pagar un gasto de ‘Mamá’.* * **Clasificación de MP por Temporalidad:** * **MP Líquidos (inmediatos):** El dinero sale del patrimonio en el mismo momento de la compra (Ej: cuenta bancaria, efectivo, e-commerce, broker).
+* **Regla de Vinculación:** Un MP puede ser utilizado para financiar gastos de cualquier Centro de Costos (CC). *Ejemplo: MP propiedad de ‘Personal’ puede ser utilizado para pagar un gasto de ‘Mamá’.*
+* **Clasificación de MP por Temporalidad:**
+    * **MP Líquidos (inmediatos):** El dinero sale del patrimonio en el mismo momento de la compra (Ej: cuenta bancaria, efectivo, e-commerce, broker).
     * **MP Diferidos (crédito):** El dinero sale del patrimonio en una fecha futura (fecha de vencimiento) (Ej: tarjetas de crédito - Visa, Amex).
 
 ## **5.5. ENTIDAD: MOVIMIENTO (M)**
@@ -140,7 +147,8 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
 * **Regla de Signo (Naturaleza):** El Movimiento en sí mismo es un valor absoluto (magnitud). Si suma o resta al saldo depende del Tipo de Categoría a la que pertenece su Subcategoría (destino):
     * Si Categoría es EGRESO → El movimiento **RESTA** patrimonio.
     * Si Categoría es INGRESO → El movimiento **SUMA** patrimonio.
-* **Regla de Temporalidad (Cierre vs Caja):** * La fecha del movimiento es la fecha de la transacción (lo económico).
+* **Regla de Temporalidad (Cierre vs Caja):**
+    * La fecha del movimiento es la fecha de la transacción (lo económico).
     * La fecha de salida real del dinero (lo financiero) es calculada automáticamente por las reglas del Medio de Pago, si es tarjeta de crédito.
 * **Regla de Unicidad:** Cada movimiento importado de un sistema externo (Banco/MP) debe poseer un identificador único (campo `num_referencia`) que impida su duplicación en la base de datos local durante procesos de importación masiva.
 * **Regla de Amortización:** Los gastos de gran magnitud financiados en cuotas pueden registrarse bajo dos modalidades, siendo preferente el **Criterio Financiero** para la gestión diaria del S.I.G.A.P. (registro del flujo de caja mes a mes) sobre el Criterio Económico (devengado total al inicio).
@@ -152,11 +160,11 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
     * *Activos:* Saldo en cuentas bancarias + efectivo + inversiones.
     * *Pasivos:* Saldo pendiente en tarjetas de crédito + préstamos.
 * **Regla de Segregación:** Cada CC tiene su propio Estado Patrimonial Independiente. (Ej: el patrimonio de “Personal” puede crecer mientras el de “Familia” -que es puramente deficitario por diseño- siempre es negativo).
-* **Regla de Liquidez vs. Solvencia:** * **Liquidez:** Dinero disponible YA en MP Líquidos (caja de ahorro).
+* **Regla de Liquidez vs. Solvencia:**
+    * **Liquidez:** Dinero disponible YA en MP Líquidos (caja de ahorro).
     * **Patrimonio Real:** Liquidez menos las deudas de Tarjeta de Crédito que vencerán el mes próximo.
 
 ## **5.7. ENTIDAD: AGENDA DE PAGOS (AP)**
 **Definición:** Es el registro de obligaciones futuras ciertas o estimadas (Pasivos Transitorios). Actúa como un "Radar de Vencimientos".
-
 * **Regla de Previsión:** Todo gasto recurrente o compromiso asumido debe ingresarse en la Agenda con una fecha de vencimiento y un monto estimado, permitiendo calcular el "Cash Flow" futuro.
 * **Regla de Prioridad:** En situaciones de déficit de liquidez, la Agenda debe permitir clasificar pagos por prioridad (Alta/Normal/Baja) para decidir qué obligaciones cubrir primero (Gestión de Crisis).
