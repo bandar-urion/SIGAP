@@ -16,10 +16,10 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
     - [x] Manifiesto y Filosofía.
     - [x] Metodología de Desarrollo (Protocolo Fénix).
     - [x] Reglas de Negocio detalladas.
-- [ ] **Control de Versiones (Git Local)** ⬅️ *PRIORIDAD ALTA*
-    - [ ] Inicializar repositorio (`git init`).
-    - [ ] Configurar `.gitignore` (Ignorar DBs, temporales y sensibles).
-    - [ ] Primer Commit (Base Line).
+- [x] **Control de Versiones (Git Local)** ⬅️ *PRIORIDAD ALTA*
+    - [x] Inicializar repositorio (`git init`).
+    - [x] Configurar `.gitignore` (Ignorar DBs, temporales y sensibles).
+    - [x] Primer Commit (Base Line).
 - [ ] **Orquestación (Tooling)**
     - [ ] Crear `manage.py` (CLI unificado para administrar el sistema).
     - [ ] Integrar funciones de reset y test en el orquestador.
@@ -36,6 +36,7 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
     - [ ] Reporte: "Últimos 10 movimientos".
     - [ ] Reporte: "Saldos por Centro de Costo".
     - [ ] Reporte: "Alerta de Vencimientos (Agenda)".
+- ​[ ] **Implementar carga inteligente con sinónimos (diccionario_terminos)**
 
 ---
 
@@ -55,3 +56,19 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
 - [ ] **Inteligencia Artificial:** Asistente para categorización automática de gastos.
 - [ ] **Auditoría:** Reporte de desvíos de presupuesto.
 - [ ] **Backup:** Script de exportación automática a JSON/SQL.
+
+## 🔮 BACKLOG (Gobernanza Futura)
+*Implementación técnica de las reglas definidas en la Sección 6 de DOCUMENTACION.md*
+
+- [ ] **Soporte Multimoneda (Regla 6.1)**
+    - [ ] Agregar columna `cotizacion_ref` en tabla movimientos.
+    - [ ] Integrar API de Dólar/UVA para consultas históricas.
+- [ ] **Gestión de Tarjetas Avanzada (Regla 6.2)**
+    - [ ] Crear tabla `calendario_cierres`.
+    - [ ] Algoritmo de cálculo de fecha de pago real.
+- [ ] **Integridad Histórica (Regla 6.3)**
+    - [ ] Migrar `DELETE` físicos a `UPDATE activo=false`.
+    - [ ] Adaptar todas las consultas SQL para filtrar por `activo=true`.
+- [ ] **Presupuestos (Regla 6.4)**
+    - [ ] Crear tabla `presupuestos_mensuales`.
+    - [ ] Reporte de desvío de gastos.

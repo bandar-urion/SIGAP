@@ -20,3 +20,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - Creación de `DOCUMENTACION.md` (Constitución del Sistema).
 - Creación de `ROADMAP.md` (Hoja de Ruta).
 - Creación de `ADR-001` y `ADR-002` (Decisiones Arquitectónicas).
+
+## [v0.1.1] - 2026-01-30 (Mejora de Modelo de Datos)
+### 💎 Base de Datos
+- **Refactorización de Categorías:** Separación de `Terreno` (Inversión) y `Casa` (Gasto).
+- **Inteligencia de Datos:** Implementación de tabla `diccionario_terminos` para mapeo de sinónimos.
+- **Normalización:** Ajuste de Subcategorías basado en análisis de CSVs históricos (Regla de Abstracción).
+- **Medios de Pago:** Inclusión de Billeteras Virtuales (Lemon) y Cuentas de Terceros (Santander Mamá).

@@ -111,60 +111,113 @@ Para ver la guía completa de tipos, alcances y ejemplos, consultar el anexo té
 
 ## **5.1. ENTIDAD: CENTROS DE COSTO (CC)**
 **Definición:** Es una Entidad (persona, grupo o proyecto) para la cual se genera el gasto o quien se beneficia del mismo.
+* **Tabla DB:** `param_centros_costo`
 
-* **Regla de Separación Patrimonial:** Solo se crea un Centro de Costo (CC) cuando se necesita aislar la gestión de sus gastos para analizar su "costo de vida" por separado (Ej: Familia / Mamá / Personal).
-* **Regla de Financiamiento:** Un CC puede ser **autofinanciado** (tiene ingresos propios) o ser **subsidiado** con fondos de otro CC (no tener ingresos propios).
-* **Regla de Operación:** El CC tiene uno o más Medios de Pagos asociados para operar, ya sean propios (titular) o cedidos por un tercero (propios de un CC financiador).
+**Reglas de Negocio:**
+1. **Regla de Separación Patrimonial:** Solo se crea un Centro de Costo (CC) cuando se necesita aislar la gestión de sus gastos para analizar su "costo de vida" por separado (Ej: Familia / Mamá / Personal).
+2. **Regla de Financiamiento:** Un CC puede ser **autofinanciado** (tiene ingresos propios) o ser **subsidiado** con fondos de otro CC (no tener ingresos propios).
+3. **Regla de Operación:** El CC tiene uno o más Medios de Pagos asociados para operar, ya sean propios (titular) o cedidos por un tercero (propios de un CC financiador).
 
 ## **5.2. ENTIDAD: CATEGORÍAS (C)**
-**Definición:** Es el Tema, Rubro u Objeto al que se aplica el gasto (Ej: Casa / Auto / Salud / Alimentación / Impuestos / Servicios / Educación / Obra Social / Gustos).
+**Definición:** Es la clasificación de **Nivel 1 (Macro)**. Representa el "Concepto Contable" o la naturaleza mayor del gasto.
+* **Tabla DB:** `param_categorias`
 
-* **Regla de Abstracción:** La Categoría define el **concepto** del gasto, no el comercio donde se compró.
-* **Regla de Jerarquía:** Debe ser suficientemente amplia como para abarcar más de una SC.
+**Reglas de Negocio:**
+1.  **Regla de Jerarquía:** Una Categoría debe ser un contenedor lógico suficientemente amplio para abarcar múltiples Subcategorías.
+2.  **Regla de Abstracción:** Define el *concepto* (Ej: Alimentos), no el *consumidor* ni el *comercio*.
+3.  **Regla de Segregación (Inversión vs. Gasto):**
+    * **Casa (Gasto Operativo):** Fondos que se consumen para la habitabilidad diaria (Luz, Gas, Limpieza).
+    * **Terreno (Inversión Patrimonial):** Fondos destinados al mantenimiento de un Activo no habitado (Impuestos, Mejoras). Se separan para no distorsionar el costo de vida mensual.
 
 ## **5.3. ENTIDAD: SUBCATEGORÍAS (SC)**
-**Definición:** Es el Primer Subnivel de Detalle dentro de una Categoría (C).
+**Definición:** Es la clasificación de **Nivel 2 (Micro)**. Representa el detalle específico dentro de una Categoría padre.
+* **Tabla DB:** `param_subcategorias`
 
-* **Regla del Impacto:** Solo crear una Subcategoría si el gasto representa un impacto significativo mensual o es crítico para una decisión. Si el gasto es pequeño o esporádico, debe ir a una SC genérica (ej: "Varios" o "General").
-* **Regla de Generalidad:** No usar nombres de empresas o propios (Coto, Shell) como subcategorías. Se utiliza el genérico (Supermercado, Combustible).
+**Reglas de Negocio:**
+1.  **Regla del Impacto:** Solo se crea una SC si el gasto tiene un impacto significativo mensual o es crítico para la toma de decisiones. Gastos menores o esporádicos van a agrupadores genéricos.
+2.  **Regla de Generalidad:** No se utilizan nombres propios de empresas o marcas (Ej: "Coto", "Shell") como nombre de Subcategoría. Se debe usar el sustantivo genérico ("Supermercado", "Combustible").
+3.  **Dependencia:** Toda SC debe pertenecer obligatoriamente a una sola Categoría.
 
 ## **5.4. ENTIDAD: MEDIOS DE PAGO (MP)**
 **Definición:** Es el instrumento financiero o canal utilizado para abonar una transacción.
+* **Tabla DB:** `param_medios_pago`
 
-* **Regla de Ejecución:** Todo movimiento debe tener asociado un Medio de Pago (MP) que identifique el origen de los fondos.
-* **Regla de Vinculación:** Un MP puede ser utilizado para financiar gastos de cualquier Centro de Costos (CC). *Ejemplo: MP propiedad de ‘Personal’ puede ser utilizado para pagar un gasto de ‘Mamá’.*
-* **Clasificación de MP por Temporalidad:**
+**Reglas de Negocio:**
+1. **Regla de Ejecución:** Todo movimiento debe tener asociado un Medio de Pago (MP) que identifique el origen de los fondos.
+2. **Regla de Vinculación:** Un MP puede ser utilizado para financiar gastos de cualquier Centro de Costos (CC). *Ejemplo: MP propiedad de ‘Personal’ puede ser utilizado para pagar un gasto de ‘Mamá’.*
+3. **Clasificación de MP por Temporalidad:**
     * **MP Líquidos (inmediatos):** El dinero sale del patrimonio en el mismo momento de la compra (Ej: cuenta bancaria, efectivo, e-commerce, broker).
     * **MP Diferidos (crédito):** El dinero sale del patrimonio en una fecha futura (fecha de vencimiento) (Ej: tarjetas de crédito - Visa, Amex).
 
 ## **5.5. ENTIDAD: MOVIMIENTO (M)**
 **Definición:** Es el registro atómico de un hecho económico que altera el patrimonio de un CC.
+* **Tabla DB:** `movimientos`
 
-* **Regla de Integridad:** Todo movimiento debe estar triangularmente vinculado a:
-    1. **Cuándo:** Una fecha real de ocurrencia (Fecha de Compra, no de Pago).
-    2. **Qué:** Una Subcategoría (SC) que explica el **destino** de los fondos (en caso de gastos) o la fuente (en caso de ingresos).
-    3. **Cómo:** Un Medio de Pago (MP) que explica el **origen** de los fondos (en caso de gastos) o donde se depositan (en caso de ingresos).
-* **Regla de Signo (Naturaleza):** El Movimiento en sí mismo es un valor absoluto (magnitud). Si suma o resta al saldo depende del Tipo de Categoría a la que pertenece su Subcategoría (destino):
+**Reglas de Negocio:**
+1. **Regla de Integridad:** Todo movimiento debe estar triangularmente vinculado a:
+    1.  **Cuándo:** Una fecha real de ocurrencia (Fecha de Compra, no de Pago).
+    2.  **Qué:** Una Subcategoría (SC) que explica el **destino** de los fondos (en caso de gastos) o la fuente (en caso de ingresos).
+    3.  **Cómo:** Un Medio de Pago (MP) que explica el **origen** de los fondos (en caso de gastos) o donde se depositan (en caso de ingresos).
+2. **Regla de Signo (Naturaleza):** El Movimiento en sí mismo es un valor absoluto (magnitud). Si suma o resta al saldo depende del Tipo de Categoría a la que pertenece su Subcategoría (destino):
     * Si Categoría es EGRESO → El movimiento **RESTA** patrimonio.
     * Si Categoría es INGRESO → El movimiento **SUMA** patrimonio.
-* **Regla de Temporalidad (Cierre vs Caja):**
+3. **Regla de Temporalidad (Cierre vs Caja):**
     * La fecha del movimiento es la fecha de la transacción (lo económico).
     * La fecha de salida real del dinero (lo financiero) es calculada automáticamente por las reglas del Medio de Pago, si es tarjeta de crédito.
-* **Regla de Unicidad:** Cada movimiento importado de un sistema externo (Banco/MP) debe poseer un identificador único (campo `num_referencia`) que impida su duplicación en la base de datos local durante procesos de importación masiva.
-* **Regla de Amortización:** Los gastos de gran magnitud financiados en cuotas pueden registrarse bajo dos modalidades, siendo preferente el **Criterio Financiero** para la gestión diaria del S.I.G.A.P. (registro del flujo de caja mes a mes) sobre el Criterio Económico (devengado total al inicio).
+4. **Regla de Unicidad:** Cada movimiento importado de un sistema externo (Banco/MP) debe poseer un identificador único (campo `num_referencia`) que impida su duplicación en la base de datos local durante procesos de importación masiva.
+5.* **Regla de Amortización:** Los gastos de gran magnitud financiados en cuotas pueden registrarse bajo dos modalidades, siendo preferente el **Criterio Financiero** para la gestión diaria del S.I.G.A.P. (registro del flujo de caja mes a mes) sobre el Criterio Económico (devengado total al inicio).
 
 ## **5.6. ENTIDAD: PATRIMONIO (P)**
 **Definición:** Es el valor neto resultante de los recursos económicos de un CC en un instante determinado. Es la "foto" de la salud financiera.
 
-* **Regla de Cálculo:** Patrimonio = Activos (lo que tengo) - Pasivos (lo que debo).
+**Reglas de Negocio:**
+1. **Regla de Cálculo:** Patrimonio = Activos (lo que tengo) - Pasivos (lo que debo).
     * *Activos:* Saldo en cuentas bancarias + efectivo + inversiones.
     * *Pasivos:* Saldo pendiente en tarjetas de crédito + préstamos.
-* **Regla de Segregación:** Cada CC tiene su propio Estado Patrimonial Independiente. (Ej: el patrimonio de “Personal” puede crecer mientras el de “Familia” -que es puramente deficitario por diseño- siempre es negativo).
-* **Regla de Liquidez vs. Solvencia:**
+2. **Regla de Segregación:** Cada CC tiene su propio Estado Patrimonial Independiente. (Ej: el patrimonio de “Personal” puede crecer mientras el de “Familia” -que es puramente deficitario por diseño- siempre es negativo).
+3. **Regla de Liquidez vs. Solvencia:**
     * **Liquidez:** Dinero disponible YA en MP Líquidos (caja de ahorro).
     * **Patrimonio Real:** Liquidez menos las deudas de Tarjeta de Crédito que vencerán el mes próximo.
 
 ## **5.7. ENTIDAD: AGENDA DE PAGOS (AP)**
 **Definición:** Es el registro de obligaciones futuras ciertas o estimadas (Pasivos Transitorios). Actúa como un "Radar de Vencimientos".
-* **Regla de Previsión:** Todo gasto recurrente o compromiso asumido debe ingresarse en la Agenda con una fecha de vencimiento y un monto estimado, permitiendo calcular el "Cash Flow" futuro.
-* **Regla de Prioridad:** En situaciones de déficit de liquidez, la Agenda debe permitir clasificar pagos por prioridad (Alta/Normal/Baja) para decidir qué obligaciones cubrir primero (Gestión de Crisis).
+* **Tabla DB:** `agenda_pagos`
+
+**Reglas de Negocio:**
+1. **Regla de Previsión:** Todo gasto recurrente o compromiso asumido debe ingresarse en la Agenda con una fecha de vencimiento y un monto estimado, permitiendo calcular el "Cash Flow" futuro.
+2. **Regla de Prioridad:** En situaciones de déficit de liquidez, la Agenda debe permitir clasificar pagos por prioridad (Alta/Normal/Baja) para decidir qué obligaciones cubrir primero (Gestión de Crisis).
+
+## **5.8. ENTIDAD: DICCIONARIO DE TÉRMINOS (SINÓNIMOS)**
+**Definición:** Es una capa de traducción semántica que vincula términos coloquiales o comerciales con una Subcategoría oficial.
+* **Tabla DB:** `diccionario_terminos`
+
+**Funcionalidad:**
+1. Actúa como un "Middleware" en la entrada de datos.
+2. Permite al usuario ingresar lo que recuerda (Ej: *"Sushi"*, *"Nafta"*, *"Piyito"*) y el sistema lo normaliza automáticamente (`Comida Preparada`, `Combustible`, `Mascotas`).
+3. Reduce la fricción en la carga de datos y evita errores de clasificación.
+
+**Reglas de Negocio:**
+1. **Regla de Aprendizaje:** El sistema debe permitir agregar nuevos sinónimos sobre la marcha sin alterar la estructura de Categorías.
+
+# **6. REGLAS FUTURAS (ROADMAP DE GOBERNANZA)**
+*Nota: Estas reglas definen el estándar objetivo para las versiones v0.3 y superiores. No son bloqueantes para el MVP actual, pero guían la evolución de la arquitectura.*
+
+## **6.1. REGLA DE HOMOGENEIZACIÓN MONETARIA (FACTOR INFLACIÓN)**
+**Contexto:** Dada la inestabilidad de la moneda local (ARS), los valores nominales pierden representatividad histórica rápidamente.
+* **Definición:** Para análisis de largo plazo (> 3 meses), el sistema no debe comparar nominales.
+* **Implementación Futura:** Todo movimiento en Pesos debe registrar, al momento de la transacción, una **Cotización de Referencia** (Dólar Blue/MEP o Índice UVA) que permita normalizar la serie histórica.
+
+## **6.2. REGLA DE IMPUTACIÓN FINANCIERA (CIERRE DE TARJETA)**
+**Contexto:** El "Gasto Económico" (cuando compro) y el "Gasto Financiero" (cuando pago) están desfasados en los Medios de Pago Diferidos.
+* **Definición:** Para el cálculo de liquidez (Cash Flow), la fecha de egreso de fondos de una compra con Tarjeta de Crédito no es la fecha del ticket, sino la **Fecha de Vencimiento del Resumen** correspondiente.
+* **Implementación Futura:** Incorporación de una tabla `calendario_cierres` para proyectar automáticamente cuándo impactará realmente el gasto en la cuenta bancaria.
+
+## **6.3. REGLA DE INMUTABILIDAD HISTÓRICA (SOFT DELETE)**
+**Contexto:** Eliminar físicamente un registro maestro (ej: borrar una Categoría vieja) rompe la integridad referencial de los movimientos históricos asociados.
+* **Definición:** Está prohibido el uso de `DELETE` en tablas paramétricas que hayan tenido uso.
+* **Implementación Futura:** Se aplicará el patrón de **Borrado Lógico**. Las tablas tendrán un campo `activo = False`. El ítem deja de aparecer en los selectores de carga, pero sigue existiendo para los reportes históricos.
+
+## **6.4. REGLA DE APROPIACIÓN PRESUPUESTARIA**
+**Contexto:** El registro de gastos es reactivo. La gestión financiera requiere proactividad.
+* **Definición:** El sistema debe permitir definir "Topes de Gasto" (Presupuesto) por Categoría/Subcategoría mensual.
+* **Implementación Futura:** Comparativa automática entre `Gasto Real` vs `Presupuesto`. El sistema alertará mediante un semáforo de cumplimiento (Verde/Amarillo/Rojo) cuando la ejecución se acerque al límite definido.

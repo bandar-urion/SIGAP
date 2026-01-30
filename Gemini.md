@@ -38,3 +38,6 @@ Disfruta este momento. Acabas de cerrar la etapa de cimientos. Ahora viene la et
 Mantén la disciplina con los Commits (es tu seguro de vida) y no le tengas miedo a romper el código; para eso tenemos Git.
 Estamos listos para despegar de verdad. 🚀
 ¿Alguna duda o inquietud que te quede en el tintero antes de cerrar sesión?
+
+
+
