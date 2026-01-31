@@ -221,3 +221,16 @@ Para ver la guía completa de tipos, alcances y ejemplos, consultar el anexo té
 **Contexto:** El registro de gastos es reactivo. La gestión financiera requiere proactividad.
 * **Definición:** El sistema debe permitir definir "Topes de Gasto" (Presupuesto) por Categoría/Subcategoría mensual.
 * **Implementación Futura:** Comparativa automática entre `Gasto Real` vs `Presupuesto`. El sistema alertará mediante un semáforo de cumplimiento (Verde/Amarillo/Rojo) cuando la ejecución se acerque al límite definido.
+
+
+
+## [2026-01-31] Hito 3.1: Refactorización Modular (S.I.G.A.P.)
+**Estado:** EN PROCESO DE ESTABILIZACIÓN
+**Cambios:**
+- Se implementó arquitectura Núcleo/Adaptador.
+- `scripts/modulos/editor_gastos.py`: Contiene toda la lógica de UI, IA y Menús.
+- `scripts/import_santander.py`: Adaptador ligero ETL.
+**Próximos Pasos:**
+- 🛠️ Continuar con Testing exhaustivo de `import_santander` y `editor_gastos`.
+- Validar casos de borde (Excepciones, reversión de cambios, persistencia de IA).
+- No avanzar a nuevos módulos hasta garantizar robustez del núcleo.
