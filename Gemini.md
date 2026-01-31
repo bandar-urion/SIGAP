@@ -41,3 +41,101 @@ Estamos listos para despegar de verdad. 🚀
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BLUEPRINT: Refinamiento del Importador Santander
+Objetivo de la Misión: Transformar el script de prueba en una herramienta de producción eficiente, silenciosa y ordenada.
+
+1. Flujo de Trabajo Propuesto (The Flow)
+El script ya no será una "ametralladora de prints". Operará en fases:
+
+FASE A: Carga y Análisis Silencioso
+
+El sistema carga el Excel y el Diccionario de la DB.
+
+Itera todos los movimientos en memoria (sin mostrar nada en pantalla).
+
+Separa los movimientos en dos listas:
+
+✅ Listos: Ya existen en DB o tienen sinónimo conocido. (Se procesan 100% automático).
+
+❓ Pendientes: No se reconocen o requieren intervención.
+
+FASE B: Intervención Quirúrgica (Solo si es necesario)
+
+Si hay Pendientes, el sistema te los muestra uno por uno.
+
+Nueva Funcionalidad - Limpieza de Texto:
+
+Original: "Compra con tarjeta de debito \t El coyita - tarj nro. 0033"
+
+Acción: El sistema te permite editar el texto a "El Coyita" antes de guardarlo.
+
+Selección de Contexto: Eliges Categoría + Subcategoría + Centro de Costo (Personal/Familia).
+
+Aprendizaje: Decides si guardas la regla.
+
+FASE C: Confirmación y Commit
+
+El sistema muestra un Resumen Final:
+
+"Se insertarán 45 movimientos automáticos."
+
+"Se insertarán 3 movimientos manuales."
+
+"Total: $150.000."
+
+Pregunta: "¿Proceder a grabar en Base de Datos? (S/n)".
+
+Esto evita que un error a mitad de camino deje la DB sucia.
+
+FASE D: Gestión de Archivos (Housekeeping)
+
+Si la grabación es exitosa:
+
+Mueve el archivo movimientos.xlsx de /inbox a /processed.
+
+Lo renombra con fecha: santander_2026-01-31_1830.xlsx.
+
+Si fallas o cancelas:
+
+El archivo se queda en /inbox intacto.
+
+2. Reglas de Negocio a Aplicar
+Fechas: Forzar siempre dayfirst=True (Formato Argentino).
+
+Monto: Ignorar filas con monto 0 o vacías.
+
+Duplicados: Filtrado estricto por num_referencia (ya implementado, se mantiene).
+
+Centro de Costo:
+
+Automáticos: Se asume "Personal" por defecto (MVP) o se hereda si logramos meterlo al diccionario (Feature futura).
+
+Manuales: El usuario DEBE seleccionar el CC explícitamente.
+
+🦅 Decisión del Arquitecto
+Comandante, este es el Blueprint.
+
+¿Estás de acuerdo con el flujo A -> B -> C -> D?
+
+¿Te parece correcta la confirmación final en lote en lugar de grabar fila por fila?
+
+¿Agregamos la opción de editar la descripción?
+
+Espero tu aprobación o correcciones sobre este plano. 📝
+
