@@ -1,11 +1,11 @@
-# scripts/import_santander.py
 import pandas as pd
 import sqlite3
 import os
 import glob
 import shutil
 from datetime import datetime
-from modulos import editor_gastos # <--- IMPORTAMOS EL NÚCLEO
+# --- CAMBIO IMPORTANTE: AHORA LLAMAMOS A CARGA_GASTOS ---
+from modulos import carga_gastos
 
 # --- CONFIGURACIÓN ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +16,7 @@ PROCESSED_DIR = os.path.join(BASE_DIR, 'data', 'processed')
 def main():
     # 1. SETUP
     os.makedirs(PROCESSED_DIR, exist_ok=True)
-    archivos = glob.glob(os.path.join(INBOX_DIR, '*.xlsx')) # Santander usa xlsx
+    archivos = glob.glob(os.path.join(INBOX_DIR, '*.xlsx'))
     if not archivos: print("❌ No hay archivos .xlsx en inbox."); return
     archivo_input = archivos[0]
 
@@ -31,7 +31,7 @@ def main():
         ID_MP, NOM_MP, TIPO_MP = res
         MP_FULL = f"{NOM_MP} [{TIPO_MP}]"
 
-        # 3. PARSEO ESPECÍFICO DE SANTANDER (ETL)
+        # 3. PARSEO
         print(f"📂 Procesando: {os.path.basename(archivo_input)}...")
         df = pd.read_excel(archivo_input, skiprows=13, engine='openpyxl')
         df = df.dropna(how='all', axis=1)
@@ -45,9 +45,8 @@ def main():
         for _, row in df.iterrows():
             if row['Monto_Real'] == 0: continue
 
-            # --- MAPEO DE COLUMNAS A CLASE TRANSACCION ---
-            # Aquí es donde cada banco es diferente
-            tx = editor_gastos.Transaccion(
+            # Usamos la clase del nuevo módulo
+            tx = carga_gastos.Transaccion(
                 fecha=row['Fecha'],
                 referencia=row['Referencia'],
                 descripcion=row['Descripción'],
@@ -56,7 +55,6 @@ def main():
             )
             tx.idx = idx
 
-            # Chequeo duplicados (DB)
             cursor.execute("SELECT id FROM movimientos WHERE num_referencia = ?", (tx.referencia,))
             if cursor.fetchone(): continue
 
@@ -65,23 +63,21 @@ def main():
 
         if not lista_tx: print("✅ No hay movimientos nuevos."); return
 
-        # 4. INVOCAR AL EDITOR (REUTILIZABLE)
-        confirmado = editor_gastos.iniciar_torre_control(lista_tx, cursor, MP_FULL)
+        # 4. INVOCAR AL NUEVO MOTOR DE CARGA
+        confirmado = carga_gastos.iniciar_torre_control(lista_tx, cursor, MP_FULL)
 
-        # 5. GRABAR SI CONFIRMÓ
+        # 5. GRABAR
         if confirmado:
             print("\n💾 Guardando en DB...")
             n = 0
             for tx in lista_tx:
-                if tx.estado not in ['LISTO', 'AUTO']: continue # Solo lo aprobado
+                if tx.estado not in ['LISTO', 'AUTO']: continue
 
-                # Insertar Movimiento
                 cursor.execute("""
                     INSERT INTO movimientos (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia))
 
-                # Insertar Aprendizaje
                 if tx.nuevo_sinonimo:
                     try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (tx.nuevo_sinonimo, tx.id_subcat))
                     except: pass
@@ -89,11 +85,10 @@ def main():
 
             conn.commit()
 
-            # Mover archivo
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             dest = os.path.join(PROCESSED_DIR, f"santander_{ts}.xlsx")
             shutil.move(archivo_input, dest)
-            print(f"✅ Procesado exitoso: {n} registros. Archivo archivado.")
+            print(f"✅ Procesado exitoso: {n} registros.")
 
     except Exception as e:
         print(f"❌ Error Crítico: {e}")

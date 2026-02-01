@@ -3,10 +3,14 @@ import os
 import shutil
 import math
 import time
-from datetime import datetime
+import winsound
 import msvcrt
+from datetime import datetime
 
-# --- COLORES ANSI ---
+# --- CONFIGURACIÓN VISUAL ---
+PAGE_SIZE = 9
+PANEL_HEIGHT = 6
+
 C_RESET = "\033[0m"
 C_RED = "\033[91m"
 C_GREEN = "\033[92m"
@@ -15,11 +19,12 @@ C_BLUE = "\033[94m"
 C_CYAN = "\033[96m"
 C_WHITE = "\033[97m"
 C_PURPLE = "\033[95m"
+C_INVERT = "\033[7m"
 
-PAGE_SIZE = 9  # Ajustado a 9 para permitir selección 1-9 instantánea
-MENU_SIZE = 9
+# ANSI CODES
+ANSI_CLEAR_LINE = "\033[K"
+ANSI_UP = "\033[A"
 
-# --- CLASE MODELO ---
 class Transaccion:
     def __init__(self, fecha, referencia, descripcion, monto, id_mp):
         self.idx = 0
@@ -28,83 +33,154 @@ class Transaccion:
         self.descripcion_original = str(descripcion).strip()
         self.monto = float(monto)
         self.id_mp = id_mp
-
         self.descripcion_final = self.descripcion_original
         self.estado = 'PENDIENTE'
-
         self.id_cc = None; self.nombre_cc = "---"
         self.id_cat = None; self.nombre_cat = "---"
         self.id_subcat = None; self.nombre_subcat = "---"
-
         self.ia_match = False
         self.nuevo_sinonimo = None
         self.conflictos = []
 
-# --- UI HELPER FUNCTIONS ---
+# --- UI UTILS ---
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def mostrar_encabezado(titulo, screen_id):
-    limpiar_pantalla()
-    try: width = shutil.get_terminal_size().columns
-    except: width = 80
-    header_txt = f"🦅 S.I.G.A.P. - {titulo}"
-    espacios = width - len(header_txt) - len(screen_id) - 2
-    if espacios < 1: espacios = 1
-    print(f"{C_CYAN}{header_txt}{' ' * espacios}{C_YELLOW}[{screen_id}]{C_RESET}")
-    print("="*width)
+def vaciar_buffer_teclado():
+    while msvcrt.kbhit():
+        msvcrt.getch()
+
+def beep_confirmacion():
+    try: winsound.Beep(1000, 200)
+    except: print('\a')
+    vaciar_buffer_teclado()
+
+def beep_error():
+    try: winsound.Beep(500, 500)
+    except: print('\a')
+    vaciar_buffer_teclado()
 
 def limpiar_texto_visual(texto):
     basura = ["Compra con tarjeta de debito", "Transferencia realizada", "Transferencia recibida",
               "Pago de servicios", "Debito directo", "Su pago en", "Pago DEBIN", "\t"]
     limpio = texto
     for b in basura:
-        limpio = limpio.replace(b, "")
-        limpio = limpio.replace(b.upper(), "")
+        limpio = limpio.replace(b, "").replace(b.upper(), "")
     limpio = " ".join(limpio.split())
     if limpio.startswith("-"): limpio = limpio[1:].strip()
     return limpio
 
-# --- MOTOR DE ENTRADA (INSTANTÁNEO) ---
+def detectar_patron_comun(tx_actual, lista_tx):
+    desc_clean = limpiar_texto_visual(tx_actual.descripcion_final)
+    mejor_patron = desc_clean
+    for tx in lista_tx:
+        if tx.idx == tx_actual.idx: continue
+        otro_desc = limpiar_texto_visual(tx.descripcion_final)
+        comun = os.path.commonprefix([desc_clean, otro_desc])
+        if len(comun) > 10 and len(comun) < len(desc_clean):
+            if ' ' in comun: comun = comun.rsplit(' ', 1)[0]
+            mejor_patron = comun.strip()
+            break
+    return mejor_patron
 
-def leer_tecla_instante():
-    while True:
-        if msvcrt.kbhit():
+# --- MOTOR INTELLISENSE ---
+
+class SelectorInteligente:
+    def __init__(self, cursor):
+        self.cursor = cursor
+        self.altura_total = PANEL_HEIGHT + 4
+
+    def obtener_opciones(self, sql, params=()):
+        self.cursor.execute(sql, params)
+        return self.cursor.fetchall()
+
+    def render_matrix(self, opciones, ancho_term):
+        if not opciones:
+            for _ in range(PANEL_HEIGHT): print(ANSI_CLEAR_LINE)
+            return
+
+        max_len = 0
+        for op in opciones:
+            if len(op[1]) > max_len: max_len = len(op[1])
+
+        col_width = max_len + 4
+        num_cols = max(1, ancho_term // col_width)
+
+        capacidad = num_cols * PANEL_HEIGHT
+        visibles = opciones[:capacidad]
+
+        idx = 0
+        for r in range(PANEL_HEIGHT):
+            linea = ""
+            for c in range(num_cols):
+                if idx < len(visibles):
+                    item = visibles[idx][1]
+                    if len(item) > col_width - 2: item = item[:col_width-2]
+                    linea += f"   {item:<{col_width-3}}"
+                    idx += 1
+            print(f"{linea}{ANSI_CLEAR_LINE}")
+
+    def seleccionar(self, titulo, sql, params=(), permitir_nuevo=False):
+        opciones = self.obtener_opciones(sql, params)
+        buffer = ""
+        primera_vez = True
+
+        vaciar_buffer_teclado()
+
+        while True:
+            try: term_width = shutil.get_terminal_size().columns
+            except: term_width = 80
+
+            filtradas = [op for op in opciones if buffer.upper() in op[1].upper()]
+
+            if not primera_vez:
+                print(ANSI_UP * self.altura_total, end="")
+            primera_vez = False
+
+            print(f"{C_CYAN}➤ {titulo}: {C_WHITE}{buffer}{C_RESET}{ANSI_CLEAR_LINE}")
+            print(f"-" * term_width + ANSI_CLEAR_LINE)
+
+            self.render_matrix(filtradas, term_width)
+
+            if len(filtradas) == 0:
+                if permitir_nuevo: print(f"   {C_GREEN}[+] Crear '{buffer}' (Presione +){C_RESET}{ANSI_CLEAR_LINE}")
+                else: print(f"   {C_RED}(Sin coincidencias){C_RESET}{ANSI_CLEAR_LINE}")
+            else:
+                print(f"{ANSI_CLEAR_LINE}")
+
+            print(f"-" * term_width + ANSI_CLEAR_LINE)
+
+            if len(filtradas) == 1 and len(buffer) >= 2:
+                elegido = filtradas[0]
+                print(ANSI_UP * (self.altura_total - 1), end="")
+                print(f"{C_CYAN}➤ {titulo}: {C_GREEN}{elegido[1]} ✅{C_RESET}{ANSI_CLEAR_LINE}")
+                print("\n" * (self.altura_total - 2))
+
+                beep_confirmacion()
+                time.sleep(0.4)
+                return elegido[0], elegido[1]
+
             ch = msvcrt.getch()
-            try:
-                if ch == b'\x00' or ch == b'\xe0':
-                    msvcrt.getch(); return None
-                return ch.decode('utf-8').upper()
-            except: return None
-        time.sleep(0.05)
 
-# --- LOGICA DE APRENDIZAJE ---
+            if ch == b'\x1b': return None, None
 
-def cerrar_y_aprender(tx):
-    tx.estado = 'LISTO'
-    if not tx.ia_match:
-        clave_sugerida = limpiar_texto_visual(tx.descripcion_final)
-        clave_sugerida = (clave_sugerida[:30] + '..') if len(clave_sugerida) > 30 else clave_sugerida
+            elif ch == b'\r':
+                if len(filtradas) == 1: return filtradas[0][0], filtradas[0][1]
+                for op in filtradas:
+                    if op[1].upper() == buffer.upper(): return op[0], op[1]
 
-        print(f"\n   {C_PURPLE}🧠 INTELIGENCIA ARTIFICIAL:{C_RESET}")
-        print(f"   ¿Siempre que aparezca {C_WHITE}'{clave_sugerida}'{C_RESET}")
-        print(f"   asignar {C_CYAN}'{tx.nombre_subcat}'{C_RESET}?")
+            elif ch == b'\x08': buffer = buffer[:-1]
 
-        print(f"   (s/N): ", end='', flush=True)
-        resp = leer_tecla_instante()
-        print(resp)
+            elif permitir_nuevo and ch == b'+': return 'NUEVO', buffer
 
-        if resp == 'S':
-            k = input(f"   Frase clave a buscar (Enter usa '{clave_sugerida}'): ").strip()
-            if not k: k = clave_sugerida
-            k = k.replace("..", "").strip()
-            tx.nuevo_sinonimo = k
-            return (k, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat)
+            else:
+                try:
+                    char = ch.decode('utf-8')
+                    if char.isalnum() or char in [' ', '-', '.']: buffer += char
+                except: pass
 
-    return None
-
-# --- DB & LOGIC FUNCTIONS ---
+# --- CORE LOGIC ---
 
 def cargar_diccionario(cursor):
     cursor.execute("""
@@ -115,361 +191,235 @@ def cargar_diccionario(cursor):
     """)
     return list(cursor.fetchall())
 
-def verificar_conocimiento_previo(cursor, tx):
-    if not tx.id_subcat: return False
-    desc_lower = tx.descripcion_final.lower()
-    cursor.execute("SELECT termino FROM diccionario_terminos WHERE id_subcategoria = ?", (tx.id_subcat,))
-    terminos = cursor.fetchall()
-    for (t,) in terminos:
-        if t.lower() in desc_lower:
-            tx.ia_match = True
-            return True
-    tx.ia_match = False
-    return False
-
-def reanalizar_lista(lista_tx, diccionario):
-    cambios = 0
-    # Reseteamos conflictos previos para evitar fantasmas
+def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None):
     for tx in lista_tx:
-        if tx.estado not in ['LISTO', 'DESCARTADO']:
-            desc_lower = tx.descripcion_original.lower()
-            coincidencias = []
+        if tx.estado != 'PENDIENTE': continue
+        desc_lower = tx.descripcion_original.lower()
+        match_db = False
+        for termino, id_sub, nom_sub, nom_cat, id_cat in diccionario:
+            if termino.lower() in desc_lower:
+                tx.id_subcat = id_sub; tx.nombre_subcat = nom_sub
+                tx.nombre_cat = nom_cat; tx.id_cat = id_cat
+                tx.ia_match = True
+                match_db = True
+                break
+        if cc_hint and match_db:
+            termino_hint, id_cc_hint, nom_cc_hint = cc_hint
+            if termino_hint in desc_lower and not tx.id_cc:
+                tx.id_cc = id_cc_hint; tx.nombre_cc = nom_cc_hint
+        if tx.id_cc and tx.id_cat and tx.id_subcat:
+            tx.estado = 'AUTO'
 
-            for termino, id_sub, nom_sub, nom_cat, id_cat in diccionario:
-                if termino.lower() in desc_lower:
-                    # CLAVE ÚNICA: ID_SUB + ID_CAT (Para diferenciar misma subcat en distinta cat si pasara)
-                    identificador_unico = (id_sub, id_cat)
+def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, pag, mp_nombre):
 
-                    # Verificamos si ya tenemos esta opción exacta guardada
-                    ya_existe = False
-                    for c in coincidencias:
-                        if (c[0], c[3]) == identificador_unico:
-                            ya_existe = True
-                            break
+    render_callback(lista_tx, pag, mp_nombre, idx_resaltado=tx)
+    print("\n")
 
-                    if not ya_existe:
-                        coincidencias.append( (id_sub, nom_sub, nom_cat, id_cat) )
+    # 1. CC
+    id_cc, nom_cc = selector.seleccionar(
+        "CENTRO DE COSTO",
+        "SELECT id, nombre FROM param_centros_costo ORDER BY nombre"
+    )
+    if not id_cc: return None, None
+    tx.id_cc, tx.nombre_cc = id_cc, nom_cc
 
-            if len(coincidencias) == 1:
-                c = coincidencias[0]
-                if tx.id_subcat != c[0]:
-                    tx.id_subcat = c[0]; tx.nombre_subcat = c[1]
-                    tx.nombre_cat = c[2]; tx.id_cat = c[3]
-                    tx.ia_match = True; tx.conflictos = []; cambios += 1
-            elif len(coincidencias) > 1:
-                tx.conflictos = coincidencias
-                tx.estado = 'PENDIENTE'
-                tx.id_subcat = None
-                tx.nombre_subcat = f"{C_PURPLE}AMBIGUO ({len(coincidencias)}){C_RESET}"
-            else:
-                # Si no hay coincidencias, limpiamos conflictos viejos
-                tx.conflictos = []
+    render_callback(lista_tx, pag, mp_nombre, idx_resaltado=tx)
+    print("\n")
 
-# --- MENUS PAGINADOS (INSTANTÁNEOS) ---
+    # 2. CAT
+    id_cat, nom_cat = selector.seleccionar(
+        "CATEGORÍA",
+        "SELECT id, nombre FROM param_categorias ORDER BY nombre"
+    )
+    if not id_cat: return None, None
+    tx.id_cat, tx.nombre_cat = id_cat, nom_cat
 
-def menu_paginado(opciones, titulo):
-    total = len(opciones)
-    pag = 1
-    max_pag = math.ceil(total / MENU_SIZE)
-    error_msg = ""
+    render_callback(lista_tx, pag, mp_nombre, idx_resaltado=tx)
+    print("\n")
 
-    while True:
-        if error_msg: print(f"\r{' '*80}\r", end='')
+    # 3. SUB
+    id_sub, nom_sub = selector.seleccionar(
+        f"SUBCATEGORÍA ({nom_cat})",
+        "SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre",
+        (id_cat,),
+        permitir_nuevo=True
+    )
 
-        ini = (pag-1) * MENU_SIZE; fin = ini + MENU_SIZE
-        lote = opciones[ini:fin]
-
-        print(f"\n   {titulo} (Pág {pag}/{max_pag})")
-        validos = []
-        for i, row in enumerate(lote):
-            num = i + 1
-            print(f"      [{num}] {row[1]}")
-            validos.append(str(num))
-
-        if max_pag > 1:
-            nav = []
-            if pag > 1: nav.append("[A] Ant"); validos.append('A')
-            if pag < max_pag: nav.append("[S] Sig"); validos.append('S')
-            if nav: print(f"      {C_BLUE}{' '.join(nav)}{C_RESET}")
-
-        print(f"      {C_YELLOW}[0] VOLVER ATRÁS{C_RESET}")
-        validos.append('0')
-
-        if error_msg: print(f"      {C_RED}{error_msg}{C_RESET}", end='')
-        print(f"\n      >>> Opción: ", end='', flush=True)
-
-        inp = leer_tecla_instante()
-        print(inp)
-
-        if inp in validos:
-            if inp == '0': return None, None
-            if inp == 'S': pag += 1; continue
-            if inp == 'A': pag -= 1; continue
-            sel_idx = int(inp) - 1
-            return lote[sel_idx][0], lote[sel_idx][1]
-        else:
-            limpiar_pantalla()
-            error_msg = "❌ Opción no válida." # Simplificación visual
-
-def seleccionar_opcion_db(cursor, query, titulo, params=None):
-    if params: cursor.execute(query, params)
-    else: cursor.execute(query)
-    opciones = cursor.fetchall()
-    return menu_paginado(opciones, titulo)
-
-def seleccionar_o_crear_subcategoria(cursor, id_cat):
-    cursor.execute("SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre", (id_cat,))
-    opciones = cursor.fetchall()
-
-    total = len(opciones); pag = 1
-    max_pag = math.ceil(total / MENU_SIZE) if total > 0 else 1
-
-    while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        ini = (pag-1) * MENU_SIZE; fin = ini + MENU_SIZE
-        lote = opciones[ini:fin]
-
-        print(f"\n   📦 SUBCATEGORÍA (Pág {pag}/{max_pag})")
-        for i, row in enumerate(lote):
-            print(f"      [{i+1}] {row[1]}")
-
-        nav = []
-        if pag > 1: nav.append("[A] Ant")
-        if pag < max_pag: nav.append("[S] Sig")
-        if nav: print(f"      {C_BLUE}{' '.join(nav)}{C_RESET}")
-
-        print(f"      {C_GREEN}[+] CREAR NUEVA{C_RESET}")
-        print(f"      {C_YELLOW}[0] VOLVER ATRÁS{C_RESET}")
-        print(f"\n      >>> Opción: ", end='', flush=True)
-
-        inp = leer_tecla_instante()
-        print(inp)
-
-        if inp == '0': return None, None
-        if inp == 'S' and pag < max_pag: pag += 1; continue
-        if inp == 'A' and pag > 1: pag -= 1; continue
-
-        if inp == '+':
-            nueva = input(f"   ✨ Nombre nueva Subcategoría: ").strip()
-            if nueva:
-                try:
-                    cursor.execute("INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (id_cat, nueva))
-                    cursor.connection.commit()
-                    return cursor.lastrowid, nueva
-                except Exception as e:
-                    print(f"Error: {e}"); time.sleep(1); return None, None
-            continue
-
-        try:
-            val = int(inp)
-            if 1 <= val <= len(lote):
-                return lote[val-1][0], lote[val-1][1]
-        except: pass
-        print(f"   {C_RED}❌ Opción inválida{C_RESET}"); time.sleep(0.3)
-
-def intentar_autodetectar_ingreso(cursor, tx):
-    if tx.monto > 0:
-        cursor.execute("SELECT id, nombre FROM param_categorias WHERE nombre LIKE 'Ingresos%' LIMIT 1")
-        res = cursor.fetchone()
-        if res:
-            tx.id_cat = res[0]; tx.nombre_cat = res[1]
-            return True
-    return False
-
-def editar_transaccion(cursor, tx, nombre_mp_completo):
-    if tx.monto > 0 and not tx.id_cat: intentar_autodetectar_ingreso(cursor, tx)
-    verificar_conocimiento_previo(cursor, tx)
-
-    while True:
-        mostrar_encabezado(f"EDICIÓN #{tx.idx}", "SCR-EDIT")
-        f_latam = datetime.strptime(tx.fecha_fmt, '%Y-%m-%d').strftime('%d/%m/%Y')
-        cc_disp = tx.nombre_cc if tx.id_cc else f"{C_RED}SIN ASIGNAR ⚠️{C_RESET}"
-        color_monto = C_GREEN if tx.monto > 0 else C_WHITE
-
-        print(f"\n   💳 MP: {C_WHITE}{nombre_mp_completo}{C_RESET} | 📅 {C_WHITE}{f_latam}{C_RESET} | 💰 {color_monto}${tx.monto:,.2f}{C_RESET}")
-        print(f"   📝 {C_YELLOW}{tx.descripcion_final}{C_RESET}")
-        print("-" * 60)
-        print(f"   🏢 CC: {cc_disp} | 🏷️ CAT: {tx.nombre_cat} | 📦 SUB: {tx.nombre_subcat}")
-        print("-" * 60)
-
-        valid_keys = ['1', '2', '3', '4', 'D', 'C', '0']
-
-        if tx.conflictos:
-            print(f"   {C_PURPLE}🧠 OPCIONES APRENDIDAS:{C_RESET}")
-            for idx, conf in enumerate(tx.conflictos):
-                # Asignamos letras A, B, C... para selección rápida
-                letra_opcion = chr(65 + idx) # A, B, C
-                valid_keys.append(letra_opcion)
-                print(f"   [{C_PURPLE}{letra_opcion}{C_RESET}] {conf[2]} > {conf[1]}")
-            print("-" * 30)
-
-        print("   1. 🏢 Cambiar Centro Costo (+Smart)")
-        print("   2. 🏷️  Cambiar Categoría")
-        print("   3. 📦 Cambiar SubCategoría")
-        print("   4. ✏️  Editar Descripción")
-        print("-" * 30)
-        print(f"   D. 🗑️  DESCARTAR")
-        print(f"\n   {C_GREEN}C. ✅ CONFIRMAR{C_RESET}   {C_RED}0. ❌ CANCELAR{C_RESET}")
-
-        print("\n   >>> Acción: ", end='', flush=True)
-        opc = leer_tecla_instante()
-        print(opc)
-
-        # RESOLUCIÓN DE AMBIGÜEDADES (A, B, C...)
-        if tx.conflictos:
+    if id_sub == 'NUEVO':
+        nombre_new = nom_sub.strip().title()
+        if nombre_new:
             try:
-                # Convertir letra A, B, C a indice 0, 1, 2
-                idx_conf = ord(opc) - 65
-                if 0 <= idx_conf < len(tx.conflictos):
-                    sel = tx.conflictos[idx_conf]
-                    tx.id_subcat = sel[0]; tx.nombre_subcat = sel[1]
-                    tx.nombre_cat = sel[2]; tx.id_cat = sel[3]
-                    tx.ia_match = True; tx.conflictos = []
-                    continue
-            except: pass
+                cursor.execute("INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (id_cat, nombre_new))
+                cursor.connection.commit()
+                id_sub = cursor.lastrowid; nom_sub = nombre_new
+            except: return None, None
 
-        if opc == '1': # CC + Smart
-            paso = 0
-            while 0 <= paso <= 3:
-                if paso == 0:
-                    id_cc, nom_cc = seleccionar_opcion_db(cursor, "SELECT id, nombre FROM param_centros_costo ORDER BY id", "🏢 CENTRO DE COSTO:")
-                    if not id_cc: break
-                    tx.id_cc, tx.nombre_cc = id_cc, nom_cc
-                    paso = 1
-                elif paso == 1:
-                    if tx.id_cat:
-                        sub_str = tx.nombre_subcat if tx.id_subcat else "---"
-                        print(f"\n   🤖 Clasif. actual: {tx.nombre_cat} > {sub_str}")
-                        print(f"   ¿Mantener? (S/n): ", end='', flush=True)
-                        mantener = leer_tecla_instante()
-                        print(mantener)
-                        if mantener in ['S', ' ', '\r']:
-                            if not tx.id_subcat:
-                                print(f"   {C_YELLOW}⚠️ Falta definir Subcategoría.{C_RESET}"); time.sleep(0.5)
-                                paso = 3; continue
-                            return cerrar_y_aprender(tx)
-                    paso = 2
-                elif paso == 2:
-                    id_cat, nom_cat = seleccionar_opcion_db(cursor, "SELECT id, nombre FROM param_categorias ORDER BY nombre", "🏷️  CATEGORÍA:")
-                    if not id_cat: paso=0; continue
-                    tx.id_cat, tx.nombre_cat = id_cat, nom_cat
-                    paso = 3
-                elif paso == 3:
-                    id_sub, nom_sub = seleccionar_o_crear_subcategoria(cursor, tx.id_cat)
-                    if not id_sub: paso=2; continue
-                    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub; tx.ia_match = False
-                    return cerrar_y_aprender(tx)
+    if not id_sub: return None, None
+    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
 
-        elif opc == '2': # Cat -> Sub
-            id_cat, nom_cat = seleccionar_opcion_db(cursor, "SELECT id, nombre FROM param_categorias ORDER BY nombre", "🏷️  CATEGORÍA:")
-            if id_cat:
-                tx.id_cat, tx.nombre_cat = id_cat, nom_cat
-                id_sub, nom_sub = seleccionar_o_crear_subcategoria(cursor, tx.id_cat)
-                if id_sub:
-                    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub; tx.ia_match = False
-                    if tx.id_cc: return cerrar_y_aprender(tx)
+    tx.estado = 'LISTO'
+    tx.ia_match = False
 
-        elif opc == '3': # Solo Sub
-            if not tx.id_cat: print(f"⚠️ Defina Categoría primero."); time.sleep(1)
-            else:
-                id_sub, nom_sub = seleccionar_o_crear_subcategoria(cursor, tx.id_cat)
-                if id_sub:
-                    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub; tx.ia_match = False
-                    if tx.id_cc: return cerrar_y_aprender(tx)
+    render_callback(lista_tx, pag, mp_nombre, idx_resaltado=tx)
 
-        elif opc == '4':
-            n = input("   Nueva descripción: ").strip()
-            if n: tx.descripcion_final = n
+    clave_sugerida = detectar_patron_comun(tx, lista_tx)
 
-        elif opc == 'D':
-            print(f"   {C_RED}¿DESCARTAR? (S/n): {C_RESET}", end='', flush=True)
-            if leer_tecla_instante() == 'S':
-                tx.estado = 'DESCARTADO'; return None
+    while True:
+        print(f"\n{C_PURPLE}🧠 ¿Memorizar '{clave_sugerida}' como {nom_sub}? (S/n/Back){C_RESET}{ANSI_CLEAR_LINE}", end='\r')
+        vaciar_buffer_teclado()
+        ch = msvcrt.getch()
 
-        elif opc == 'C':
-            if not tx.id_cc or not tx.id_subcat:
-                print(f"⛔ Faltan datos (CC o Subcat)"); time.sleep(1)
-            else:
-                return cerrar_y_aprender(tx)
+        if ch in [b's', b'S', b'\r', b' ']:
+            return (clave_sugerida, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat), (clave_sugerida.lower(), tx.id_cc, tx.nombre_cc)
+        elif ch in [b'n', b'N', b'\x1b']:
+            return None, None
+        elif ch == b'\x08':
+            while True:
+                print(ANSI_CLEAR_LINE, end='\r')
+                print(f"{C_YELLOW}✏️ Personalizar clave: {C_RESET}", end='')
+                custom_clave = input().strip()
+                if not custom_clave: break
 
-        elif opc == '0': return None
+                desc_real_lower = limpiar_texto_visual(tx.descripcion_final).lower()
+                if custom_clave.lower() in desc_real_lower:
+                    return (custom_clave, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat), (custom_clave.lower(), tx.id_cc, tx.nombre_cc)
+                else:
+                    print(f"   {C_RED}❌ Error: La frase '{custom_clave}' no existe en la descripción original.{C_RESET}")
+                    beep_error()
+                    time.sleep(1.5)
+            continue
+        else:
+            beep_error()
 
-def render_dashboard(lista_tx, pag, mp_nombre):
-    try: term_width = shutil.get_terminal_size().columns
-    except: term_width = 80
+# --- DASHBOARD DINÁMICO ---
+
+def render_dashboard(lista_tx, pag, mp_nombre, idx_resaltado=None):
+    limpiar_pantalla()
 
     total = len(lista_tx); pags = math.ceil(total / PAGE_SIZE)
     ini = (pag-1)*PAGE_SIZE; fin = ini+PAGE_SIZE
     lote = lista_tx[ini:fin]
 
-    mostrar_encabezado(f"TORRE DE CONTROL ({mp_nombre})", "SCR-MAIN")
+    try: term_width = shutil.get_terminal_size().columns
+    except: term_width = 80
+
+    # [1] MEDIR ANCHO NUMÉRICO (Smart Fit Monetario)
+    max_monto_len = 0
+    max_desc_len = 0
+    max_clasif_len = 0
+
+    for tx in lote:
+        # Monto (solo numeros, puntos y comas)
+        m_str = f"{tx.monto:,.2f}"
+        if len(m_str) > max_monto_len: max_monto_len = len(m_str)
+
+        # Descripcion
+        d = len(limpiar_texto_visual(tx.descripcion_final))
+        if d > max_desc_len: max_desc_len = d
+
+        # Clasif
+        cc_s = tx.nombre_cc if tx.id_cc else "???"
+        ca_s = tx.nombre_cat if tx.id_cat else "???"
+        sc_s = tx.nombre_subcat if tx.id_subcat else "???"
+        c_str = f"{cc_s} / {ca_s} > {sc_s}"
+        if len(c_str) > max_clasif_len: max_clasif_len = len(c_str)
+
+    # [2] DEFINICIÓN DE COLUMNAS
+    col_sel = 3
+    col_fecha = 10
+    col_monto = max_monto_len + 4 # Espacio para "$ " y margenes
+
+    fixed_space = col_sel + col_fecha + col_monto + 13
+    available = max(10, term_width - fixed_space)
+
+    req_desc = max_desc_len + 2
+    req_clasif = max_clasif_len + 2
+
+    if req_desc + req_clasif <= available:
+        col_desc = max(20, req_desc)
+        col_clasif = available - col_desc
+    else:
+        col_clasif = min(req_clasif, int(available * 0.5))
+        col_desc = available - col_clasif
+
+    # --- RENDER ---
+    print(f"{C_CYAN}🦅 S.I.G.A.P. - TORRE DE CONTROL ({mp_nombre}){C_RESET}")
     print(f"📄 Pág {pag}/{pags} | Total: {total}")
 
-    col_sel = 5; col_id = 4; col_fecha = 10; col_monto = 11; col_est = 8; col_clasif = 25
-    used = col_sel + col_id + col_fecha + col_monto + col_est + col_clasif + 20
-    desc_width = term_width - used
-    if desc_width < 10: desc_width = 10
-
     print("-" * term_width)
-    h = f"{'SEL':<{col_sel}} | {'ID':<{col_id}} | {'FECHA':<{col_fecha}} | {'DESCRIPCIÓN':<{desc_width}} | {'MONTO':>{col_monto}} | {'EST':<{col_est}} | {'CLASIF'}"
+    h = f"SEL | FECHA      | {'DESCRIPCIÓN':<{col_desc}} | {'MONTO':>{col_monto}} | {'CLASIFICACIÓN':<{col_clasif}}"
     print(h[:term_width])
     print("-" * term_width)
 
-    validos = []
     for i, tx in enumerate(lote):
         key = str(i + 1)
-        validos.append(key)
 
-        c = C_RESET; est = "PEND"; clas = f"{tx.nombre_cc[:1]}/{tx.nombre_cat[:8]}>{tx.nombre_subcat[:8]}"
-        if tx.estado == 'AUTO': c = C_GREEN; est = "AUTO"
-        elif tx.estado == 'LISTO': c = C_CYAN; est = "LISTO"
-        elif tx.estado == 'DESCARTADO': c = C_RED; est = "NO"; clas = "---"
-        elif tx.estado == 'PENDIENTE':
-            c = C_YELLOW
-            if tx.conflictos: clas = f"{C_PURPLE}AMBIGUO (?){C_RESET}"
-            else: clas = "INCOMPLETO"
+        style = C_RESET
+        if tx.estado == 'AUTO': style = C_GREEN
+        elif tx.estado == 'LISTO': style = C_CYAN
+        elif tx.estado == 'DESCARTADO': style = C_RED
+        elif tx.estado == 'PENDIENTE': style = C_YELLOW
 
-        try: f_show = datetime.strptime(tx.fecha_fmt, '%Y-%m-%d').strftime('%d/%m/%Y')
-        except: f_show = tx.fecha_fmt
+        cc_str = tx.nombre_cc if tx.id_cc else "???"
 
+        safe_width = max(10, col_clasif - 6)
+        w_cc = len(cc_str)
+        remain = max(4, safe_width - w_cc)
+        limit_cat = max(3, int(remain * 0.5))
+        limit_sub = max(3, int(remain * 0.5))
+
+        cat_str = tx.nombre_cat[:limit_cat] if tx.id_cat else "???"
+        sub_str = tx.nombre_subcat[:limit_sub] if tx.id_subcat else "???"
+
+        clasif = f"{cc_str} / {cat_str} > {sub_str}"
+
+        if tx.estado == 'PENDIENTE':
+            if not tx.id_subcat: clasif = "---"
+
+        if tx == idx_resaltado:
+            style = C_INVERT
+
+        f_show = tx.fecha_fmt
         desc = limpiar_texto_visual(tx.descripcion_final)
-        if len(desc) > desc_width: desc = desc[:desc_width-2] + ".."
+        if len(desc) > col_desc: desc = desc[:col_desc-2] + ".."
 
-        sel_str = f"[{key}]"
-        linea = f"{c}{sel_str:<{col_sel}} | {tx.idx:<{col_id}} | {f_show:<{col_fecha}} | {desc:<{desc_width}} | {tx.monto:>{col_monto}.0f} | {est:<{col_est}} | {clas}{C_RESET}"
-        print(linea)
+        # FORMATO MONEDA ALINEADO
+        val_str = f"{tx.monto:,.2f}"
+        monto_fmt = f"$ {val_str:>{max_monto_len}}"
+
+        print(f"{style}[{key}] | {f_show} | {desc:<{col_desc}} | {monto_fmt:>{col_monto}} | {clasif:<{col_clasif}}{C_RESET}")
 
     print("-" * term_width)
-    print(f" [1-9] Editar | [S] Sig | [A] Ant | {C_GREEN}[G] GRABAR{C_RESET} | {C_RED}[X] SALIR{C_RESET}")
+    print(f"{C_YELLOW}[1-9]{C_RESET} Editar | {C_BLUE}[S/A]{C_RESET} Navegar | {C_GREEN}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
     return lote
+
+# --- MAIN LOOP ---
 
 def iniciar_torre_control(lista_tx, cursor, mp_nombre):
     diccionario = cargar_diccionario(cursor)
-    reanalizar_lista(lista_tx, diccionario)
-
+    reanalizar_inteligencia(lista_tx, diccionario)
+    selector = SelectorInteligente(cursor)
     pag = 1
+
     while True:
         lote_actual = render_dashboard(lista_tx, pag, mp_nombre)
+        print("\n>>> Acción: ", end='', flush=True)
 
-        print(f"\n>>> Acción: ", end='', flush=True)
-        cmd = leer_tecla_instante()
-        print(cmd)
+        ch = msvcrt.getch()
+        try: cmd = ch.decode('utf-8').upper()
+        except: continue
 
         if cmd == 'S' and pag < math.ceil(len(lista_tx)/PAGE_SIZE): pag += 1
         elif cmd == 'A' and pag > 1: pag -= 1
         elif cmd == 'X': return False
-        elif cmd == 'G':
-            pend = [t for t in lista_tx if t.estado == 'PENDIENTE']
-            if pend:
-                print(f"❌ {len(pend)} Incompletos."); time.sleep(1.5); continue
-            return True
+        elif cmd == 'G': return True
 
-        # Selección Rápida 1-9
-        if cmd in [str(x) for x in range(1, 10)]:
-            idx_pag = int(cmd) - 1
-            if idx_pag < len(lote_actual):
-                tx = lote_actual[idx_pag]
-                aprendido = editar_transaccion(cursor, tx, mp_nombre)
+        if cmd.isdigit() and '1' <= cmd <= '9':
+            idx = int(cmd) - 1
+            if idx < len(lote_actual):
+                tx_sel = lote_actual[idx]
+                aprendido, cc_hint = flujo_edicion_inteligente(cursor, tx_sel, selector, render_dashboard, lista_tx, pag, mp_nombre)
+
                 if aprendido:
                     diccionario.append(aprendido)
-                    reanalizar_lista(lista_tx, diccionario)
+                    reanalizar_inteligencia(lista_tx, diccionario, cc_hint)
