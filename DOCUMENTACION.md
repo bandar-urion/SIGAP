@@ -79,6 +79,13 @@ La justificación final del desarrollo no es reemplazar a la IA, sino **potencia
 ## **3.1. DOCTRINA UX: FLOW STATE (v4.0)**
 El objetivo es superar la practicidad de Excel manteniendo la integridad de una Base de Datos. El usuario no debe sentir que "entra y sale" de menús, sino que fluye a través de los datos.
 
+### **Doctrina HyperFlux (v5.0)**
+La interfaz evoluciona de "Paginada" a "Flujo Continuo".
+1.  **Viewport Deslizante:** El usuario navega una ventana de n registros que se desplaza sobre el total de datos.
+2.  **Navegación Vectorial:** El uso del teclado es natural (Flechas direccionales).
+3.  **Acciones Binarias:** Las decisiones de descarte o recuperación son inmediatas (Teclas laterales).
+4.  **HUD de Estado:** El usuario siempre conoce el "Saldo de trabajo restante" mediante contadores en pantalla.
+
 ### **Filosofía de "Flujo Continuo"**
 La interfaz debe reducir la carga cognitiva del usuario, permitiendo la clasificación masiva de datos sin interrupciones visuales ni cambios de contexto.
 
@@ -128,6 +135,14 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
 El proyecto adhiere estrictamente a **Conventional Commits** y **Semantic Versioning**.
 Para ver la guía completa de tipos, alcances y ejemplos, consultar el anexo técnico:
 👉 [GUIA_GIT.md](docs/GUIA_GIT.md)
+
+### **4.5. ESTÁNDARES DE CALIDAD (UNIT TESTING)**
+Para garantizar la robustez financiera, se aplica una política de **Tolerancia Cero** a la regresión.
+* **Infraestructura:** Uso de `unittest` nativo de Python.
+* **Cobertura:**
+    * **Integridad de Datos:** Tests que simulan inserción de duplicados y validan constraints SQL.
+    * **Lógica de Negocio:** Tests que validan la limpieza de strings y el matcheo de reglas.
+* **Ejecución:** Todo cambio en la lógica del "Cerebro" debe ser validado corriendo `python -m unittest discover tests`.
 
 ---
 

@@ -4,7 +4,6 @@ import os
 import glob
 import shutil
 from datetime import datetime
-# --- CAMBIO IMPORTANTE: AHORA LLAMAMOS A CARGA_GASTOS ---
 from modulos import carga_gastos
 
 # --- CONFIGURACIÓN ---
@@ -42,53 +41,85 @@ def main():
 
         lista_tx = []
         idx = 1
+        skipped_count = 0
+
         for _, row in df.iterrows():
             if row['Monto_Real'] == 0: continue
 
-            # Usamos la clase del nuevo módulo
+            referencia = str(row['Referencia'])
+
+            # Chequeo previo
+            cursor.execute("SELECT id FROM movimientos WHERE num_referencia = ?", (referencia,))
+            if cursor.fetchone():
+                skipped_count += 1
+                continue
+
             tx = carga_gastos.Transaccion(
                 fecha=row['Fecha'],
-                referencia=row['Referencia'],
+                referencia=referencia,
                 descripcion=row['Descripción'],
                 monto=row['Monto_Real'],
                 id_mp=ID_MP
             )
             tx.idx = idx
-
-            cursor.execute("SELECT id FROM movimientos WHERE num_referencia = ?", (tx.referencia,))
-            if cursor.fetchone(): continue
-
             lista_tx.append(tx)
             idx += 1
 
-        if not lista_tx: print("✅ No hay movimientos nuevos."); return
+        if not lista_tx:
+            if skipped_count > 0:
+                print(f"✅ Todos los movimientos ({skipped_count}) ya estaban cargados.")
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                dest = os.path.join(PROCESSED_DIR, f"santander_{ts}.xlsx")
+                shutil.move(archivo_input, dest)
+                print("📂 Archivo movido a procesados.")
+            else:
+                print("ℹ️ Archivo vacío.")
+            return
 
-        # 4. INVOCAR AL NUEVO MOTOR DE CARGA
+        print(f"ℹ️ {skipped_count} omitidos. 🚀 Carga para {len(lista_tx)} nuevos.\n")
+
+        # 4. TORRE DE CONTROL
         confirmado = carga_gastos.iniciar_torre_control(lista_tx, cursor, MP_FULL)
 
-        # 5. GRABAR
+        # 5. GRABAR BLINDADO
         if confirmado:
-            print("\n💾 Guardando en DB...")
-            n = 0
+            print("\n💾 Sincronizando con Base de Datos...")
+            n_guardados = 0
+            n_pendientes = 0
+            n_descartados = 0
+
             for tx in lista_tx:
-                if tx.estado not in ['LISTO', 'AUTO']: continue
+                if tx.estado in ['LISTO', 'AUTO']:
+                    # INSERT OR IGNORE: Si ya existe la referencia, no explota, solo lo salta.
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO movimientos (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia))
 
-                cursor.execute("""
-                    INSERT INTO movimientos (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia))
+                    # Verificamos si se insertó realmente (rowcount > 0)
+                    if cursor.rowcount > 0:
+                        n_guardados += 1
+                        # Solo guardamos sinónimo si el movimiento fue nuevo
+                        if tx.nuevo_sinonimo:
+                            try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (tx.nuevo_sinonimo, tx.id_subcat))
+                            except: pass
 
-                if tx.nuevo_sinonimo:
-                    try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (tx.nuevo_sinonimo, tx.id_subcat))
-                    except: pass
-                n += 1
+                elif tx.estado == 'PENDIENTE':
+                    n_pendientes += 1
+                elif tx.estado == 'DESCARTADO':
+                    n_descartados += 1
 
             conn.commit()
 
-            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            dest = os.path.join(PROCESSED_DIR, f"santander_{ts}.xlsx")
-            shutil.move(archivo_input, dest)
-            print(f"✅ Procesado exitoso: {n} registros.")
+            print(f"✅ Guardados: {n_guardados} registros.")
+
+            if n_pendientes == 0:
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                dest = os.path.join(PROCESSED_DIR, f"santander_{ts}.xlsx")
+                shutil.move(archivo_input, dest)
+                print(f"📂 Archivo procesado y movido.")
+            else:
+                print(f"⚠️ Quedan {n_pendientes} PENDIENTES. Archivo se mantiene en INBOX.")
 
     except Exception as e:
         print(f"❌ Error Crítico: {e}")

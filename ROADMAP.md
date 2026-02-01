@@ -23,6 +23,7 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
 - [ ] **Orquestación (Tooling)**
     - [ ] Crear `manage.py` (CLI unificado para administrar el sistema).
     - [ ] Integrar funciones de reset y test en el orquestador.
+    - [x] Suite de Tests Unitarios (`tests/`).
 
 ---
 
@@ -40,14 +41,15 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
 
 ---
 
-## ⚙️ HITO 3: AUTOMATIZACIÓN & MASIVIDAD (v0.3)
+## ⚙️ HITO 3: AUTOMATIZACIÓN & MASIVIDAD (v0.3 - v0.5)
 **Objetivo:** Reducir la carga manual procesando archivos bancarios.
 
 - [ ] **Importador Bancario**
-    - [ ] Definir formato estándar de importación (CSV Intermedio).
-    - [ ] Parser para Santander (XLS/CSV -> DB).
+    - [x] Definir formato estándar de importación (CSV Intermedio).
+    - [x] Parser para Santander (XLS/CSV -> DB).
     - [ ] Parser para MercadoPago.
-    - [ ] Lógica de Deduplicación (`num_referencia`).
+    - [x] Lógica de Deduplicación (`num_referencia`).
+    - [x] Lógica de "Smart Archive" (Gestión de Pendientes).
 
 ---
 
