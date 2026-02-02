@@ -3,11 +3,113 @@ import os
 import shutil
 import math
 import time
-import winsound
-import msvcrt
 import re
 import sqlite3
+import sys
 from datetime import datetime
+
+# ==========================================
+# 🐧 CAPA DE ABSTRACCIÓN (CROSS-PLATFORM)
+# ==========================================
+
+IS_WINDOWS = os.name == 'nt'
+
+if IS_WINDOWS:
+    import msvcrt
+    import winsound
+else:
+    # Librerías estándar de Unix para manejo de terminal
+    import tty
+    import termios
+
+    def getch_unix():
+        """Lee un caracter crudo en Unix/Linux."""
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+# --- FUNCIONES PUENTE (WRAPPERS) ---
+
+def leer_byte():
+    """Devuelve un objeto BYTES de la tecla presionada (ej: b'a', b'\r')."""
+    if IS_WINDOWS:
+        return msvcrt.getch()
+    else:
+        char = getch_unix()
+        return char.encode('utf-8')
+
+def limpiar_pantalla():
+    os.system('cls' if IS_WINDOWS else 'clear')
+
+def vaciar_buffer_teclado():
+    """Limpia pulsaciones pendientes para evitar 'doble enter'."""
+    if IS_WINDOWS:
+        while msvcrt.kbhit():
+            msvcrt.getch()
+    else:
+        # En Linux/Termux el flush es complejo y puede bloquear.
+        # Por seguridad y simplicidad en Termux, lo omitimos (no suele ser crítico).
+        pass
+
+def beep_confirmacion():
+    if IS_WINDOWS:
+        try: winsound.Beep(1000, 200)
+        except: print('\a')
+    else:
+        # En Linux imprimimos el carácter BELL
+        print('\a', end='', flush=True)
+
+def beep_error():
+    if IS_WINDOWS:
+        try: winsound.Beep(500, 500)
+        except: print('\a')
+    else:
+        print('\a', end='', flush=True)
+
+def leer_input_navegacion():
+    """Detecta flechas y teclas especiales en ambos sistemas."""
+    ch = leer_byte()
+
+    if IS_WINDOWS:
+        # Windows usa secuencias de 2 bytes: \x00 o \xe0 + código
+        if ch in [b'\x00', b'\xe0']:
+            try:
+                scancode = msvcrt.getch()
+                if scancode == b'H': return 'UP'
+                if scancode == b'P': return 'DOWN'
+                if scancode == b'K': return 'LEFT'
+                if scancode == b'M': return 'RIGHT'
+            except: pass
+            return None
+        try: return ch.decode('utf-8').upper()
+        except: return None
+    else:
+        # Linux usa secuencias ANSI: \x1b + [ + Letra
+        if ch == b'\x1b':
+            # Es un escape, leemos los siguientes bytes para ver si es flecha
+            seq1 = leer_byte()
+            if seq1 == b'[':
+                seq2 = leer_byte()
+                if seq2 == b'A': return 'UP'
+                if seq2 == b'B': return 'DOWN'
+                if seq2 == b'D': return 'LEFT'
+                if seq2 == b'C': return 'RIGHT'
+            return None # Fue solo la tecla ESC
+
+        if ch == b'\r': return '\r' # Enter
+        if ch == b'\n': return '\r'
+
+        try: return ch.decode('utf-8').upper()
+        except: return None
+
+# ==========================================
+# 🦅 LÓGICA DE NEGOCIO (CORE)
+# ==========================================
 
 # --- CONFIGURACIÓN VISUAL ---
 VIEWPORT_HEIGHT = 10
@@ -24,7 +126,6 @@ C_PURPLE = "\033[95m"
 C_INVERT = "\033[7m"
 C_GRAY = "\033[90m"
 
-# ANSI CODES
 ANSI_CLEAR_LINE = "\033[K"
 ANSI_UP = "\033[A"
 
@@ -50,19 +151,10 @@ class Transaccion:
 
     def detectar_cuotas_regex(self):
         texto = self.descripcion_original.upper()
-
-        # --- FILTRO ANTI-FECHAS (Nivel 1: Palabras Clave) ---
-        # Borramos fechas precedidas por DEL, AL, VTO, etc.
         texto_limpio = re.sub(r'\b(DEL|AL|VTO|FECHA)\s+\d{1,2}[\/-]\d{1,2}([\/-]\d{2,4})?', ' ', texto)
-
-        # --- FILTRO DE CUOTAS (Nivel 2: Estructura) ---
-        # Regex 1: "01/12"
-        # MEJORA v0.6.4: (?!\/) significa "Que NO tenga una barra después"
-        # Esto evita capturar "09/12" dentro de "09/12/2025"
         match = re.search(r'\b(\d{1,2})[\/](\d{1,2})\b(?!\/)', texto_limpio)
 
         if not match:
-            # Regex 2: "Cta 1" o "Cuota 1"
             match = re.search(r'(?:CTA|CUOTA)\s?(\d{1,2})', texto_limpio)
             if match:
                 self.cuota_actual = int(match.group(1))
@@ -72,54 +164,12 @@ class Transaccion:
             try:
                 c_act = int(match.group(1))
                 c_tot = int(match.group(2))
-
-                # --- VALIDACIONES FINANCIERAS ---
-                if c_act > c_tot: return # Cuota 13 de 12 imposible
-                if c_tot > 60: return    # Más de 5 años es hipoteca (raro en resumen)
-
-                # Filtro extra: Si c_tot parece un año (20-30) y c_act es mes válido (<=12)
-                # y NO hay palabra "Cuota" explicita, desconfiamos.
-                if 20 <= c_tot <= 30 and c_act <= 12:
-                    return
-
+                if c_act > c_tot: return
+                if c_tot > 60: return
+                if 20 <= c_tot <= 30 and c_act <= 12: return
                 self.cuota_actual = c_act
                 self.cuotas_totales = c_tot
             except: pass
-
-# --- UI UTILS ---
-# (El resto del archivo se mantiene IDÉNTICO. No es necesario copiarlo todo de nuevo si sabes editar la clase,
-# pero para asegurar integridad te copio las funciones clave abajo por si acaso).
-
-def limpiar_pantalla():
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-def vaciar_buffer_teclado():
-    while msvcrt.kbhit():
-        msvcrt.getch()
-
-def beep_confirmacion():
-    try: winsound.Beep(1000, 200)
-    except: print('\a')
-    vaciar_buffer_teclado()
-
-def beep_error():
-    try: winsound.Beep(500, 500)
-    except: print('\a')
-    vaciar_buffer_teclado()
-
-def leer_input_navegacion():
-    ch = msvcrt.getch()
-    if ch in [b'\x00', b'\xe0']:
-        try:
-            scancode = msvcrt.getch()
-            if scancode == b'H': return 'UP'
-            if scancode == b'P': return 'DOWN'
-            if scancode == b'K': return 'LEFT'
-            if scancode == b'M': return 'RIGHT'
-        except: pass
-        return None
-    try: return ch.decode('utf-8').upper()
-    except: return None
 
 def limpiar_texto_visual(texto):
     basura = ["Compra con tarjeta de debito", "Transferencia realizada", "Transferencia recibida",
@@ -144,8 +194,6 @@ def detectar_patron_comun(tx_actual, lista_tx):
             break
     return mejor_patron
 
-# --- CORE LOGIC ---
-
 def cargar_diccionario(cursor):
     return list(cursor.execute("""
         SELECT d.termino, s.id, s.nombre, c.nombre, c.id
@@ -155,7 +203,6 @@ def cargar_diccionario(cursor):
     """).fetchall())
 
 def cargar_preferencias_contexto(cursor):
-    # 1. CC Prefs
     sql_cc = """
         SELECT id_subcategoria, id_centro_costo, cc.nombre, COUNT(*) as uso
         FROM movimientos m
@@ -169,7 +216,6 @@ def cargar_preferencias_contexto(cursor):
         sub_id, cc_id, cc_nom, _ = row
         if sub_id not in prefs_cc: prefs_cc[sub_id] = (cc_id, cc_nom)
 
-    # 2. Amortización Default
     sql_amort = "SELECT id, amortizacion_default FROM param_subcategorias WHERE amortizacion_default > 0"
     cursor.execute(sql_amort)
     prefs_amort = {row[0]: row[1] for row in cursor.fetchall()}
@@ -186,7 +232,6 @@ def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None, map_prefs_cc=No
         desc_visual_lower = limpiar_texto_visual(tx.descripcion_original).lower()
         match_db = False
 
-        # 1. Match Diccionario
         for termino, id_sub, nom_sub, nom_cat, id_cat in diccionario:
             if termino.lower() in desc_visual_lower:
                 tx.id_subcat = id_sub; tx.nombre_subcat = nom_sub
@@ -195,7 +240,6 @@ def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None, map_prefs_cc=No
                 match_db = True
                 break
 
-        # 2. Inferencia CC
         if cc_hint and match_db:
             termino_hint, id_cc_hint, nom_cc_hint = cc_hint
             if termino_hint in desc_visual_lower and not tx.id_cc:
@@ -204,9 +248,6 @@ def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None, map_prefs_cc=No
         if match_db and not tx.id_cc and map_prefs_cc:
             if tx.id_subcat in map_prefs_cc:
                 tx.id_cc, tx.nombre_cc = map_prefs_cc[tx.id_subcat]
-
-        # 3. Inferencia Amortización
-        # (Sin cambios aquí, la lógica de sugerencia está en el flujo UI)
 
         if tx.id_cc and tx.id_cat and tx.id_subcat:
             tx.estado = 'AUTO'
@@ -287,14 +328,15 @@ class SelectorInteligente:
                 time.sleep(0.4)
                 return elegido[0], elegido[1]
 
-            ch = msvcrt.getch()
+            ch = leer_byte() # <--- USAMOS EL WRAPPER
 
             if ch == b'\x1b': return None, None
             elif ch == b'\r':
                 if len(filtradas) == 1: return filtradas[0][0], filtradas[0][1]
                 for op in filtradas:
                     if op[1].upper() == buffer.upper(): return op[0], op[1]
-            elif ch == b'\x08': buffer = buffer[:-1]
+            elif ch == b'\x08' or ch == b'\x7f': # Backspace en Win es x08, en Linux puede ser x7f
+                buffer = buffer[:-1]
             elif permitir_nuevo and ch == b'+': return 'NUEVO', buffer
             else:
                 try:
@@ -351,7 +393,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
 
         buffer_cuotas = ""
         while True:
-            ch = msvcrt.getch()
+            ch = leer_byte() # <--- WRAPPER
             if ch == b'\r': # ENTER
                 if not buffer_cuotas and cuotas_sugeridas > 0:
                     buffer_cuotas = str(cuotas_sugeridas)
@@ -368,7 +410,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
 
             if id_sub not in prefs_amort or prefs_amort[id_sub] != meses:
                 print(f"\n{C_PURPLE}🧠 ¿Recordar que '{nom_sub}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
-                ch_mem = msvcrt.getch()
+                ch_mem = leer_byte() # <--- WRAPPER
                 if ch_mem in [b's', b'S']:
                     cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, id_sub))
                     cursor.connection.commit()
@@ -379,23 +421,22 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
     tx.estado = 'LISTO'
     tx.ia_match = False
 
-    prefs_cc[id_sub] = (id_cc, nom_cc) # Update RAM CC
+    prefs_cc[id_sub] = (id_cc, nom_cc)
 
     repaint()
     clave_sugerida = detectar_patron_comun(tx, lista_tx)
 
-    # 5. Aprendizaje de Sinónimo
     while True:
         print(f"\n{C_PURPLE}🧠 ¿Memorizar '{clave_sugerida}' como {nom_sub}? (S/n/Back){C_RESET}{ANSI_CLEAR_LINE}", end='\r')
         vaciar_buffer_teclado()
-        ch = msvcrt.getch()
+        ch = leer_byte() # <--- WRAPPER
 
         if ch in [b's', b'S', b'\r', b' ']:
             tx.nuevo_sinonimo = clave_sugerida
             return (clave_sugerida, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat), (clave_sugerida.lower(), tx.id_cc, tx.nombre_cc)
         elif ch in [b'n', b'N', b'\x1b']:
             return None, None
-        elif ch == b'\x08':
+        elif ch == b'\x08' or ch == b'\x7f':
             while True:
                 print(ANSI_CLEAR_LINE, end='\r')
                 print(f"{C_GRAY}   (Original: {clave_sugerida}){C_RESET}")
@@ -412,8 +453,6 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
             continue
         else: beep_error()
 
-# --- DASHBOARD DINÁMICO ---
-# (El resto es igual al anterior)
 def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
     limpiar_pantalla()
 
@@ -517,8 +556,6 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
 
     print(f"{stats} | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
 
-# --- MAIN LOOP (HYPERFLUX) ---
-
 def iniciar_torre_control(lista_tx, cursor, mp_nombre):
     diccionario = cargar_diccionario(cursor)
     prefs_cc, prefs_amort = cargar_preferencias_contexto(cursor)
@@ -550,7 +587,6 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
                 else: tx_foco.estado = 'PENDIENTE'
         elif key == '\r':
             if tx_foco.estado == 'DESCARTADO': continue
-            # Pasamos prefs_amort tambien al flujo de edicion
             aprendido, cc_hint = flujo_edicion_inteligente(cursor, tx_foco, selector, render_dashboard, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort)
             if aprendido:
                 diccionario.append(aprendido)

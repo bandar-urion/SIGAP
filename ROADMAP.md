@@ -50,6 +50,9 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
     - [ ] Parser para MercadoPago.
     - [x] Lógica de Deduplicación (`num_referencia`).
     - [x] Lógica de "Smart Archive" (Gestión de Pendientes).
+    - [x] **Portabilidad**
+    - [x] Soporte Cross-Platform (Windows/Linux/Termux).
+
 
 ---
 

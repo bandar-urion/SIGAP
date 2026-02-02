@@ -3,6 +3,13 @@
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [v0.6.5] - 2026-02-02 (Patch: Cross-Platform)
+
+### 🐧 Infraestructura & Portabilidad
+- **Soporte Linux/Termux:** El sistema ahora detecta automáticamente el Sistema Operativo al iniciar.
+- **Capa de Abstracción de I/O:** Se reemplazaron las llamadas directas a librerías nativas de Windows (`msvcrt`, `winsound`) por wrappers inteligentes (`leer_byte`, `beep_confirmacion`) que se adaptan al entorno.
+- **Navegación ANSI:** Implementación de parser de secuencias de escape para permitir el uso de flechas de dirección en terminales Unix/Linux.
+
 ## [v0.6.4] - 2026-02-01 (Hito: Financiación Inteligente)
 
 ### 💳 Gestión de Cuotas & Amortización
