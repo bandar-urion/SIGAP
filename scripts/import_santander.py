@@ -92,9 +92,10 @@ def main():
                 if tx.estado in ['LISTO', 'AUTO']:
                     # INSERT OR IGNORE: Si ya existe la referencia, no explota, solo lo salta.
                     cursor.execute("""
-                        INSERT OR IGNORE INTO movimientos (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia))
+                        INSERT OR IGNORE INTO movimientos
+                        (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia, cuota_actual, cuotas_totales)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia, tx.cuota_actual, tx.cuotas_totales))
 
                     # Verificamos si se insertó realmente (rowcount > 0)
                     if cursor.rowcount > 0:

@@ -5,6 +5,8 @@ import math
 import time
 import winsound
 import msvcrt
+import re
+import sqlite3
 from datetime import datetime
 
 # --- CONFIGURACIÓN VISUAL ---
@@ -41,9 +43,52 @@ class Transaccion:
         self.id_subcat = None; self.nombre_subcat = "---"
         self.ia_match = False
         self.nuevo_sinonimo = None
-        self.conflictos = []
+
+        self.cuota_actual = 0
+        self.cuotas_totales = 0
+        self.detectar_cuotas_regex()
+
+    def detectar_cuotas_regex(self):
+        texto = self.descripcion_original.upper()
+
+        # --- FILTRO ANTI-FECHAS (Nivel 1: Palabras Clave) ---
+        # Borramos fechas precedidas por DEL, AL, VTO, etc.
+        texto_limpio = re.sub(r'\b(DEL|AL|VTO|FECHA)\s+\d{1,2}[\/-]\d{1,2}([\/-]\d{2,4})?', ' ', texto)
+
+        # --- FILTRO DE CUOTAS (Nivel 2: Estructura) ---
+        # Regex 1: "01/12"
+        # MEJORA v0.6.4: (?!\/) significa "Que NO tenga una barra después"
+        # Esto evita capturar "09/12" dentro de "09/12/2025"
+        match = re.search(r'\b(\d{1,2})[\/](\d{1,2})\b(?!\/)', texto_limpio)
+
+        if not match:
+            # Regex 2: "Cta 1" o "Cuota 1"
+            match = re.search(r'(?:CTA|CUOTA)\s?(\d{1,2})', texto_limpio)
+            if match:
+                self.cuota_actual = int(match.group(1))
+                return
+
+        if match:
+            try:
+                c_act = int(match.group(1))
+                c_tot = int(match.group(2))
+
+                # --- VALIDACIONES FINANCIERAS ---
+                if c_act > c_tot: return # Cuota 13 de 12 imposible
+                if c_tot > 60: return    # Más de 5 años es hipoteca (raro en resumen)
+
+                # Filtro extra: Si c_tot parece un año (20-30) y c_act es mes válido (<=12)
+                # y NO hay palabra "Cuota" explicita, desconfiamos.
+                if 20 <= c_tot <= 30 and c_act <= 12:
+                    return
+
+                self.cuota_actual = c_act
+                self.cuotas_totales = c_tot
+            except: pass
 
 # --- UI UTILS ---
+# (El resto del archivo se mantiene IDÉNTICO. No es necesario copiarlo todo de nuevo si sabes editar la clase,
+# pero para asegurar integridad te copio las funciones clave abajo por si acaso).
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -98,6 +143,73 @@ def detectar_patron_comun(tx_actual, lista_tx):
             mejor_patron = comun.strip()
             break
     return mejor_patron
+
+# --- CORE LOGIC ---
+
+def cargar_diccionario(cursor):
+    return list(cursor.execute("""
+        SELECT d.termino, s.id, s.nombre, c.nombre, c.id
+        FROM diccionario_terminos d
+        JOIN param_subcategorias s ON d.id_subcategoria = s.id
+        JOIN param_categorias c ON s.id_categoria = c.id
+    """).fetchall())
+
+def cargar_preferencias_contexto(cursor):
+    # 1. CC Prefs
+    sql_cc = """
+        SELECT id_subcategoria, id_centro_costo, cc.nombre, COUNT(*) as uso
+        FROM movimientos m
+        JOIN param_centros_costo cc ON m.id_centro_costo = cc.id
+        GROUP BY id_subcategoria, id_centro_costo
+        ORDER BY id_subcategoria, uso DESC
+    """
+    cursor.execute(sql_cc)
+    prefs_cc = {}
+    for row in cursor.fetchall():
+        sub_id, cc_id, cc_nom, _ = row
+        if sub_id not in prefs_cc: prefs_cc[sub_id] = (cc_id, cc_nom)
+
+    # 2. Amortización Default
+    sql_amort = "SELECT id, amortizacion_default FROM param_subcategorias WHERE amortizacion_default > 0"
+    cursor.execute(sql_amort)
+    prefs_amort = {row[0]: row[1] for row in cursor.fetchall()}
+
+    return prefs_cc, prefs_amort
+
+def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None, map_prefs_cc=None, map_prefs_amort=None):
+    diccionario.sort(key=lambda x: len(x[0]), reverse=True)
+
+    for tx in lista_tx:
+        if tx.estado in ['DESCARTADO']: continue
+        if tx.estado not in ['PENDIENTE']: continue
+
+        desc_visual_lower = limpiar_texto_visual(tx.descripcion_original).lower()
+        match_db = False
+
+        # 1. Match Diccionario
+        for termino, id_sub, nom_sub, nom_cat, id_cat in diccionario:
+            if termino.lower() in desc_visual_lower:
+                tx.id_subcat = id_sub; tx.nombre_subcat = nom_sub
+                tx.nombre_cat = nom_cat; tx.id_cat = id_cat
+                tx.ia_match = True
+                match_db = True
+                break
+
+        # 2. Inferencia CC
+        if cc_hint and match_db:
+            termino_hint, id_cc_hint, nom_cc_hint = cc_hint
+            if termino_hint in desc_visual_lower and not tx.id_cc:
+                tx.id_cc = id_cc_hint; tx.nombre_cc = nom_cc_hint
+
+        if match_db and not tx.id_cc and map_prefs_cc:
+            if tx.id_subcat in map_prefs_cc:
+                tx.id_cc, tx.nombre_cc = map_prefs_cc[tx.id_subcat]
+
+        # 3. Inferencia Amortización
+        # (Sin cambios aquí, la lógica de sugerencia está en el flujo UI)
+
+        if tx.id_cc and tx.id_cat and tx.id_subcat:
+            tx.estado = 'AUTO'
 
 # --- MOTOR INTELLISENSE ---
 
@@ -190,57 +302,24 @@ class SelectorInteligente:
                     if char.isalnum() or char in [' ', '-', '.']: buffer += char
                 except: pass
 
-# --- CORE LOGIC ---
-
-def cargar_diccionario(cursor):
-    return list(cursor.execute("""
-        SELECT d.termino, s.id, s.nombre, c.nombre, c.id
-        FROM diccionario_terminos d
-        JOIN param_subcategorias s ON d.id_subcategoria = s.id
-        JOIN param_categorias c ON s.id_categoria = c.id
-    """).fetchall())
-
-def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None):
-    diccionario.sort(key=lambda x: len(x[0]), reverse=True)
-
-    for tx in lista_tx:
-        if tx.estado in ['DESCARTADO']: continue
-        if tx.estado not in ['PENDIENTE']: continue
-
-        desc_visual_lower = limpiar_texto_visual(tx.descripcion_original).lower()
-        match_db = False
-
-        for termino, id_sub, nom_sub, nom_cat, id_cat in diccionario:
-            if termino.lower() in desc_visual_lower:
-                tx.id_subcat = id_sub; tx.nombre_subcat = nom_sub
-                tx.nombre_cat = nom_cat; tx.id_cat = id_cat
-                tx.ia_match = True
-                match_db = True
-                break
-
-        if cc_hint and match_db:
-            termino_hint, id_cc_hint, nom_cc_hint = cc_hint
-            if termino_hint in desc_visual_lower and not tx.id_cc:
-                tx.id_cc = id_cc_hint; tx.nombre_cc = nom_cc_hint
-
-        if tx.id_cc and tx.id_cat and tx.id_subcat:
-            tx.estado = 'AUTO'
-
-def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, viewport_start, mp_nombre):
+def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort):
 
     def repaint():
         render_callback(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx)
 
+    # 1. CC
     repaint(); print("\n")
     id_cc, nom_cc = selector.seleccionar("CENTRO DE COSTO", "SELECT id, nombre FROM param_centros_costo ORDER BY nombre")
     if not id_cc: return None, None
     tx.id_cc, tx.nombre_cc = id_cc, nom_cc
 
+    # 2. CAT
     repaint(); print("\n")
     id_cat, nom_cat = selector.seleccionar("CATEGORÍA", "SELECT id, nombre FROM param_categorias ORDER BY nombre")
     if not id_cat: return None, None
     tx.id_cat, tx.nombre_cat = id_cat, nom_cat
 
+    # 3. SUBCAT
     repaint(); print("\n")
     id_sub, nom_sub = selector.seleccionar(f"SUBCATEGORÍA ({nom_cat})", "SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre", (id_cat,), permitir_nuevo=True)
 
@@ -255,28 +334,77 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
     if not id_sub: return None, None
     tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
 
+    # --- 4. PREGUNTA DE AMORTIZACIÓN ---
+    if tx.cuotas_totales <= 1:
+        repaint()
+        msg_extra = "(Enter=No | Escribe ej: 2, 6, 12)"
+        cuotas_sugeridas = 0
+
+        if id_sub in prefs_amort:
+            cuotas_sugeridas = prefs_amort[id_sub]
+            msg_extra = f"(Enter={cuotas_sugeridas} cuotas | Escribe otro | 0=No)"
+            print(f"\n{C_YELLOW}📅 Detectado: '{nom_sub}' suele ser {cuotas_sugeridas} cuotas. ¿Aplicar? {msg_extra}{C_RESET}", end='\r')
+        else:
+            print(f"\n{C_YELLOW}📅 ¿Es un gasto en cuotas/amortizable? {msg_extra}{C_RESET}", end='\r')
+
+        vaciar_buffer_teclado()
+
+        buffer_cuotas = ""
+        while True:
+            ch = msvcrt.getch()
+            if ch == b'\r': # ENTER
+                if not buffer_cuotas and cuotas_sugeridas > 0:
+                    buffer_cuotas = str(cuotas_sugeridas)
+                break
+            if ch == b'\x1b': break # Esc
+            if ch.isdigit():
+                buffer_cuotas += ch.decode()
+                print(f"Cuotas: {buffer_cuotas}", end='\r')
+
+        if buffer_cuotas and int(buffer_cuotas) > 1:
+            meses = int(buffer_cuotas)
+            tx.cuotas_totales = meses
+            tx.cuota_actual = 1
+
+            if id_sub not in prefs_amort or prefs_amort[id_sub] != meses:
+                print(f"\n{C_PURPLE}🧠 ¿Recordar que '{nom_sub}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
+                ch_mem = msvcrt.getch()
+                if ch_mem in [b's', b'S']:
+                    cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, id_sub))
+                    cursor.connection.commit()
+                    prefs_amort[id_sub] = meses
+                    print("✅ Regla aprendida/actualizada.")
+                    time.sleep(0.5)
+
     tx.estado = 'LISTO'
     tx.ia_match = False
+
+    prefs_cc[id_sub] = (id_cc, nom_cc) # Update RAM CC
 
     repaint()
     clave_sugerida = detectar_patron_comun(tx, lista_tx)
 
+    # 5. Aprendizaje de Sinónimo
     while True:
         print(f"\n{C_PURPLE}🧠 ¿Memorizar '{clave_sugerida}' como {nom_sub}? (S/n/Back){C_RESET}{ANSI_CLEAR_LINE}", end='\r')
         vaciar_buffer_teclado()
         ch = msvcrt.getch()
+
         if ch in [b's', b'S', b'\r', b' ']:
+            tx.nuevo_sinonimo = clave_sugerida
             return (clave_sugerida, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat), (clave_sugerida.lower(), tx.id_cc, tx.nombre_cc)
         elif ch in [b'n', b'N', b'\x1b']:
             return None, None
         elif ch == b'\x08':
             while True:
                 print(ANSI_CLEAR_LINE, end='\r')
-                print(f"{C_YELLOW}✏️ Personalizar clave: {C_RESET}", end='')
+                print(f"{C_GRAY}   (Original: {clave_sugerida}){C_RESET}")
+                print(f"{C_YELLOW}✏️ Escribe nueva clave: {C_RESET}", end='')
                 custom_clave = input().strip()
                 if not custom_clave: break
                 desc_real_lower = limpiar_texto_visual(tx.descripcion_final).lower()
                 if custom_clave.lower() in desc_real_lower:
+                    tx.nuevo_sinonimo = custom_clave
                     return (custom_clave, tx.id_subcat, tx.nombre_subcat, tx.nombre_cat, tx.id_cat), (custom_clave.lower(), tx.id_cc, tx.nombre_cc)
                 else:
                     print(f"   {C_RED}❌ Error: La frase '{custom_clave}' no existe en la descripción original.{C_RESET}")
@@ -285,7 +413,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
         else: beep_error()
 
 # --- DASHBOARD DINÁMICO ---
-
+# (El resto es igual al anterior)
 def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
     limpiar_pantalla()
 
@@ -300,13 +428,15 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
     fixed_space = col_sel + col_fecha + col_monto + 13
     available = max(10, term_width - fixed_space)
 
-    # 1. Medir contenido
     max_desc = 0; max_clasif = 0; max_monto_len = 0
     for tx in lote:
         m_str = f"{tx.monto:,.2f}";
         if len(m_str) > max_monto_len: max_monto_len = len(m_str)
 
-        d = len(limpiar_texto_visual(tx.descripcion_final))
+        tag_cuota = ""
+        if tx.cuotas_totales > 1: tag_cuota = f"💳 [{tx.cuota_actual}/{tx.cuotas_totales}] "
+
+        d = len(tag_cuota + limpiar_texto_visual(tx.descripcion_final))
         if d > max_desc: max_desc = d
 
         c_str = f"{tx.nombre_cc if tx.id_cc else '???'} / {tx.nombre_cat if tx.id_cat else '???'} > {tx.nombre_subcat if tx.id_subcat else '???'}"
@@ -356,34 +486,33 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
         if tx.estado == 'DESCARTADO':
             clasif = "[DESCARTADO]"
 
-        # --- AQUI ESTA LA MAGIA VISUAL DE ESTADO ---
+        desc_visual = limpiar_texto_visual(tx.descripcion_final)
+        if tx.cuotas_totales > 1:
+            tag_cuota = f"💳 [{tx.cuota_actual}/{tx.cuotas_totales}]"
+            desc_visual = f"{tag_cuota} {desc_visual}"
+
         if tx == idx_resaltado:
             style = C_INVERT
-            # Inyectamos el estado en el texto porque perdemos el color
             if tx.estado == 'AUTO': clasif = f"[AUTO] {clasif}"
             elif tx.estado == 'LISTO': clasif = f"[OK] {clasif}"
             elif tx.estado == 'PENDIENTE': clasif = f"[PEND] {clasif}"
             elif tx.estado == 'DESCARTADO': clasif = "[DESCARTADO]"
 
         f_show = tx.fecha_fmt
-        desc = limpiar_texto_visual(tx.descripcion_final)
-        if len(desc) > col_desc: desc = desc[:col_desc-2] + ".."
+        if len(desc_visual) > col_desc: desc_visual = desc_visual[:col_desc-2] + ".."
 
         val_str = f"{tx.monto:,.2f}"
         monto_fmt = f"$ {val_str:>{max_monto_len}}"
 
-        print(f"{style}[{key}] | {f_show} | {desc:<{col_desc}} | {monto_fmt:>{col_monto}} | {clasif:<{col_clasif}}{C_RESET}")
+        print(f"{style}[{key}] | {f_show} | {desc_visual:<{col_desc}} | {monto_fmt:>{col_monto}} | {clasif:<{col_clasif}}{C_RESET}")
 
-    # --- FOOTER CON STATS ---
     print("-" * term_width)
 
-    # Calcular contadores
     n_auto = sum(1 for t in lista_tx if t.estado == 'AUTO')
     n_listo = sum(1 for t in lista_tx if t.estado == 'LISTO')
     n_pend = sum(1 for t in lista_tx if t.estado == 'PENDIENTE')
     n_desc = sum(1 for t in lista_tx if t.estado == 'DESCARTADO')
 
-    # Barra de estado tipo Excel
     stats = f"{C_YELLOW}PEND: {n_pend}{C_RESET} | {C_GREEN}AUTO: {n_auto}{C_RESET} | {C_CYAN}OK: {n_listo}{C_RESET} | {C_GRAY}🗑️: {n_desc}{C_RESET}"
 
     print(f"{stats} | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
@@ -392,28 +521,25 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
 
 def iniciar_torre_control(lista_tx, cursor, mp_nombre):
     diccionario = cargar_diccionario(cursor)
-    reanalizar_inteligencia(lista_tx, diccionario)
-    selector = SelectorInteligente(cursor)
+    prefs_cc, prefs_amort = cargar_preferencias_contexto(cursor)
 
+    reanalizar_inteligencia(lista_tx, diccionario, map_prefs_cc=prefs_cc, map_prefs_amort=prefs_amort)
+
+    selector = SelectorInteligente(cursor)
     cursor_idx = 0
     viewport_start = 0
 
     while True:
-        if cursor_idx < viewport_start:
-            viewport_start = cursor_idx
-        if cursor_idx >= viewport_start + VIEWPORT_HEIGHT:
-            viewport_start = cursor_idx - VIEWPORT_HEIGHT + 1
+        if cursor_idx < viewport_start: viewport_start = cursor_idx
+        if cursor_idx >= viewport_start + VIEWPORT_HEIGHT: viewport_start = cursor_idx - VIEWPORT_HEIGHT + 1
 
         tx_foco = lista_tx[cursor_idx]
-
         render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx_foco)
 
         key = leer_input_navegacion()
 
-        if key == 'UP':
-            cursor_idx = max(0, cursor_idx - 1)
-        elif key == 'DOWN':
-            cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
+        if key == 'UP': cursor_idx = max(0, cursor_idx - 1)
+        elif key == 'DOWN': cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
         elif key == 'RIGHT':
             if tx_foco.estado != 'DESCARTADO':
                 tx_foco.estado = 'DESCARTADO'
@@ -424,10 +550,11 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
                 else: tx_foco.estado = 'PENDIENTE'
         elif key == '\r':
             if tx_foco.estado == 'DESCARTADO': continue
-            aprendido, cc_hint = flujo_edicion_inteligente(cursor, tx_foco, selector, render_dashboard, lista_tx, viewport_start, mp_nombre)
+            # Pasamos prefs_amort tambien al flujo de edicion
+            aprendido, cc_hint = flujo_edicion_inteligente(cursor, tx_foco, selector, render_dashboard, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort)
             if aprendido:
                 diccionario.append(aprendido)
-                reanalizar_inteligencia(lista_tx, diccionario, cc_hint)
+                reanalizar_inteligencia(lista_tx, diccionario, cc_hint, prefs_cc, prefs_amort)
                 cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
         elif key == 'G': return True
         elif key == 'X': return False

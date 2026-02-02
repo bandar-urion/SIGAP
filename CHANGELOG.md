@@ -3,6 +3,17 @@
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [v0.6.4] - 2026-02-01 (Hito: Financiación Inteligente)
+
+### 💳 Gestión de Cuotas & Amortización
+- **Regex Financiero:** El sistema ahora escanea las descripciones buscando patrones de cuotas (`01/12`, `Cta 3`).
+- **Date Guard:** Lógica avanzada (Negative Lookahead) para evitar confundir fechas (`01/12/2025`) con cuotas.
+- **Smart Suggestion:** Para servicios sin cuotas explícitas (ej: Gas), el sistema sugiere la amortización basada en el historial, pero permite confirmación manual o edición rápida.
+- **Visualización:** Nuevos indicadores visuales en la Torre de Control (`💳 [x/y]`).
+
+### 🧪 Calidad (QA)
+- **Tests de Tortura:** Se agregó `tests/test_avanzado.py` para someter al motor de Regex a casos extremos, lógicas imposibles y ambigüedades fecha/cuota.
+
 ## [v0.5.0] - 2026-02-01 (Hito: HyperFlux & Calidad)
 
 ### 🚀 UX/UI (HyperFlux)
