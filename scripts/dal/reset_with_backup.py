@@ -2,8 +2,8 @@ import sqlite3
 import os
 import sys
 
-# Ajuste de rutas para encontrar el script base y la DB
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Ajustamos la ruta: 1(dal) -> 2(scripts) -> 3(raíz)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
 
 # Intentamos importar el reset original para no duplicar código de esquema

@@ -1,8 +1,8 @@
 import sqlite3
 import os
 
-# Ajustamos la ruta para que siempre apunte a la raíz
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Ajustamos la ruta: 1(dal) -> 2(scripts) -> 3(raíz)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
 
 def ejecutar_sql(cursor, sql, params=()):

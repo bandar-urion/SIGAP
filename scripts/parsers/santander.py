@@ -4,10 +4,16 @@ import os
 import glob
 import shutil
 from datetime import datetime
-from modulos import carga_gastos
 
-# --- CONFIGURACIÓN ---
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# --- NUEVOS IMPORTS MODULARES ---
+# Como manage.py agrega 'scripts' al path, importamos directo desde las carpetas
+from core.brain import Transaccion, limpiar_texto
+from ui.torre_control import render_dashboard
+
+# --- CONFIGURACIÓN DE RUTAS ---
+# 1(parsers) -> 2(scripts) -> 3(raíz)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
 INBOX_DIR = os.path.join(BASE_DIR, 'data', 'inbox')
 PROCESSED_DIR = os.path.join(BASE_DIR, 'data', 'processed')
@@ -54,7 +60,7 @@ def main():
                 skipped_count += 1
                 continue
 
-            tx = carga_gastos.Transaccion(
+            tx = Transaccion(
                 fecha=row['Fecha'],
                 referencia=referencia,
                 descripcion=row['Descripción'],
@@ -79,7 +85,8 @@ def main():
         print(f"ℹ️ {skipped_count} omitidos. 🚀 Carga para {len(lista_tx)} nuevos.\n")
 
         # 4. TORRE DE CONTROL
-        confirmado = carga_gastos.iniciar_torre_control(lista_tx, cursor, MP_FULL)
+        from ui.torre_control import iniciar_torre_control
+        confirmado = iniciar_torre_control(lista_tx, cursor, MP_FULL)
 
         # 5. GRABAR BLINDADO
         if confirmado:
