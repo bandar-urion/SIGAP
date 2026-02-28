@@ -1,7 +1,10 @@
 import sqlite3
 import os
+import sys
 
-# Ajustamos la ruta para que siempre apunte a la raíz, sin importar desde dónde se llame
+# =============================================================================
+# 1. CONFIGURACIÓN DE RUTAS Y ENTORNO
+# =============================================================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
 
@@ -12,90 +15,84 @@ def ejecutar_sql(cursor, sql, params=()):
         print(f"❌ Error SQL: {e} | Query: {sql}")
 
 def factory_reset_normalized():
-    print(f"💎 INICIANDO PROTOCOLO DE NORMALIZACIÓN (S.I.G.A.P.)...")
+    print(f"💎 INICIANDO PROTOCOLO DE NORMALIZACIÓN (S.I.G.A.P.)")
     print(f"    Target DB: {DB_FILE}")
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # ---------------------------------------------------------
-    # 1. DESTRUCCIÓN (DROP)
-    # ---------------------------------------------------------
+    # =============================================================================
+    # 2. LIMPIEZA (DROP TABLES)
+    # =============================================================================
+    print("🧹 Borrando estructuras antiguas y legacy...")
     cursor.execute("PRAGMA foreign_keys = OFF;")
-
-    tablas = [
+    
+    tablas_a_borrar = [
         # Tablas Operativas
-        'movimientos', 'movimientos_v2', 'agenda_pagos', 'auditoria_compliance',
+        'movimientos', 'movimientos_v2', 'agenda_pagos', 'auditoria_compliance', 'auditoria_movimientos',
 
         # Tablas de Parametría
         'param_subcategorias', 'param_categorias',
         'param_medios_pago', 'param_centros_costo',
 
         # Tablas de Gobernanza
-        'reglas_vinculos', 'reglas_catalogo',
+        'reglas_vinculos', 'reglas_catalogo', 'diccionario_terminos',
+        'reglas_gobernanza',
 
         # Limpieza de legacy
         'reglas_gobierno', 'centros_costo', 'movimientos_old_text'
     ]
 
-    for tabla in tablas:
+    for tabla in tablas_a_borrar:
         cursor.execute(f"DROP TABLE IF EXISTS {tabla}")
 
+    # Reiniciar contadores de autoincremento
     try:
         cursor.execute("DELETE FROM sqlite_sequence;")
     except sqlite3.OperationalError:
         pass
-
+    
     cursor.execute("PRAGMA foreign_keys = ON;")
 
-    # ---------------------------------------------------------
-    # 2. RECONSTRUCCIÓN (CREATE)
-    # ---------------------------------------------------------
-    print("🏗️  LEVANTANDO ESTRUCTURA NORMALIZADA...")
+    # =============================================================================
+    # 3. RECONSTRUCCIÓN DE ESQUEMA (DDL)
+    # =============================================================================
+    print("🏗️  Levantando nuevas tablas de Core y Auditoría...")
 
-    # --- A. GOBERNANZA (EL CEREBRO) ---
+    # A. GOBERNANZA
     cursor.execute("""
     CREATE TABLE reglas_catalogo (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         descripcion TEXT NOT NULL,
-        tipo_alerta TEXT DEFAULT 'BLOQUEANTE' -- BLOQUEANTE / ADVERTENCIA
-    );
-    """)
+        tipo_alerta TEXT DEFAULT 'BLOQUEANTE'
+    );""")
 
     cursor.execute("""
     CREATE TABLE reglas_vinculos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_regla INTEGER NOT NULL,
-        entidad_target TEXT NOT NULL, -- Nombre de la tabla destino (Ej: 'param_categorias')
+        entidad_target TEXT NOT NULL,
         FOREIGN KEY (id_regla) REFERENCES reglas_catalogo(id),
         UNIQUE(id_regla, entidad_target)
-    );
-    """)
+    );""")
 
-    # --- B. PARAMÉTRICAS ---
-    cursor.execute("""
-    CREATE TABLE param_centros_costo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL UNIQUE
-    );
-    """)
-
+    # B. PARAMETRICAS (CC, Medios, Categorías)
+    cursor.execute("CREATE TABLE param_centros_costo (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL UNIQUE);")
+    
     cursor.execute("""
     CREATE TABLE param_medios_pago (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         tipo TEXT CHECK(tipo IN ('EFECTIVO', 'CUENTA', 'TARJETA_CREDITO'))
-    );
-    """)
+    );""")
 
     cursor.execute("""
     CREATE TABLE param_categorias (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL UNIQUE,
         tipo TEXT CHECK(tipo IN ('INGRESO', 'EGRESO'))
-    );
-    """)
+    );""")
 
     cursor.execute("""
     CREATE TABLE param_subcategorias (
@@ -104,23 +101,9 @@ def factory_reset_normalized():
         nombre TEXT NOT NULL,
         UNIQUE(nombre, id_categoria),
         FOREIGN KEY (id_categoria) REFERENCES param_categorias(id)
-    );
-    """)
+    );""")
 
-    # --- C. OPERATIVAS ---
-    cursor.execute("""
-    CREATE TABLE agenda_pagos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_centro_costo INTEGER NOT NULL,
-        fecha_vencimiento TEXT NOT NULL,
-        descripcion TEXT NOT NULL,
-        monto_estimado REAL DEFAULT 0,
-        estado TEXT DEFAULT 'PENDIENTE',
-        prioridad TEXT DEFAULT 'NORMAL',
-        FOREIGN KEY (id_centro_costo) REFERENCES param_centros_costo(id)
-    );
-    """)
-
+    # C. OPERATIVAS (Movimientos y Agenda)
     cursor.execute("""
     CREATE TABLE movimientos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,16 +114,35 @@ def factory_reset_normalized():
         descripcion TEXT,
         monto REAL NOT NULL,
         num_referencia TEXT UNIQUE,
-        es_amortizable BOOLEAN DEFAULT 0 CHECK (es_amortizable IN (0, 1)),
+        es_amortizable BOOLEAN DEFAULT 0,
         meses_amortizacion INTEGER DEFAULT 0,
-        fecha_fin_amortizacion DATE,
         FOREIGN KEY(id_centro_costo) REFERENCES param_centros_costo(id),
         FOREIGN KEY(id_medio_pago) REFERENCES param_medios_pago(id),
         FOREIGN KEY(id_subcategoria) REFERENCES param_subcategorias(id)
-    );
-    """)
+    );""")
 
-    # --- D. AUDITORÍA (La Caja Negra) ---
+    cursor.execute("""
+    CREATE TABLE agenda_pagos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_centro_costo INTEGER NOT NULL,
+        fecha_vencimiento TEXT NOT NULL,
+        descripcion TEXT NOT NULL,
+        monto_estimado REAL DEFAULT 0,
+        estado TEXT DEFAULT 'PENDIENTE',
+        prioridad TEXT DEFAULT 'NORMAL',
+        url_pago TEXT,
+        FOREIGN KEY (id_centro_costo) REFERENCES param_centros_costo(id)
+    );""")
+
+    # D. INTELIGENCIA Y AUDITORÍA 
+    cursor.execute("""
+    CREATE TABLE diccionario_terminos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        termino TEXT NOT NULL UNIQUE,
+        id_subcategoria INTEGER NOT NULL,
+        FOREIGN KEY (id_subcategoria) REFERENCES param_subcategorias(id)
+    );""")
+
     cursor.execute("""
     CREATE TABLE auditoria_compliance (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,17 +152,84 @@ def factory_reset_normalized():
         accion TEXT,
         detalle TEXT,
         usuario TEXT DEFAULT 'SISTEMA'
-    );
-    """)
+    );""")
 
-    print("✅ Estructura Normalizada Desplegada (incluye Auditoría).")
+    cursor.execute("""
+    CREATE TABLE auditoria_movimientos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')),
+        usuario TEXT DEFAULT 'SISTEMA',
+        accion TEXT NOT NULL,
+        id_movimiento_ref INTEGER,
+        estado_previo TEXT,
+        estado_nuevo TEXT,
+        resultado TEXT
+    );""")
 
-    # ---------------------------------------------------------
-    # 3. SEMBRADO DE DATOS (SEED INTELIGENTE)
-    # ---------------------------------------------------------
-    print("🌱 SEMBRANDO DATOS...")
+    # E. ÍNDICES DE PERFORMANCE
+    cursor.execute("CREATE INDEX idx_movimientos_fecha ON movimientos(fecha);")
+    cursor.execute("CREATE INDEX idx_movimientos_ref ON movimientos(num_referencia);")
 
-    # --- SEED DE GOBERNANZA ---
+    # =============================================================================
+    # 4. SIEMBRA DE DATOS (SEEDING) - Explicito para evitar Huerfanos
+    # =============================================================================
+    print("🌱 Sembrando datos maestros y categorías...")
+
+    # Categorías - param_categorias
+    print("   🔹 Mapeando Categorías...")
+    categorias_data = [
+        ('ALIMENTACION', 'EGRESO'), ('AUTO', 'EGRESO'),  ('CASA', 'EGRESO'),
+        ('EDUCACION', 'EGRESO'), ('ENTRETENIMIENTO', 'EGRESO'), ('GUSTOS', 'EGRESO'),
+        ('INGRESOS', 'INGRESO'), ('MASCOTA', 'EGRESO'), ('SALUD', 'EGRESO'),
+        ('SERVICIOS', 'EGRESO'), ('TECNOLOGIA', 'EGRESO'), ('VARIOS', 'EGRESO')
+    ]
+    cursor.executemany("INSERT INTO param_categorias (nombre, tipo) VALUES (?, ?)", categorias_data)
+
+    def get_cat_id(nombre_cat):
+        cursor.execute("SELECT id FROM param_categorias WHERE nombre = ?", (nombre_cat,))
+        res = cursor.fetchone()
+        return res[0] if res else None
+
+    # Centros de Costo - param_centros_costo
+    centros = [('Personal',), ('Familia',), ('Mamá',)]
+    cursor.executemany("INSERT INTO param_centros_costo (nombre) VALUES (?)", centros)
+
+    # Medios de Pago - param_medios_pago
+    medios = [
+        ('Efectivo', 'EFECTIVO'),
+        ('MercadoPago', 'CUENTA'),
+        ('Santander', 'CUENTA'),
+        ('Santander Visa', 'TARJETA_CREDITO'),
+        ('Santander Amex', 'TARJETA_CREDITO'),
+        ('MercadoPago Mastercard', 'TARJETA_CREDITO')
+    ]
+    cursor.executemany("INSERT INTO param_medios_pago (nombre, tipo) VALUES (?, ?)", medios)
+
+    # Subcategorias - param_subcategorias
+    print("   🔹 Mapeando Subcategorías...")
+    sub_map = {
+        'ALIMENTACION': ['Supermercado', 'Almuerzos Laborales'],
+        'AUTO': ['Combustible', 'Mantenimiento', 'Seguro', 'Patente'],
+        'CASA': ['Mejoras', 'Mantenimiento'],
+        'EDUCACION': ['Cuotas', 'Utiles', 'Suscripciones'],
+        'ENTRETENIMIENTO': ['DCS World', 'Cine', 'Hobby', 'Suscripciones'],
+        'GUSTOS':['Restaurante', 'Comida Preparada', 'Helados'],
+        'INGRESOS': ['Sueldo', 'Honorarios', 'Intereses', 'Aguinaldo', 'Premios'],
+        'MASCOTA':  ['Alimento', 'Veterinaria', 'Higiene', 'Accesorios/Juguetes'],
+        'SALUD': ['Farmacia', 'Obra Social', 'Médicos', 'Gimnasio'],
+        'SERVICIOS': ['Luz', 'Gas', 'Internet', 'Celular'],
+        'TECNOLOGIA': ['Hardware', 'Software', 'Suscripciones'],
+        'VARIOS': ['Gastos Generales','Otros', 'Regalos']
+    }
+
+    for cat_nombre, subs in sub_map.items():
+        cursor.execute("SELECT id FROM param_categorias WHERE nombre = ?", (cat_nombre,))
+        cat_id = cursor.fetchone()
+        if cat_id:
+            for s in subs:
+                ejecutar_sql(cursor, "INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (cat_id[0], s))
+
+    # Gobernanza - reglas_catalogo
     print("   🔹 Cargando Catálogo de Reglas y Vínculos...")
     reglas_data = [
         ('Regla de Segregación Patrimonial', 'Aislar gestión de gastos (costo de vida separado).', 'BLOQUEANTE', ['param_centros_costo']),
@@ -177,54 +246,47 @@ def factory_reset_normalized():
         for target in targets:
             cursor.execute("INSERT INTO reglas_vinculos (id_regla, entidad_target) VALUES (?, ?)", (id_regla, target))
 
-    # --- DATOS MAESTROS ---
-    for cc in ['Personal', 'Familia', 'Mamá']:
-        ejecutar_sql(cursor, "INSERT INTO param_centros_costo (nombre) VALUES (?)", (cc,))
+    # Inteligencia - diccionario_terminos
+    print("   🔹 Cargando Inteligencia de Términos (Sinónimos)...")
 
-    mps = [
-        ('Efectivo', 'EFECTIVO'),
-        ('MercadoPago', 'CUENTA'),
-        ('Santander', 'CUENTA'),
-        ('Santander Visa', 'TARJETA_CREDITO'),
-        ('Santander Amex', 'TARJETA_CREDITO'),
-        ('MercadoPago Mastercard', 'TARJETA_CREDITO')
-    ]
-    for n, t in mps:
-        ejecutar_sql(cursor, "INSERT INTO param_medios_pago (nombre, tipo) VALUES (?, ?)", (n, t))
-
-    cats = [
-        ('Ingresos', 'INGRESO'), ('Vivienda', 'EGRESO'), ('Transporte', 'EGRESO'),
-        ('Alimentos', 'EGRESO'), ('Salud', 'EGRESO'), ('Servicios', 'EGRESO'),
-        ('Educación', 'EGRESO'), ('Tecnología', 'EGRESO'), ('Varios', 'EGRESO')
-    ]
-    for n, t in cats:
-        ejecutar_sql(cursor, "INSERT INTO param_categorias (nombre, tipo) VALUES (?, ?)", (n, t))
-
-    def get_cat_id(nombre_cat):
-        cursor.execute("SELECT id FROM param_categorias WHERE nombre = ?", (nombre_cat,))
+    # Helper interno para obtener el ID de la subcategoría por su nombre
+    def get_subcat_id(nombre_sub):
+        cursor.execute("SELECT id FROM param_subcategorias WHERE nombre = ?", (nombre_sub,))
         res = cursor.fetchone()
         return res[0] if res else None
 
-    subcats_map = {
-        'Ingresos': ['Sueldo', 'Honorarios', 'Intereses'],
-        'Vivienda': ['Alquiler', 'Expensas', 'Mantenimiento'],
-        'Transporte': ['Combustible', 'Seguro Auto', 'Patente', 'Uber/Taxi'],
-        'Alimentos': ['Supermercado', 'Restaurante', 'Delivery'],
-        'Salud': ['Farmacia', 'Obra Social', 'Médico/Dentista', 'Gimnasio'],
-        'Servicios': ['Luz', 'Gas', 'Internet', 'Celular'],
-        'Tecnología': ['Hardware', 'Software', 'Suscripciones'],
-        'Varios': ['Gastos Generales']
-    }
+    # Mapa de Sinónimos -> Subcategoría
+    sinonimos_data = [
+        ('Comida Preparada', ['Sushi', 'Rotiseria', 'Delivery', 'PedidosYa', 'Pizza']),
+        ('Supermercado', ['Despensa', 'Verduleria', 'Almacen', 'Carniceria', 'Chino', 'La Anonima', 'Coto', 'El coyita', 'el coyita']),
+        ('Combustible', ['Nafta', 'YPF', 'Shell', 'Axion']),
+        ('Hobby', ['Eagle Dynamics', 'Modulo Avion', 'Mapa DCS']),
+        ('Almuerzos Laborales', ['la anonima suc010']),
+        ('Alimento', ['Sieger','Alimento Perro', 'Bolsa 3kg']),
+        ('Veterinaria', ['Vacunas', 'Desparasitante', 'Consulta Veterinaria'])
+    ]
 
-    for cat_nombre, lista_subcats in subcats_map.items():
-        cat_id = get_cat_id(cat_nombre)
-        if cat_id:
-            for sub in lista_subcats:
-                ejecutar_sql(cursor, "INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (cat_id, sub))
+    for subcat_nombre, terminos in sinonimos_data:
+        sid = get_subcat_id(subcat_nombre)
+        if sid:
+            for term in terminos:
+                try:
+                    # INSERT OR IGNORE para evitar duplicados.
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)",
+                        (term, sid)
+                    )
+                except sqlite3.Error as e:
+                    print(f"      ⚠️ Error al cargar término '{term}': {e}")
+        else:
+            print(f"      ⚠️ Alerta: No se encontró la subcategoría '{subcat_nombre}' para cargar sus términos.")
 
+    # =============================================================================
+    # 5. FINALIZACIÓN
+    # =============================================================================
     conn.commit()
     conn.close()
-    print("🚀 ¡S.I.G.A.P. BASE DE DATOS RESTAURADA (VERSION DIAMOND)! LISTO.")
+    print(f"\n✅ PROTOCOLO FINALIZADO. La estructura de {DB_FILE} es ahora 100% compatible.")
 
 if __name__ == "__main__":
     # Si se ejecuta directo, corre la función
