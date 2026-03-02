@@ -1,16 +1,25 @@
 import pandas as pd
 import sqlite3
 import os
+import sys
 import glob
 import shutil
 from datetime import datetime
+
+# 1. Aseguramos que Python encuentre el módulo sigap_config en la raíz
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+import sigap_config
 from modulos import carga_gastos
 
-# --- CONFIGURACIÓN ---
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
-INBOX_DIR = os.path.join(BASE_DIR, 'data', 'inbox')
-PROCESSED_DIR = os.path.join(BASE_DIR, 'data', 'processed')
+# 2. Rutas dinámicas desde sigap.cfg (Compatibles con Termux S21 y Windows)
+DB_FILE = sigap_config.get_db_path()
+INBOX_DIR = sigap_config.get_path('PATHS', 'INBOX')
+PROCESSED_DIR = sigap_config.get_path('PATHS', 'PROCESSED')
+# -----------------------------------------------------
+
 
 def main():
     # 1. SETUP
