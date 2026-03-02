@@ -173,7 +173,7 @@ class Transaccion:
 
 def limpiar_texto_visual(texto):
     basura = ["Compra con tarjeta de debito", "Transferencia realizada", "Transferencia recibida",
-              "Pago de servicios", "Debito directo", "Su pago en", "Pago DEBIN", "\t"]
+            "Pago de servicios", "Debito directo", "Su pago en", "Pago DEBIN", "\t"]
     limpio = texto
     for b in basura:
         limpio = limpio.replace(b, "").replace(b.upper(), "")
@@ -269,8 +269,10 @@ class SelectorInteligente:
             return
 
         max_len = 0
-        for op in opciones:
-            if len(op[1]) > max_len: max_len = len(op[1])
+        # Agregamos el número de índice visual [1], [2], etc.
+        for i, op in enumerate(opciones):
+            item_str = f"[{i+1}] {op[1]}"
+            if len(item_str) > max_len: max_len = len(item_str)
 
         col_width = max_len + 4
         num_cols = max(1, ancho_term // col_width)
@@ -283,7 +285,7 @@ class SelectorInteligente:
             linea = ""
             for c in range(num_cols):
                 if idx < len(visibles):
-                    item = visibles[idx][1]
+                    item = f"[{idx+1}] {visibles[idx][1]}"
                     if len(item) > col_width - 2: item = item[:col_width-2]
                     linea += f"   {item:<{col_width-3}}"
                     idx += 1
@@ -299,7 +301,11 @@ class SelectorInteligente:
             try: term_width = shutil.get_terminal_size().columns
             except: term_width = 80
 
-            filtradas = [op for op in opciones if buffer.upper() in op[1].upper()]
+            # 1. HÍBRIDO: Si el buffer es número, muestra todo (menú). Si es texto, filtra.
+            if buffer.isdigit():
+                filtradas = opciones
+            else:
+                filtradas = [op for op in opciones if buffer.upper() in op[1].upper()]
 
             if not primera_vez:
                 print(ANSI_UP * self.altura_total, end="")
@@ -311,58 +317,93 @@ class SelectorInteligente:
             self.render_matrix(filtradas, term_width)
 
             if len(filtradas) == 0:
-                if permitir_nuevo: print(f"   {C_GREEN}[+] Crear '{buffer}' (Presione +){C_RESET}{ANSI_CLEAR_LINE}")
-                else: print(f"   {C_RED}(Sin coincidencias){C_RESET}{ANSI_CLEAR_LINE}")
+                if permitir_nuevo and not buffer.isdigit(): 
+                    print(f"   {C_GREEN}[+] Crear '{buffer}' (Presione +){C_RESET}{ANSI_CLEAR_LINE}")
+                else: 
+                    print(f"   {C_RED}(Sin coincidencias o índice inválido){C_RESET}{ANSI_CLEAR_LINE}")
             else:
                 print(f"{ANSI_CLEAR_LINE}")
 
             print(f"-" * term_width + ANSI_CLEAR_LINE)
 
-            if len(filtradas) == 1 and len(buffer) >= 2:
-                elegido = filtradas[0]
-                print(ANSI_UP * (self.altura_total - 1), end="")
-                print(f"{C_CYAN}➤ {titulo}: {C_GREEN}{elegido[1]} ✅{C_RESET}{ANSI_CLEAR_LINE}")
-                print("\n" * (self.altura_total - 2))
-
-                beep_confirmacion()
-                time.sleep(0.4)
-                return elegido[0], elegido[1]
-
-            ch = leer_byte() # <--- USAMOS EL WRAPPER
+            ch = leer_byte()
 
             if ch == b'\x1b': return None, None
             elif ch == b'\r':
-                if len(filtradas) == 1: return filtradas[0][0], filtradas[0][1]
+                # -- CONFIRMACIÓN ESTRICTA CON ENTER --
+                
+                # A) Modo Numérico
+                if buffer.isdigit():
+                    idx = int(buffer) - 1
+                    if 0 <= idx < len(opciones):
+                        elegido = opciones[idx]
+                        print(ANSI_UP * (self.altura_total - 1), end="")
+                        print(f"{C_CYAN}➤ {titulo}: {C_GREEN}{elegido[1]} ✅{C_RESET}{ANSI_CLEAR_LINE}")
+                        print("\n" * (self.altura_total - 2))
+                        beep_confirmacion(); time.sleep(0.4)
+                        return elegido[0], elegido[1]
+                    else:
+                        beep_error()
+                        continue
+                
+                # B) Modo Texto (Filtro único)
+                if len(filtradas) == 1:
+                    elegido = filtradas[0]
+                    print(ANSI_UP * (self.altura_total - 1), end="")
+                    print(f"{C_CYAN}➤ {titulo}: {C_GREEN}{elegido[1]} ✅{C_RESET}{ANSI_CLEAR_LINE}")
+                    print("\n" * (self.altura_total - 2))
+                    beep_confirmacion(); time.sleep(0.4)
+                    return elegido[0], elegido[1]
+                
+                # C) Modo Texto (Coincidencia exacta entre varias)
                 for op in filtradas:
-                    if op[1].upper() == buffer.upper(): return op[0], op[1]
-            elif ch == b'\x08' or ch == b'\x7f': # Backspace en Win es x08, en Linux puede ser x7f
+                    if op[1].upper() == buffer.upper():
+                        print(ANSI_UP * (self.altura_total - 1), end="")
+                        print(f"{C_CYAN}➤ {titulo}: {C_GREEN}{op[1]} ✅{C_RESET}{ANSI_CLEAR_LINE}")
+                        print("\n" * (self.altura_total - 2))
+                        beep_confirmacion(); time.sleep(0.4)
+                        return op[0], op[1]
+                
+                # Si aprieta Enter sin coincidencia válida
+                beep_error() 
+
+            elif ch == b'\x08' or ch == b'\x7f':
                 buffer = buffer[:-1]
-            elif permitir_nuevo and ch == b'+': return 'NUEVO', buffer
+            elif permitir_nuevo and ch == b'+' and not buffer.isdigit(): 
+                return 'NUEVO', buffer
             else:
                 try:
                     char = ch.decode('utf-8')
                     if char.isalnum() or char in [' ', '-', '.']: buffer += char
                 except: pass
 
+
 def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort):
 
+    historial_edicion = []
+
     def repaint():
-        render_callback(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx)
+        render_callback(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx, modo_edicion=True)
+        print("\n")
+        for paso in historial_edicion:
+            print(paso)
 
     # 1. CC
-    repaint(); print("\n")
+    repaint()
     id_cc, nom_cc = selector.seleccionar("CENTRO DE COSTO", "SELECT id, nombre FROM param_centros_costo ORDER BY nombre")
     if not id_cc: return None, None
     tx.id_cc, tx.nombre_cc = id_cc, nom_cc
+    historial_edicion.append(f"{C_CYAN}➤ CENTRO DE COSTO: {C_GREEN}{nom_cc} ✅{C_RESET}")
 
     # 2. CAT
-    repaint(); print("\n")
+    repaint()
     id_cat, nom_cat = selector.seleccionar("CATEGORÍA", "SELECT id, nombre FROM param_categorias ORDER BY nombre")
     if not id_cat: return None, None
     tx.id_cat, tx.nombre_cat = id_cat, nom_cat
+    historial_edicion.append(f"{C_CYAN}➤ CATEGORÍA: {C_GREEN}{nom_cat} ✅{C_RESET}")
 
     # 3. SUBCAT
-    repaint(); print("\n")
+    repaint()
     id_sub, nom_sub = selector.seleccionar(f"SUBCATEGORÍA ({nom_cat})", "SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre", (id_cat,), permitir_nuevo=True)
 
     if id_sub == 'NUEVO':
@@ -375,48 +416,15 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
             except: return None, None
     if not id_sub: return None, None
     tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
+    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
 
-    # --- 4. PREGUNTA DE AMORTIZACIÓN ---
-    if tx.cuotas_totales <= 1:
-        repaint()
-        msg_extra = "(Enter=No | Escribe ej: 2, 6, 12)"
-        cuotas_sugeridas = 0
-
-        if id_sub in prefs_amort:
-            cuotas_sugeridas = prefs_amort[id_sub]
-            msg_extra = f"(Enter={cuotas_sugeridas} cuotas | Escribe otro | 0=No)"
-            print(f"\n{C_YELLOW}📅 Detectado: '{nom_sub}' suele ser {cuotas_sugeridas} cuotas. ¿Aplicar? {msg_extra}{C_RESET}", end='\r')
-        else:
-            print(f"\n{C_YELLOW}📅 ¿Es un gasto en cuotas/amortizable? {msg_extra}{C_RESET}", end='\r')
-
-        vaciar_buffer_teclado()
-
-        buffer_cuotas = ""
-        while True:
-            ch = leer_byte() # <--- WRAPPER
-            if ch == b'\r': # ENTER
-                if not buffer_cuotas and cuotas_sugeridas > 0:
-                    buffer_cuotas = str(cuotas_sugeridas)
-                break
-            if ch == b'\x1b': break # Esc
-            if ch.isdigit():
-                buffer_cuotas += ch.decode()
-                print(f"Cuotas: {buffer_cuotas}", end='\r')
-
-        if buffer_cuotas and int(buffer_cuotas) > 1:
-            meses = int(buffer_cuotas)
+    #     # --- 4. PREGUNTA DE AMORTIZACIÓN (APLICACIÓN SILENCIOSA) ---
+    if tx.cuotas_totales <= 1 and id_sub in prefs_amort:
+        meses = prefs_amort[id_sub]
+        if meses > 1:
             tx.cuotas_totales = meses
             tx.cuota_actual = 1
-
-            if id_sub not in prefs_amort or prefs_amort[id_sub] != meses:
-                print(f"\n{C_PURPLE}🧠 ¿Recordar que '{nom_sub}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
-                ch_mem = leer_byte() # <--- WRAPPER
-                if ch_mem in [b's', b'S']:
-                    cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, id_sub))
-                    cursor.connection.commit()
-                    prefs_amort[id_sub] = meses
-                    print("✅ Regla aprendida/actualizada.")
-                    time.sleep(0.5)
+            historial_edicion.append(f"{C_CYAN}➤ AMORTIZACIÓN: {C_GREEN}Autocompletado {meses} cuotas ✅{C_RESET}")
 
     tx.estado = 'LISTO'
     tx.ia_match = False
@@ -453,7 +461,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
             continue
         else: beep_error()
 
-def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
+def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, modo_edicion=False):
     limpiar_pantalla()
 
     total = len(lista_tx)
@@ -554,7 +562,14 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None):
 
     stats = f"{C_YELLOW}PEND: {n_pend}{C_RESET} | {C_GREEN}AUTO: {n_auto}{C_RESET} | {C_CYAN}OK: {n_listo}{C_RESET} | {C_GRAY}🗑️: {n_desc}{C_RESET}"
 
-    print(f"{stats} | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
+    if modo_edicion:
+        # Menú contextual: Modo Edición de Rubros
+        print(f"{stats} | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
+        print() # Separador limpio
+        print(f"{C_WHITE}[⬆⬇ ⬅⮕] Cancela Edición{C_RESET}")
+    else:
+        # Menú contextual: Modo Navegación (Torre de Control)
+        print(f"{stats} | [Enter] Selecciona | {C_PURPLE}[C]{C_RESET} Cuotas | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
 
 def iniciar_torre_control(lista_tx, cursor, mp_nombre):
     diccionario = cargar_diccionario(cursor)
@@ -571,7 +586,7 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
         if cursor_idx >= viewport_start + VIEWPORT_HEIGHT: viewport_start = cursor_idx - VIEWPORT_HEIGHT + 1
 
         tx_foco = lista_tx[cursor_idx]
-        render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx_foco)
+        render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx_foco, modo_edicion=False)
 
         key = leer_input_navegacion()
 
@@ -594,3 +609,38 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
                 cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
         elif key == 'G': return True
         elif key == 'X': return False
+        elif key == 'C':
+            if tx_foco.estado == 'DESCARTADO': continue
+            
+            print(f"\n{C_YELLOW}📅 Modificando cuotas para: {tx_foco.descripcion_final}{C_RESET}")
+            print(f"{C_YELLOW}➤ Ingrese cantidad de cuotas (0 o 1 = Sin cuotas): {C_RESET}", end='', flush=True)
+            
+            vaciar_buffer_teclado()
+            buffer_cuotas = ""
+            while True:
+                ch = leer_byte()
+                if ch == b'\r': break
+                if ch == b'\x1b': buffer_cuotas = ""; break # Esc cancela
+                if ch.isdigit():
+                    buffer_cuotas += ch.decode('utf-8')
+                    print(f"\r{C_YELLOW}➤ Ingrese cantidad de cuotas (0 o 1 = Sin cuotas): {C_WHITE}{buffer_cuotas}{C_RESET}", end='', flush=True)
+            
+            if buffer_cuotas:
+                meses = int(buffer_cuotas)
+                if meses > 1:
+                    tx_foco.cuotas_totales = meses
+                    tx_foco.cuota_actual = 1
+                    # Si tiene subcategoría y la regla es nueva, ofrecemos memorizar
+                    if tx_foco.id_subcat and (tx_foco.id_subcat not in prefs_amort or prefs_amort[tx_foco.id_subcat] != meses):
+                        print(f"\n{C_PURPLE}🧠 ¿Recordar que '{tx_foco.nombre_subcat}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
+                        ch_mem = leer_byte()
+                        if ch_mem in [b's', b'S', b'\r']:
+                            cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, tx_foco.id_subcat))
+                            cursor.connection.commit()
+                            prefs_amort[tx_foco.id_subcat] = meses
+                            print(f"{ANSI_CLEAR_LINE}✅ Regla aprendida/actualizada.      ")
+                            time.sleep(0.5)
+                else:
+                    tx_foco.cuotas_totales = 0
+                    tx_foco.cuota_actual = 0
+
