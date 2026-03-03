@@ -461,7 +461,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
             continue
         else: beep_error()
 
-def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, modo_edicion=False):
+def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, modo_edicion=False, custom_title=None):
     limpiar_pantalla()
 
     total = len(lista_tx)
@@ -501,7 +501,11 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, mo
         col_clasif = min(req_clasif, int(available * 0.5))
         col_desc = available - col_clasif
 
-    print(f"{C_CYAN}🦅 S.I.G.A.P. - TORRE DE CONTROL ({mp_nombre}){C_RESET}")
+    if custom_title:
+        print(custom_title)
+    else:
+        print(f"{C_CYAN}🦅 S.I.G.A.P. - TORRE DE CONTROL ({mp_nombre}){C_RESET}\n")
+
     print(f"📊 Vista: {viewport_start+1}-{viewport_end} de {total} | ⬆⬇ Navegar | ⮕ Descartar | ⬅ Recuperar | ENTER Editar")
 
     print("-" * term_width)
