@@ -20,7 +20,7 @@ class SIGAPTestRunner(unittest.TextTestRunner):
     resultclass = SIGAPTestResult
 # ----------------------------------------------
 
-class TestInboxMovimientosUI(unittest.TestCase):
+class TestUiInboxMovimientos(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
