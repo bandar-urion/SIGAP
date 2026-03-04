@@ -7,6 +7,8 @@ import re
 import sqlite3
 import sys
 from datetime import datetime
+from scripts.utils.config_grafica import *
+
 
 # ==========================================
 # 🐧 CAPA DE ABSTRACCIÓN (CROSS-PLATFORM)
@@ -111,25 +113,7 @@ def leer_input_navegacion():
 # 🦅 LÓGICA DE NEGOCIO (CORE)
 # ==========================================
 
-# --- CONFIGURACIÓN VISUAL ---
-VIEWPORT_HEIGHT = 10
-PANEL_HEIGHT = 6
-
-C_RESET = "\033[0m"
-C_RED = "\033[91m"
-C_GREEN = "\033[92m"
-C_YELLOW = "\033[93m"
-C_BLUE = "\033[94m"
-C_CYAN = "\033[96m"
-C_WHITE = "\033[97m"
-C_PURPLE = "\033[95m"
-C_INVERT = "\033[7m"
-C_GRAY = "\033[90m"
-
-ANSI_CLEAR_LINE = "\033[K"
-ANSI_UP = "\033[A"
-
-class Transaccion:
+class Movimiento:
     def __init__(self, fecha, referencia, descripcion, monto, id_mp):
         self.idx = 0
         self.fecha_fmt = pd.to_datetime(fecha, dayfirst=True).strftime('%Y-%m-%d')
@@ -181,10 +165,10 @@ def limpiar_texto_visual(texto):
     if limpio.startswith("-"): limpio = limpio[1:].strip()
     return limpio
 
-def detectar_patron_comun(tx_actual, lista_tx):
+def detectar_patron_comun(tx_actual, lista_movs):
     desc_clean = limpiar_texto_visual(tx_actual.descripcion_final)
     mejor_patron = desc_clean
-    for tx in lista_tx:
+    for tx in lista_movs:
         if tx.idx == tx_actual.idx: continue
         otro_desc = limpiar_texto_visual(tx.descripcion_final)
         comun = os.path.commonprefix([desc_clean, otro_desc])
@@ -222,10 +206,10 @@ def cargar_preferencias_contexto(cursor):
 
     return prefs_cc, prefs_amort
 
-def reanalizar_inteligencia(lista_tx, diccionario, cc_hint=None, map_prefs_cc=None, map_prefs_amort=None):
+def reanalizar_inteligencia(lista_movs, diccionario, cc_hint=None, map_prefs_cc=None, map_prefs_amort=None):
     diccionario.sort(key=lambda x: len(x[0]), reverse=True)
 
-    for tx in lista_tx:
+    for tx in lista_movs:
         if tx.estado in ['DESCARTADO']: continue
         if tx.estado not in ['PENDIENTE']: continue
 
@@ -378,12 +362,12 @@ class SelectorInteligente:
                 except: pass
 
 
-def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort):
+def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort):
 
     historial_edicion = []
 
     def repaint():
-        render_callback(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx, modo_edicion=True)
+        render_callback(lista_movs, viewport_start, mp_nombre, idx_resaltado=tx, modo_edicion=True)
         print("\n")
         for paso in historial_edicion:
             print(paso)
@@ -432,7 +416,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
     prefs_cc[id_sub] = (id_cc, nom_cc)
 
     repaint()
-    clave_sugerida = detectar_patron_comun(tx, lista_tx)
+    clave_sugerida = detectar_patron_comun(tx, lista_movs)
 
     while True:
         print(f"\n{C_PURPLE}🧠 ¿Memorizar '{clave_sugerida}' como {nom_sub}? (S/n/Back){C_RESET}{ANSI_CLEAR_LINE}", end='\r')
@@ -461,12 +445,12 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_tx, v
             continue
         else: beep_error()
 
-def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, modo_edicion=False, custom_title=None):
+def render_dashboard(lista_movs, viewport_start, mp_nombre, idx_resaltado=None, modo_edicion=False, custom_title=None):
     limpiar_pantalla()
 
-    total = len(lista_tx)
+    total = len(lista_movs)
     viewport_end = min(total, viewport_start + VIEWPORT_HEIGHT)
-    lote = lista_tx[viewport_start:viewport_end]
+    lote = lista_movs[viewport_start:viewport_end]
 
     try: term_width = shutil.get_terminal_size().columns
     except: term_width = 80
@@ -504,7 +488,7 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, mo
     if custom_title:
         print(custom_title)
     else:
-        print(f"{C_CYAN}🦅 S.I.G.A.P. - TORRE DE CONTROL ({mp_nombre}){C_RESET}\n")
+        print(f"{C_CYAN}🦅 S.I.G.A.P. - INBOX MOVIMIENTOS ({mp_nombre}){C_RESET}")
 
     print(f"📊 Vista: {viewport_start+1}-{viewport_end} de {total} | ⬆⬇ Navegar | ⮕ Descartar | ⬅ Recuperar | ENTER Editar")
 
@@ -559,10 +543,10 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, mo
 
     print("-" * term_width)
 
-    n_auto = sum(1 for t in lista_tx if t.estado == 'AUTO')
-    n_listo = sum(1 for t in lista_tx if t.estado == 'LISTO')
-    n_pend = sum(1 for t in lista_tx if t.estado == 'PENDIENTE')
-    n_desc = sum(1 for t in lista_tx if t.estado == 'DESCARTADO')
+    n_auto = sum(1 for t in lista_movs if t.estado == 'AUTO')
+    n_listo = sum(1 for t in lista_movs if t.estado == 'LISTO')
+    n_pend = sum(1 for t in lista_movs if t.estado == 'PENDIENTE')
+    n_desc = sum(1 for t in lista_movs if t.estado == 'DESCARTADO')
 
     stats = f"{C_YELLOW}PEND: {n_pend}{C_RESET} | {C_GREEN}AUTO: {n_auto}{C_RESET} | {C_CYAN}OK: {n_listo}{C_RESET} | {C_GRAY}🗑️: {n_desc}{C_RESET}"
 
@@ -575,11 +559,11 @@ def render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=None, mo
         # Menú contextual: Modo Navegación (Torre de Control)
         print(f"{stats} | [Enter] Selecciona | {C_PURPLE}[C]{C_RESET} Cuotas | {C_YELLOW}[G]{C_RESET} Grabar | {C_RED}[X]{C_RESET} Salir")
 
-def iniciar_torre_control(lista_tx, cursor, mp_nombre):
+def iniciar_inbox_movimientos(lista_movs, cursor, mp_nombre):
     diccionario = cargar_diccionario(cursor)
     prefs_cc, prefs_amort = cargar_preferencias_contexto(cursor)
 
-    reanalizar_inteligencia(lista_tx, diccionario, map_prefs_cc=prefs_cc, map_prefs_amort=prefs_amort)
+    reanalizar_inteligencia(lista_movs, diccionario, map_prefs_cc=prefs_cc, map_prefs_amort=prefs_amort)
 
     selector = SelectorInteligente(cursor)
     cursor_idx = 0
@@ -589,34 +573,34 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
         if cursor_idx < viewport_start: viewport_start = cursor_idx
         if cursor_idx >= viewport_start + VIEWPORT_HEIGHT: viewport_start = cursor_idx - VIEWPORT_HEIGHT + 1
 
-        tx_foco = lista_tx[cursor_idx]
-        render_dashboard(lista_tx, viewport_start, mp_nombre, idx_resaltado=tx_foco, modo_edicion=False)
+        mov_foco = lista_movs[cursor_idx]
+        render_dashboard(lista_movs, viewport_start, mp_nombre, idx_resaltado=mov_foco, modo_edicion=False)
 
         key = leer_input_navegacion()
 
         if key == 'UP': cursor_idx = max(0, cursor_idx - 1)
-        elif key == 'DOWN': cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
+        elif key == 'DOWN': cursor_idx = min(len(lista_movs) - 1, cursor_idx + 1)
         elif key == 'RIGHT':
-            if tx_foco.estado != 'DESCARTADO':
-                tx_foco.estado = 'DESCARTADO'
-                cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
+            if mov_foco.estado != 'DESCARTADO':
+                mov_foco.estado = 'DESCARTADO'
+                cursor_idx = min(len(lista_movs) - 1, cursor_idx + 1)
         elif key == 'LEFT':
-            if tx_foco.estado == 'DESCARTADO':
-                if tx_foco.id_cc and tx_foco.id_subcat: tx_foco.estado = 'AUTO'
-                else: tx_foco.estado = 'PENDIENTE'
+            if mov_foco.estado == 'DESCARTADO':
+                if mov_foco.id_cc and mov_foco.id_subcat: mov_foco.estado = 'AUTO'
+                else: mov_foco.estado = 'PENDIENTE'
         elif key == '\r':
-            if tx_foco.estado == 'DESCARTADO': continue
-            aprendido, cc_hint = flujo_edicion_inteligente(cursor, tx_foco, selector, render_dashboard, lista_tx, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort)
+            if mov_foco.estado == 'DESCARTADO': continue
+            aprendido, cc_hint = flujo_edicion_inteligente(cursor, mov_foco, selector, render_dashboard, lista_movs, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort)
             if aprendido:
                 diccionario.append(aprendido)
-                reanalizar_inteligencia(lista_tx, diccionario, cc_hint, prefs_cc, prefs_amort)
-                cursor_idx = min(len(lista_tx) - 1, cursor_idx + 1)
+                reanalizar_inteligencia(lista_movs, diccionario, cc_hint, prefs_cc, prefs_amort)
+                cursor_idx = min(len(lista_movs) - 1, cursor_idx + 1)
         elif key == 'G': return True
         elif key == 'X': return False
         elif key == 'C':
-            if tx_foco.estado == 'DESCARTADO': continue
+            if mov_foco.estado == 'DESCARTADO': continue
             
-            print(f"\n{C_YELLOW}📅 Modificando cuotas para: {tx_foco.descripcion_final}{C_RESET}")
+            print(f"\n{C_YELLOW}📅 Modificando cuotas para: {mov_foco.descripcion_final}{C_RESET}")
             print(f"{C_YELLOW}➤ Ingrese cantidad de cuotas (0 o 1 = Sin cuotas): {C_RESET}", end='', flush=True)
             
             vaciar_buffer_teclado()
@@ -632,19 +616,19 @@ def iniciar_torre_control(lista_tx, cursor, mp_nombre):
             if buffer_cuotas:
                 meses = int(buffer_cuotas)
                 if meses > 1:
-                    tx_foco.cuotas_totales = meses
-                    tx_foco.cuota_actual = 1
+                    mov_foco.cuotas_totales = meses
+                    mov_foco.cuota_actual = 1
                     # Si tiene subcategoría y la regla es nueva, ofrecemos memorizar
-                    if tx_foco.id_subcat and (tx_foco.id_subcat not in prefs_amort or prefs_amort[tx_foco.id_subcat] != meses):
-                        print(f"\n{C_PURPLE}🧠 ¿Recordar que '{tx_foco.nombre_subcat}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
+                    if mov_foco.id_subcat and (mov_foco.id_subcat not in prefs_amort or prefs_amort[mov_foco.id_subcat] != meses):
+                        print(f"\n{C_PURPLE}🧠 ¿Recordar que '{mov_foco.nombre_subcat}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
                         ch_mem = leer_byte()
                         if ch_mem in [b's', b'S', b'\r']:
-                            cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, tx_foco.id_subcat))
+                            cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, mov_foco.id_subcat))
                             cursor.connection.commit()
-                            prefs_amort[tx_foco.id_subcat] = meses
+                            prefs_amort[mov_foco.id_subcat] = meses
                             print(f"{ANSI_CLEAR_LINE}✅ Regla aprendida/actualizada.      ")
                             time.sleep(0.5)
                 else:
-                    tx_foco.cuotas_totales = 0
-                    tx_foco.cuota_actual = 0
+                    mov_foco.cuotas_totales = 0
+                    mov_foco.cuota_actual = 0
 

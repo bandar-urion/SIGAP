@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 import sigap_config
-from modulos import carga_gastos
+from modulos import inbox_movimientos as carga_movimientos
 
 # 2. Rutas dinámicas desde sigap.cfg (Compatibles con Termux S21 y Windows)
 DB_FILE = sigap_config.get_db_path()
@@ -48,7 +48,7 @@ def main():
         df = df.fillna(0)
         df['Monto_Real'] = df['Caja de Ahorro'] + df['Cuenta Corriente']
 
-        lista_tx = []
+        lista_movs = []
         idx = 1
         skipped_count = 0
 
@@ -57,24 +57,24 @@ def main():
 
             referencia = str(row['Referencia'])
 
-            # Chequeo previo
+            # Chequeo previo en la DB
             cursor.execute("SELECT id FROM movimientos WHERE num_referencia = ?", (referencia,))
             if cursor.fetchone():
                 skipped_count += 1
                 continue
 
-            tx = carga_gastos.Transaccion(
+            mov = carga_movimientos.Movimiento(
                 fecha=row['Fecha'],
                 referencia=referencia,
                 descripcion=row['Descripción'],
                 monto=row['Monto_Real'],
                 id_mp=ID_MP
             )
-            tx.idx = idx
-            lista_tx.append(tx)
+            mov.idx = idx
+            lista_movs.append(mov)
             idx += 1
 
-        if not lista_tx:
+        if not lista_movs:
             if skipped_count > 0:
                 print(f"✅ Todos los movimientos ({skipped_count}) ya estaban cargados.")
                 ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -85,10 +85,10 @@ def main():
                 print("ℹ️ Archivo vacío.")
             return
 
-        print(f"ℹ️ {skipped_count} omitidos. 🚀 Carga para {len(lista_tx)} nuevos.\n")
+        print(f"ℹ️ {skipped_count} omitidos. 🚀 Carga para {len(lista_movs)} nuevos.\n")
 
-        # 4. TORRE DE CONTROL
-        confirmado = carga_gastos.iniciar_torre_control(lista_tx, cursor, MP_FULL)
+        # 4. Invocamos INBOX_MOVIMIENTOS
+        confirmado = carga_movimientos.iniciar_inbox_movimientos(lista_movs, cursor, MP_FULL)
 
         # 5. GRABAR BLINDADO
         if confirmado:
@@ -97,21 +97,19 @@ def main():
             n_pendientes = 0
             n_descartados = 0
 
-            for tx in lista_tx:
-                if tx.estado in ['LISTO', 'AUTO']:
-                    # INSERT OR IGNORE: Si ya existe la referencia, no explota, solo lo salta.
+            for mov in lista_movs:
+                if mov.estado in ['LISTO', 'AUTO']:
                     cursor.execute("""
                         INSERT OR IGNORE INTO movimientos
                         (id_centro_costo, id_medio_pago, id_subcategoria, fecha, descripcion, monto, num_referencia, cuota_actual, cuotas_totales)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (tx.id_cc, tx.id_mp, tx.id_subcat, tx.fecha_fmt, tx.descripcion_final, tx.monto, tx.referencia, tx.cuota_actual, tx.cuotas_totales))
+                    """, (mov.id_cc, mov.id_mp, mov.id_subcat, mov.fecha_fmt, mov.descripcion_final, mov.monto, mov.referencia, mov.cuota_actual, mov.cuotas_totales))
 
                     # Verificamos si se insertó realmente (rowcount > 0)
                     if cursor.rowcount > 0:
                         n_guardados += 1
-                        # Solo guardamos sinónimo si el movimiento fue nuevo
-                        if tx.nuevo_sinonimo:
-                            try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (tx.nuevo_sinonimo, tx.id_subcat))
+                        if mov.nuevo_sinonimo:
+                            try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (mov.nuevo_sinonimo, mov.id_subcat))
                             except: pass
 
                 elif tx.estado == 'PENDIENTE':
