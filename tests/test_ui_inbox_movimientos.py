@@ -36,7 +36,6 @@ class TestUiInboxMovimientos(unittest.TestCase):
 
         # 2. Inyectamos el título usando el nuevo parámetro
         inbox_movimientos.render_dashboard([mov_demo], 0, "TEST_RUNNER_ENV", modo_edicion=False, custom_title=titulo_qa)
-        
         print("\n" + "="*80)
         print("🚀 EJECUTANDO TESTS DE UI (MODO SILENCIOSO)...")
         print("="*80 + "\n")

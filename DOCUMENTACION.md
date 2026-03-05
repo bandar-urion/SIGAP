@@ -244,9 +244,9 @@ Definición de Topes de Gasto y alertas de desvío presupuestario.
 **Estado:** EN DISEÑO
 **Cambios:**
 - Definición de la "Doctrina UX v4.0" (Flow State).
-- Renombrado de `editor_gastos.py` a `carga_gastos.py`.
+- Renombrado de `inbox_movimientos.py` a `inbox_movimientos.py`.
 - Diseño de arquitectura de pantalla dividida (Dashboard Estático / Input Dinámico).
 - Especificación de IntelliSense con feedback auditivo.
 **Próximos Pasos:**
-- Refactorizar `carga_gastos.py` implementando la nueva UI.
+- Refactorizar `inbox_movimientos.py` implementando la nueva UI.
 - Implementar búsqueda incremental en base de datos.

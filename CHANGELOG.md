@@ -2,6 +2,15 @@
 
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
+## [v0.7.0] - 2026-03-05 (Hito: Refactor Semántico e Inbox)
+
+### 🚀 Arquitectura y Dominio
+- **Domain-Driven Design:** Transición completa de la nomenclatura "Transacciones" a "Movimientos" en todo el ecosistema.
+- **Inbox Centralizado:** Consolidación del motor `inbox_movimientos.py` como único punto de entrada de datos.
+
+### 🧪 Calidad (QA)
+- **Estandarización de Mocks:** Refactor de la suite de pruebas UI (`test_ui_inbox_movimientos.py`) implementando variables de instancia (`self.`) para garantizar aislamiento entre tests.
+- **Runner Personalizado:** Implementación de descripciones limpias (Docstrings) en la salida de la terminal.
 
 ## [v0.6.5] - 2026-02-02 (Patch: Cross-Platform)
 
