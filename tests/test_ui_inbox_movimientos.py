@@ -12,9 +12,27 @@ from scripts.modulos.inbox_movimientos import Movimiento
 
 # --- 1. CUSTOM TEST RUNNER (FORMATO LIMPIO) ---
 class SIGAPTestResult(unittest.TextTestResult):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fase_actual = None
+
+    def startTest(self, test):
+        # Interceptamos el inicio del test para imprimir la Fase si es nueva
+        doc = test.shortDescription()
+        if doc and "||" in doc:
+            fase = doc.split("||")[0].strip()
+            if fase != self.fase_actual:
+                self.fase_actual = fase
+                self.stream.writeln(f"\n{fase}") # Imprime el título de la Fase
+        super().startTest(test)
+
     def getDescription(self, test):
-        # Retorna SOLO el docstring, extirpando el nombre feo de la clase
-        return test.shortDescription() or str(test)
+        # Le pasamos a la consola solo el nombre del test, ocultando la Fase
+        doc = test.shortDescription()
+        if doc and "||" in doc:
+            return doc.split("||")[1].strip()
+        return doc or str(test)
+
 
 class SIGAPTestRunner(unittest.TextTestRunner):
     resultclass = SIGAPTestResult
@@ -74,21 +92,37 @@ class TestUiInboxMovimientos(unittest.TestCase):
         self.addCleanup(patcher_byte.stop)
 
 
-    def test_robot_navegacion_y_salida(self):
-        """[UI-MOCK] Valida aborto de sesion (Tecla X) y navegacion basica."""
-        self.mock_nav.side_effect = ['DOWN', 'X']
-        resultado = inbox_movimientos.iniciar_inbox_movimientos(self.lista_movs, self.cursor_mock, "MOCK_BANK")
-        self.assertFalse(resultado)
+    def test_01_1_inundacion(self):
+        """Fase 1: Estrés de Hardware (Resiliencia I/O KVM) || - Prueba de Inundación (Flood Test): """
+        comandos = ['DOWN'] * 20
+        comandos.append('X')
+        self.mock_nav.side_effect = comandos
+        
+        try:
+            resultado = inbox_movimientos.iniciar_inbox_movimientos(self.lista_movs, self.cursor_mock, "MOCK_BANK")
+            self.assertFalse(resultado)
+        except Exception as e:
+            self.fail(f"El Flood Test falló: Excepción: {e}")
 
-    def test_robot_asignacion_cuotas_manual(self):
-        """[UI-MOCK] Valida intervencion manual de cuotas (Tecla C)."""
+    def test_01_2_limites(self):
+        """Fase 1: Estrés de Hardware (Resiliencia I/O KVM) || - Prueba de Límites (Boundary Test): """
+        self.mock_nav.side_effect = ['UP', 'DOWN', 'DOWN', 'X']
+        
+        try:
+            resultado = inbox_movimientos.iniciar_inbox_movimientos(self.lista_movs, self.cursor_mock, "MOCK_BANK")
+            self.assertFalse(resultado)
+        except Exception as e:
+            self.fail(f"El Boundary Test falló: Excepción {e}")
+
+    def test_04_2_intervencion_manual(self):
+        """Fase 4: Excepciones (Manejo de Cuotas) || - Intervención Manual (Tecla `C`):"""
         self.mock_nav.side_effect = ['C', 'X']
         self.mock_byte.side_effect = [b'3', b'\r']
         inbox_movimientos.iniciar_inbox_movimientos(self.lista_movs, self.cursor_mock, "MOCK_BANK")
         self.assertEqual(self.lista_movs[0].cuotas_totales, 3)
 
-    def test_robot_maquina_estados_descarte(self):
-        """[UI-MOCK] Valida Maquina de Estados: Descarte (Right) y Recuperacion (Left)."""
+    def test_02_1_descarte_rapido(self):
+        """Fase 2: Máquina de Estados (Navegación y Edición) || - Descarte Rápido: """
         
         # 1. Probamos Descarte (Flecha Derecha) y Salir
         self.mock_nav.side_effect = ['RIGHT', 'X']
@@ -97,15 +131,16 @@ class TestUiInboxMovimientos(unittest.TestCase):
         # Validamos que cambie internamente el estado del objeto
         self.assertEqual(self.lista_movs[0].estado, 'DESCARTADO', "El estado no cambió a DESCARTADO.")
         
-        # 2. Reiniciamos el mock de teclado y probamos Recuperación (Flecha Izquierda)
+    def test_02_2_recuperacion(self):
+        """Fase 2: Máquina de Estados (Navegación y Edición) || - Recuperación: """
         self.mock_nav.side_effect = ['LEFT', 'X']
         inbox_movimientos.iniciar_inbox_movimientos(self.lista_movs, self.cursor_mock, "MOCK_BANK")
         
         # Validamos que vuelva a su estado original
         self.assertEqual(self.lista_movs[0].estado, 'PENDIENTE', "El estado no se recuperó a PENDIENTE.")
 
-    def test_robot_motor_hibrido_numerico(self):
-        """[UI-MOCK] Valida Motor Hibrido: Seleccion numerica (Fast-Pick)."""
+    def test_03_1_motor_hibrido_numerico(self):
+        """Fase 3: Flujos de Negocio y UX || - Motor Híbrido (Fast-Pick): """
         
         # Simulamos que la base de datos devuelve 2 opciones válidas para elegir
         self.cursor_mock.fetchall.return_value = [(1, "OPCION_MOCK"), (2, "OTRA_OPCION")]
@@ -132,8 +167,8 @@ class TestUiInboxMovimientos(unittest.TestCase):
         self.assertEqual(tx.id_subcat, 1, "Fallo al asignar Subcategoría.")
         self.assertEqual(tx.estado, 'LISTO', "El registro no alcanzó el estado LISTO.")
 
-    def test_robot_motor_hibrido_texto(self):
-        """[UI-MOCK] Valida Motor Hibrido: Busqueda por texto y autocompletado."""
+    def test_03_2_motor_hibrido_texto(self):
+        """Fase 3: Flujos de Negocio y UX || - Motor Híbrido (Texto): """
         
         # El Mock de la DB devuelve opciones. El usuario tipea 'S', 'U' y da Enter.
         self.cursor_mock.fetchall.return_value = [(1, "SUPERMERCADO"), (2, "FARMACIA")]
@@ -153,8 +188,8 @@ class TestUiInboxMovimientos(unittest.TestCase):
         self.assertEqual(self.lista_movs[0].id_cc, 1, "Fallo al asignar CC por búsqueda de texto.")
         self.assertEqual(self.lista_movs[0].estado, 'LISTO', "El registro no alcanzó el estado LISTO.")
 
-    def test_robot_freno_inercia_cancelacion(self):
-        """[UI-MOCK] Valida Freno de Inercia: Cancelacion de edicion (ESC)."""
+    def test_02_3_freno_inercia(self):
+        """Fase 2: Máquina de Estados (Navegación y Edición) || - Freno de Inercia: """
         
         self.mock_nav.side_effect = ['\r', 'X'] # Enter para entrar a editar, luego X para salir del programa
         
@@ -165,7 +200,6 @@ class TestUiInboxMovimientos(unittest.TestCase):
         
         # El estado debe seguir intacto (PENDIENTE) porque abortamos antes de confirmar
         self.assertEqual(self.lista_movs[0].estado, 'PENDIENTE', "El registro no abortó limpiamente la edición.")
-
 
 if __name__ == '__main__':
     # 2. Reemplazamos el motor estándar por nuestro Custom Runner

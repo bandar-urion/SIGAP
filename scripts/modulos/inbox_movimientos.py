@@ -391,13 +391,80 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
     id_sub, nom_sub = selector.seleccionar(f"SUBCATEGORÍA ({nom_cat})", "SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre", (id_cat,), permitir_nuevo=True)
 
     if id_sub == 'NUEVO':
+        # 1. Si presionaste '+' sin texto previo en el buffer, te pedimos el nombre
+        if not nom_sub.strip():
+            print("\n" + "="*50)
+            print("🏛️  GOBERNANZA: ALTA DE SUBCATEGORÍA")
+            print("="*50)
+            nom_sub = input(f"Ingrese el nombre de la nueva Subcategoría para '{nom_cat}' (o ENTER para cancelar): ")
+            
         nombre_new = nom_sub.strip().title()
-        if nombre_new:
-            try:
-                cursor.execute("INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (id_cat, nombre_new))
-                cursor.connection.commit()
-                id_sub = cursor.lastrowid; nom_sub = nombre_new
-            except: return None, None
+        
+        # 2. Si te arrepentiste o lo dejaste vacío, ABORTAMOS y volvemos al buscador
+        if not nombre_new:
+            print("⚠️  Operación cancelada. Volviendo al buscador...")
+            time.sleep(1) # Pequeña pausa para que leas el mensaje
+            return None, None 
+            
+        # --- 🏛️ GOBERNANZA 1: Fricción Psicológica (Alerta de Micro-management) ---
+        umbral_alerta = 5000
+        if abs(tx.monto) < umbral_alerta:
+            print(f"\n⚠️  ALERTA DE GOBERNANZA: El monto asociado es bajo (${abs(tx.monto):.2f}).")
+            print(f"Crear la subcategoría '{nombre_new}' puede generar 'micro-management' si no es un gasto recurrente.")
+            print("💡 Sugerencia: ¿Podés agruparlo en algo más global (ej: 'Varios' o 'Gastos Menores')?")
+            
+            confirmacion = input(f"\n¿Estás seguro de forzar la creación de '{nombre_new}'? (S/N): ").strip().upper()
+            if confirmacion != 'S':
+                print("🚫 Creación abortada. Seleccione una subcategoría existente.")
+                time.sleep(1.5)
+                return None, None # Volvemos al buscador
+        
+        try:
+            # --- 🏛️ GOBERNANZA 2: Inserción Atómica ---
+            cursor.execute("INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (id_cat, nombre_new))
+            id_sub = cursor.lastrowid
+            nom_sub = nombre_new
+            
+            # --- 🏛️ GOBERNANZA 3: Trazabilidad Absoluta (Milisegundos) ---
+            timestamp_ms = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            
+            # Adaptamos el Alta de Subcategoría a tu estructura de auditoría
+            cursor.execute(
+                """INSERT INTO auditoria_movimientos 
+                (timestamp, usuario, accion, estado_previo, estado_nuevo, resultado) 
+                VALUES (?, ?, ?, ?, ?, ?)""", 
+                (
+                    timestamp_ms, 
+                    'SIGAP_UI', 
+                    'ALTA_SUBCAT', 
+                    'INEXISTENTE', 
+                    f"ID: {id_sub} | Nombre: '{nombre_new}' | Padre: {id_cat}", 
+                    'OK'
+                )
+            )
+
+            # Commiteamos ambas operaciones juntas
+            cursor.connection.commit()
+            
+        except Exception as e: 
+            print(f"\n❌ [LOG TÉCNICO] Error crítico al insertar en DB: {e}")
+            input("Presione ENTER para abortar...")
+            return None, None
+
+    if not id_sub: return None, None
+
+    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
+    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
+
+    if not id_sub: return None, None
+
+    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
+    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
+
+    if not id_sub: return None, None
+
+    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
+    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
     if not id_sub: return None, None
     tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
     historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
