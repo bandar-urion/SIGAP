@@ -16,7 +16,7 @@ def cargar_configuracion():
         print(f"❌ CRÍTICO: No se encontró el archivo de configuración en {CONFIG_FILE}")
         raise FileNotFoundError(f"Falta {CONFIG_FILE}")
 
-    config.read('SIGAP.cfg')
+    config.read(CONFIG_FILE)
     
     # 1. Configurar Logging Centralizado según sigap.cfg
     log_level_str = config.get('SYSTEM', 'LOG_LEVEL', fallback='INFO')

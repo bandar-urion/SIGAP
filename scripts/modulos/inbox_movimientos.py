@@ -1,3 +1,8 @@
+import sys
+try:
+    import termios
+except ImportError:
+    termios = None
 import pandas as pd
 import os
 import shutil
@@ -397,7 +402,8 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
             print("🏛️  GOBERNANZA: ALTA DE SUBCATEGORÍA")
             print("="*50)
             nom_sub = input(f"Ingrese el nombre de la nueva Subcategoría para '{nom_cat}' (o ENTER para cancelar): ")
-            
+            if termios:
+                termios.tcflush(sys.stdin, termios.TCIOFLUSH)
         nombre_new = nom_sub.strip().title()
         
         # 2. Si te arrepentiste o lo dejaste vacío, ABORTAMOS y volvemos al buscador
@@ -414,6 +420,8 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
             print("💡 Sugerencia: ¿Podés agruparlo en algo más global (ej: 'Varios' o 'Gastos Menores')?")
             
             confirmacion = input(f"\n¿Estás seguro de forzar la creación de '{nombre_new}'? (S/N): ").strip().upper()
+            if termios:
+                termios.tcflush(sys.stdin, termios.TCIOFLUSH)
             if confirmacion != 'S':
                 print("🚫 Creación abortada. Seleccione una subcategoría existente.")
                 time.sleep(1.5)
@@ -672,17 +680,15 @@ def iniciar_inbox_movimientos(lista_movs, cursor, mp_nombre):
                 if meses > 1:
                     mov_foco.cuotas_totales = meses
                     mov_foco.cuota_actual = 1
-                    # Si tiene subcategoría y la regla es nueva, ofrecemos memorizar
-                    if mov_foco.id_subcat and (mov_foco.id_subcat not in prefs_amort or prefs_amort[mov_foco.id_subcat] != meses):
-                        print(f"\n{C_PURPLE}🧠 ¿Recordar que '{mov_foco.nombre_subcat}' por defecto son {meses} meses? (S/n){C_RESET}", end='\r')
-                        ch_mem = leer_byte()
-                        if ch_mem in [b's', b'S', b'\r']:
-                            cursor.execute("UPDATE param_subcategorias SET amortizacion_default = ? WHERE id = ?", (meses, mov_foco.id_subcat))
-                            cursor.connection.commit()
-                            prefs_amort[mov_foco.id_subcat] = meses
-                            print(f"{ANSI_CLEAR_LINE}✅ Regla aprendida/actualizada.      ")
-                            time.sleep(0.5)
+                    
+                    # --- 🛠️ INICIO PARCHE OPCIÓN A (Cero adivinanzas) ---
+                    # Eliminada la lógica que envenenaba param_subcategorias.
+                    print(f"\n{C_GREEN}✅ Cuotas asignadas manualmente a este movimiento.{C_RESET}")
+                    time.sleep(0.5)
+                    # --- FIN PARCHE ---
+                    
                 else:
                     mov_foco.cuotas_totales = 0
                     mov_foco.cuota_actual = 0
+
 
