@@ -78,6 +78,45 @@ def beep_error():
     else:
         print('\a', end='', flush=True)
 
+def leer_linea_inline(prompt, max_len=50):
+    """
+    Mini-prompt HyperFlux: lee una línea de texto carácter a carácter
+    usando leer_byte(), sin salir del modo raw de la terminal.
+    Soporta backspace, ESC para cancelar y ENTER para confirmar.
+    Retorna el texto ingresado, o None si el usuario presionó ESC.
+    """
+    buffer = ""
+    print(f"{prompt}", end='', flush=True)
+
+    while True:
+        ch = leer_byte()
+
+        if ch == b'\x1b':
+            # ESC → cancelar
+            return None
+
+        elif ch in (b'\r', b'\n'):
+            # ENTER → confirmar
+            print()  # salto de línea visual
+            return buffer
+
+        elif ch in (b'\x08', b'\x7f'):
+            # BACKSPACE
+            if buffer:
+                buffer = buffer[:-1]
+                # Retroceder cursor, borrar último char, redibujar
+                print(f'\r{prompt}{buffer} \r{prompt}{buffer}', end='', flush=True)
+
+        else:
+            try:
+                char = ch.decode('utf-8')
+                # Aceptamos letras, números, espacios y algunos especiales
+                if (char.isprintable() and len(buffer) < max_len):
+                    buffer += char
+                    print(char, end='', flush=True)
+            except (UnicodeDecodeError, ValueError):
+                pass  # byte no decodificable, ignorar
+
 def leer_input_navegacion():
     """Detecta flechas y teclas especiales en ambos sistemas."""
     ch = leer_byte()
@@ -367,6 +406,242 @@ class SelectorInteligente:
                 except: pass
 
 
+def evaluar_gobernanza(cursor, nombre_new, id_cat, nom_cat, lista_movs=None):
+    """
+    Evalua los 6 criterios de calidad para el alta de una subcategoria.
+    Retorna un dict con los resultados listos para mostrar en el panel.
+    No toma decisiones - solo informa.
+
+    Criterios:
+      1. Sin duplicado exacto en la DB
+      2. Sin subcategorias similares detectadas
+      3. Formato Title Case
+      4. Nombre descriptivo (mas de una palabra)
+      5. Frecuencia en el lote actual
+      6. Frecuencia historica en la DB
+    """
+    resultado = {
+        'nombre_new':             nombre_new,
+        'nom_cat':                nom_cat,
+        'duplicado':              None,
+        'similares':              [],
+        'title_case':             nombre_new == nombre_new.title(),
+        'descriptivo':            len(nombre_new.split()) > 1,
+        'freq_lote':              0,
+        'freq_historica':         0,
+        'requiere_justificacion': False,
+    }
+
+    # Criterio 1: Duplicado exacto
+    cursor.execute(
+        "SELECT id, nombre FROM param_subcategorias WHERE LOWER(nombre) = LOWER(?) AND id_categoria = ?",
+        (nombre_new, id_cat)
+    )
+    exacto = cursor.fetchone()
+    if exacto:
+        resultado['duplicado'] = exacto
+        return resultado  # Con duplicado exacto no hace falta evaluar el resto
+
+    # Criterio 2: Similares (3 criterios combinados)
+    cursor.execute("SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ?", (id_cat,))
+    todas = cursor.fetchall()
+    nombre_lower = nombre_new.lower()
+    palabras_new = set(w for w in nombre_lower.split() if len(w) > 2)
+
+    for sub_id, sub_nom in todas:
+        sub_lower = sub_nom.lower()
+        palabras_sub = set(w for w in sub_lower.split() if len(w) > 2)
+        es_similar = False
+        motivo = ""
+
+        if nombre_lower in sub_lower or sub_lower in nombre_lower:
+            es_similar = True
+            motivo = f"'{sub_nom}' contiene o esta contenida en '{nombre_new}'"
+
+        if not es_similar and len(nombre_lower) >= 4 and len(sub_lower) >= 4:
+            prefijo = os.path.commonprefix([nombre_lower, sub_lower])
+            if len(prefijo) >= 4:
+                es_similar = True
+                motivo = f"Prefijo comun '{prefijo}' con '{sub_nom}'"
+
+        if not es_similar and palabras_new and palabras_sub and palabras_new & palabras_sub:
+            es_similar = True
+            comunes = palabras_new & palabras_sub
+            motivo = f"Palabra(s) en comun {comunes} con '{sub_nom}'"
+
+        if es_similar:
+            resultado['similares'].append((sub_id, sub_nom, motivo))
+
+    # Criterio 5: Frecuencia en el lote actual
+    if lista_movs and palabras_new:
+        for mov in lista_movs:
+            desc_limpia = limpiar_texto_visual(mov.descripcion_original).lower()
+            if any(p in desc_limpia for p in palabras_new if len(p) > 3):
+                resultado['freq_lote'] += 1
+
+    # Criterio 6: Frecuencia historica en DB
+    if palabras_new:
+        condiciones = " OR ".join(["LOWER(descripcion) LIKE ?" for _ in palabras_new])
+        params = [f"%{p}%" for p in palabras_new]
+        try:
+            cursor.execute(f"SELECT COUNT(*) FROM movimientos WHERE {condiciones}", params)
+            resultado['freq_historica'] = cursor.fetchone()[0]
+        except Exception:
+            resultado['freq_historica'] = 0
+
+    # Requiere justificacion: sin evidencia de recurrencia en ninguna fuente
+    resultado['requiere_justificacion'] = (
+        resultado['freq_lote'] <= 1 and
+        resultado['freq_historica'] == 0
+    )
+
+    return resultado
+
+
+
+def render_panel_gobernanza(gov, term_width):
+    """
+    Muestra el panel de Gobernanza con los 6 criterios de calidad.
+    Gestiona la interaccion completa: confirmacion, adoptar similar,
+    y flujo de justificacion cuando no hay evidencia de recurrencia.
+
+    Retorna una tupla (decision, justificacion):
+      decision:      'CONFIRMAR' | 'ADOPTAR:<id>' | 'CANCELAR'
+      justificacion: texto ingresado o None
+    """
+    sep = "=" * min(term_width, 56)
+
+    def icono(ok):
+        return f"{C_GREEN}OK{C_RESET}" if ok else f"{C_YELLOW}AV{C_RESET}"
+
+    print(f"\n{C_CYAN}{sep}{C_RESET}")
+    print(f"{C_CYAN}  GOBERNANZA: ALTA DE SUBCATEGORIA{C_RESET}")
+    print(f"{C_CYAN}{sep}{C_RESET}")
+    print(f"  {C_WHITE}Nombre   :{C_RESET} {gov['nombre_new']}")
+    print(f"  {C_WHITE}Categoria:{C_RESET} {gov['nom_cat']}")
+    print()
+    print(f"  {C_WHITE}Criterios de Calidad:{C_RESET}")
+
+    # C1: Duplicado exacto
+    if gov['duplicado']:
+        print(f"  [{C_RED}XX{C_RESET}] Sin duplicado exacto  {C_RED}-> Ya existe '{gov['duplicado'][1]}'{C_RESET}")
+    else:
+        print(f"  [{C_GREEN}OK{C_RESET}] Sin duplicado exacto en la DB")
+
+    # C2: Similares
+    n_sim = len(gov['similares'])
+    if n_sim == 0:
+        print(f"  [{C_GREEN}OK{C_RESET}] Sin subcategorias similares detectadas")
+    else:
+        print(f"  [{C_YELLOW}AV{C_RESET}] {n_sim} similar(es) detectada(s):")
+        for i, (_, s_nom, s_motivo) in enumerate(gov['similares'][:3], 1):
+            print(f"       {C_CYAN}[{i}]{C_RESET} {s_nom}  {C_GRAY}<- {s_motivo}{C_RESET}")
+
+    # C3: Title Case
+    if gov['title_case']:
+        print(f"  [{C_GREEN}OK{C_RESET}] Formato correcto (Title Case)")
+    else:
+        print(f"  [{C_YELLOW}AV{C_RESET}] Formato aplicado: '{gov['nombre_new'].title()}'")
+
+    # C4: Descriptividad
+    if gov['descriptivo']:
+        print(f"  [{C_GREEN}OK{C_RESET}] Nombre descriptivo (mas de una palabra)")
+    else:
+        print(f"  [{C_YELLOW}AV{C_RESET}] Nombre de una sola palabra")
+
+    # C5: Frecuencia en lote
+    fl = gov['freq_lote']
+    if fl > 1:
+        print(f"  [{C_GREEN}OK{C_RESET}] Frecuencia en lote actual: {fl} movimientos")
+    else:
+        print(f"  [{C_YELLOW}AV{C_RESET}] Frecuencia en lote actual: {fl} movimiento(s)")
+
+    # C6: Frecuencia historica
+    fh = gov['freq_historica']
+    if fh > 0:
+        print(f"  [{C_GREEN}OK{C_RESET}] Historial en DB: {fh} registro(s) relacionado(s)")
+    else:
+        print(f"  [{C_YELLOW}AV{C_RESET}] Sin historial en DB (primera aparicion)")
+
+    print(f"{C_CYAN}{sep}{C_RESET}")
+
+    # --- BLOQUEO: duplicado exacto ---
+    if gov['duplicado']:
+        print(f"\n  {C_RED}Alta bloqueada. Ya existe esta subcategoria.{C_RESET}")
+        print(f"  Presiona cualquier tecla para volver al buscador...")
+        vaciar_buffer_teclado()
+        leer_byte()
+        return 'CANCELAR', None
+
+    # --- OPCIONES segun estado ---
+    if gov['similares']:
+        max_idx = min(len(gov['similares']), 3)
+        for i in range(1, max_idx + 1):
+            print(f"  {C_CYAN}[{i}]{C_RESET} Usar similar existente")
+        print(f"  {C_PURPLE}[+]{C_RESET} Crear '{gov['nombre_new']}' de todas formas")
+        print(f"  {C_GRAY}[ESC]{C_RESET} Cancelar")
+    elif gov['requiere_justificacion']:
+        print(f"\n  {C_YELLOW}Sin evidencia de recurrencia. Justifica el alta:{C_RESET}")
+        print(f"  {C_GREEN}[M]{C_RESET} Mensual      {C_GREEN}[A]{C_RESET} Anual")
+        print(f"  {C_GREEN}[R]{C_RESET} Recurrente   {C_GREEN}[O]{C_RESET} Otro (texto libre)")
+        print(f"  {C_GRAY}[ESC]{C_RESET} Cancelar")
+    else:
+        print(f"\n  {C_GREEN}[ENTER]{C_RESET} Confirmar alta   {C_GRAY}[ESC]{C_RESET} Cancelar")
+
+    # --- LEER DECISION ---
+    vaciar_buffer_teclado()
+    ch = leer_byte()
+
+    # Adoptar similar
+    if ch in (b'1', b'2', b'3') and gov['similares']:
+        idx = int(ch.decode()) - 1
+        if idx < len(gov['similares']):
+            return f"ADOPTAR:{gov['similares'][idx][0]}", None
+        beep_error()
+        return 'CANCELAR', None
+
+    # Cancelar con ESC
+    if ch == b'\x1b':
+        return 'CANCELAR', None
+
+    # Con similares: forzar creacion con '+'
+    if gov['similares'] and ch == b'+':
+        return 'CONFIRMAR', None
+
+    # Requiere justificacion: opciones predefinidas o texto libre
+    if gov['requiere_justificacion']:
+        justificaciones = {
+            b'm': 'Pago mensual recurrente',
+            b'M': 'Pago mensual recurrente',
+            b'a': 'Pago anual recurrente',
+            b'A': 'Pago anual recurrente',
+            b'r': 'Gasto recurrente periodico',
+            b'R': 'Gasto recurrente periodico',
+        }
+        if ch in justificaciones:
+            just = justificaciones[ch]
+            print(f"\n  {C_GREEN}Justificacion: {just}{C_RESET}")
+            time.sleep(0.5)
+            return 'CONFIRMAR', just
+
+        if ch in (b'o', b'O'):
+            print()
+            texto = leer_linea_inline(f"  {C_WHITE}Justificacion (ESC=cancelar): {C_RESET}")
+            if not texto or not texto.strip():
+                return 'CANCELAR', None
+            return 'CONFIRMAR', texto.strip()
+
+        beep_error()
+        return 'CANCELAR', None
+
+    # Sin similares, sin justificacion requerida: ENTER confirma
+    if ch in (b'\r', b'\n'):
+        return 'CONFIRMAR', None
+
+    beep_error()
+    return 'CANCELAR', None
+
+
 def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs, viewport_start, mp_nombre, diccionario, prefs_cc, prefs_amort):
 
     historial_edicion = []
@@ -396,68 +671,84 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
     id_sub, nom_sub = selector.seleccionar(f"SUBCATEGORÍA ({nom_cat})", "SELECT id, nombre FROM param_subcategorias WHERE id_categoria = ? ORDER BY nombre", (id_cat,), permitir_nuevo=True)
 
     if id_sub == 'NUEVO':
-        # 1. Si presionaste '+' sin texto previo en el buffer, te pedimos el nombre
-        if not nom_sub.strip():
-            print("\n" + "="*50)
-            print("🏛️  GOBERNANZA: ALTA DE SUBCATEGORÍA")
-            print("="*50)
-            nom_sub = input(f"Ingrese el nombre de la nueva Subcategoría para '{nom_cat}' (o ENTER para cancelar): ")
-            if termios:
-                termios.tcflush(sys.stdin, termios.TCIOFLUSH)
-        nombre_new = nom_sub.strip().title()
-        
-        # 2. Si te arrepentiste o lo dejaste vacío, ABORTAMOS y volvemos al buscador
-        if not nombre_new:
-            print("⚠️  Operación cancelada. Volviendo al buscador...")
-            time.sleep(1) # Pequeña pausa para que leas el mensaje
-            return None, None 
-            
-        # --- 🏛️ GOBERNANZA 1: Fricción Psicológica (Alerta de Micro-management) ---
-        umbral_alerta = 5000
-        if abs(tx.monto) < umbral_alerta:
-            print(f"\n⚠️  ALERTA DE GOBERNANZA: El monto asociado es bajo (${abs(tx.monto):.2f}).")
-            print(f"Crear la subcategoría '{nombre_new}' puede generar 'micro-management' si no es un gasto recurrente.")
-            print("💡 Sugerencia: ¿Podés agruparlo en algo más global (ej: 'Varios' o 'Gastos Menores')?")
-            
-            confirmacion = input(f"\n¿Estás seguro de forzar la creación de '{nombre_new}'? (S/N): ").strip().upper()
-            if termios:
-                termios.tcflush(sys.stdin, termios.TCIOFLUSH)
-            if confirmacion != 'S':
-                print("🚫 Creación abortada. Seleccione una subcategoría existente.")
-                time.sleep(1.5)
-                return None, None # Volvemos al buscador
-        
-        try:
-            # --- 🏛️ GOBERNANZA 2: Inserción Atómica ---
-            cursor.execute("INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)", (id_cat, nombre_new))
-            id_sub = cursor.lastrowid
-            nom_sub = nombre_new
-            
-            # --- 🏛️ GOBERNANZA 3: Trazabilidad Absoluta (Milisegundos) ---
-            timestamp_ms = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-            
-            # Adaptamos el Alta de Subcategoría a tu estructura de auditoría
-            cursor.execute(
-                """INSERT INTO auditoria_movimientos 
-                (timestamp, usuario, accion, estado_previo, estado_nuevo, resultado) 
-                VALUES (?, ?, ?, ?, ?, ?)""", 
-                (
-                    timestamp_ms, 
-                    'SIGAP_UI', 
-                    'ALTA_SUBCAT', 
-                    'INEXISTENTE', 
-                    f"ID: {id_sub} | Nombre: '{nombre_new}' | Padre: {id_cat}", 
-                    'OK'
-                )
-            )
+        # ============================================================
+        # GOBERNANZA: ALTA DE SUBCATEGORIA - Flujo HyperFlux
+        # ============================================================
 
-            # Commiteamos ambas operaciones juntas
-            cursor.connection.commit()
-            
-        except Exception as e: 
-            print(f"\n❌ [LOG TÉCNICO] Error crítico al insertar en DB: {e}")
-            input("Presione ENTER para abortar...")
+        # PASO 1: Obtener nombre
+        # '+' CON texto en buffer -> usar directamente
+        # '+' SIN texto           -> mini-prompt inline
+        if not nom_sub.strip():
+            nombre_ingresado = leer_linea_inline(
+                f"\n{C_WHITE}   Nombre nueva subcategoria (ESC=cancelar): {C_RESET}"
+            )
+            if nombre_ingresado is None:
+                print(f"{C_GRAY}   Operacion cancelada.{C_RESET}")
+                time.sleep(0.8)
+                return None, None
+            nom_sub = nombre_ingresado
+
+        nombre_new = nom_sub.strip().title()
+
+        # PASO 2: Nombre vacio -> abortar
+        if not nombre_new:
+            print(f"{C_GRAY}   Nombre vacio. Operacion cancelada.{C_RESET}")
+            time.sleep(0.8)
             return None, None
+
+        # PASO 3+4: Evaluar todos los criterios y mostrar panel
+        try: term_width = shutil.get_terminal_size().columns
+        except: term_width = 60
+
+        gov = evaluar_gobernanza(cursor, nombre_new, id_cat, nom_cat, lista_movs)
+        decision, justificacion = render_panel_gobernanza(gov, term_width)
+
+        if decision == 'CANCELAR':
+            return None, None
+
+        if decision.startswith('ADOPTAR:'):
+            id_sub_adoptado = int(decision.split(':')[1])
+            # Buscar nombre del adoptado en los similares
+            nom_sub_adoptado = next(
+                (s[1] for s in gov['similares'] if s[0] == id_sub_adoptado),
+                nombre_new
+            )
+            print(f"\n  {C_GREEN}Usando '{nom_sub_adoptado}' existente.{C_RESET}")
+            time.sleep(0.8)
+            id_sub = id_sub_adoptado
+            nom_sub = nom_sub_adoptado
+            # Saltamos al cierre sin insertar
+
+        elif decision == 'CONFIRMAR':
+            # PASO 5: Insercion Atomica con Auditoria
+            try:
+                cursor.execute(
+                    "INSERT INTO param_subcategorias (id_categoria, nombre) VALUES (?, ?)",
+                    (id_cat, nombre_new)
+                )
+                id_sub = cursor.lastrowid
+                nom_sub = nombre_new
+
+                timestamp_ms = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                estado_nuevo = f"ID: {id_sub} | Nombre: '{nombre_new}' | Padre: '{nom_cat}' (id:{id_cat})"
+                if justificacion:
+                    estado_nuevo += f" | Justificacion: '{justificacion}'"
+
+                cursor.execute(
+                    """INSERT INTO auditoria_movimientos
+                    (timestamp, usuario, accion, estado_previo, estado_nuevo, resultado)
+                    VALUES (?, ?, ?, ?, ?, ?)""",
+                    (timestamp_ms, 'SIGAP_UI', 'ALTA_SUBCAT', 'INEXISTENTE', estado_nuevo, 'OK')
+                )
+                cursor.connection.commit()
+
+                print(f"\n  {C_GREEN}Subcategoria '{nombre_new}' creada en '{nom_cat}'.{C_RESET}")
+                time.sleep(0.6)
+
+            except Exception as e:
+                print(f"\n  {C_RED}[LOG TECNICO] Error critico al insertar en DB: {e}{C_RESET}")
+                leer_linea_inline("  Presiona ENTER para continuar...")
+                return None, None
 
     if not id_sub: return None, None
 
