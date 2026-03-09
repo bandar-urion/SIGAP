@@ -4,7 +4,7 @@ import sqlite3
 import argparse
 
 # Configuración
-DB_FILE = 'control_gastos.db'
+DB_FILE = 'sigap.db'
 
 # Importamos los módulos de la carpeta scripts/
 # Asegúrate de que el archivo 'factory_reset_normalized.py' esté en la carpeta 'scripts/'

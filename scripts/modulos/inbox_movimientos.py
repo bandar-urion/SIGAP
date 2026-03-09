@@ -456,19 +456,6 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
     tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
     historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
 
-    if not id_sub: return None, None
-
-    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
-    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
-
-    if not id_sub: return None, None
-
-    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
-    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
-    if not id_sub: return None, None
-    tx.id_subcat, tx.nombre_subcat = id_sub, nom_sub
-    historial_edicion.append(f"{C_CYAN}➤ SUBCATEGORÍA: {C_GREEN}{nom_sub} ✅{C_RESET}")
-
     #     # --- 4. PREGUNTA DE AMORTIZACIÓN (APLICACIÓN SILENCIOSA) ---
     if tx.cuotas_totales <= 1 and id_sub in prefs_amort:
         meses = prefs_amort[id_sub]

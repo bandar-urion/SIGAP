@@ -112,9 +112,9 @@ def main():
                             try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (mov.nuevo_sinonimo, mov.id_subcat))
                             except: pass
 
-                elif tx.estado == 'PENDIENTE':
+                elif mov.estado == 'PENDIENTE':
                     n_pendientes += 1
-                elif tx.estado == 'DESCARTADO':
+                elif mov.estado == 'DESCARTADO':
                     n_descartados += 1
 
             conn.commit()
