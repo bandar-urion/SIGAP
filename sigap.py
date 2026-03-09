@@ -3,12 +3,13 @@ import os
 import sqlite3
 import argparse
 
-# Configuración
-DB_FILE = 'sigap.db'
+# 1. 🏛️ IMPORTACIÓN CENTRALIZADA DE LA RUTA
+from sigap_config import get_db_path
+
+# Ejecutamos tu función para obtener la ruta dinámica y segura
+RUTA_DB = get_db_path()
 
 # Importamos los módulos de la carpeta scripts/
-# Asegúrate de que el archivo 'factory_reset_normalized.py' esté en la carpeta 'scripts/'
-# y que exista el archivo '__init__.py' en esa carpeta.
 try:
     from scripts import factory_reset_normalized as db_reset_script
 except ImportError as e:
@@ -18,33 +19,35 @@ except ImportError as e:
 
 def show_status():
     """Verifica la salud de la base de datos y muestra métricas básicas."""
-    if not os.path.exists(DB_FILE):
-        print(f"⚠️  La base de datos '{DB_FILE}' NO existe.")
-        print("💡 Tip: Ejecuta 'python manage.py reset' para inicializarla.")
+    # 2. 🏛️ USAMOS RUTA_DB EN LUGAR DEL HARDCODEO
+    if not os.path.exists(RUTA_DB):
+        print(f"⚠️ La base de datos '{RUTA_DB}' NO existe.")
+        print("💡 Tip: Ejecuta 'python SIGAP.py reset' para inicializarla.")
         return
 
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = sqlite3.connect(RUTA_DB)
         cursor = conn.cursor()
 
-        print(f"✅ CONEXIÓN EXITOSA: {DB_FILE}")
+        print(f"✅ CONEXIÓN EXITOSA: {RUTA_DB}")
         print("-" * 30)
 
-        # Conteo rápido de tablas clave
+        # 3. 🏛️ ACTUALIZAMOS A LOS NOMBRES REALES DE TU ARQUITECTURA
         tablas = {
             'Movimientos': 'movimientos',
             'Centros de Costo': 'param_centros_costo',
-            'Reglas de Gobierno': 'reglas_catalogo',
-            'Auditoría': 'auditoria_compliance'
+            'Categorías': 'param_categorias',
+            'Subcategorías': 'param_subcategorias',
+            'Auditoría': 'auditoria_movimientos'
         }
 
         for nombre, tabla in tablas.items():
             try:
                 cursor.execute(f"SELECT COUNT(*) FROM {tabla}")
                 count = cursor.fetchone()[0]
-                print(f"   📊 {nombre:<20}: {count} registros")
+                print(f" 📊 {nombre:<20}: {count} registros")
             except sqlite3.OperationalError:
-                print(f"   ❌ {nombre:<20}: Error (¿Tabla no existe?)")
+                print(f" ❌ {nombre:<20}: Error (¿Tabla no existe?)")
 
         conn.close()
         print("-" * 30)
@@ -55,31 +58,23 @@ def show_status():
 
 def run_reset():
     """Ejecuta el protocolo de reseteo de fábrica."""
-    print("⚠️  ATENCIÓN: Estás a punto de ejecutar el PROTOCOLO DE REINICIO.")
-    confirm = input("   ¿Confirmar borrado total y reconstrucción? (si/no): ")
+    print("⚠️ ATENCIÓN: Estás a punto de ejecutar el PROTOCOLO DE REINICIO.")
+    confirm = input(" ¿Confirmar borrado total y reconstrucción? (si/no): ")
 
     if confirm.lower() == 'si':
-        # Llamamos a la función principal del script que creamos ayer
         db_reset_script.factory_reset_normalized()
     else:
-        print("   🛑 Operación cancelada por el usuario.")
+        print(" 🛑 Operación cancelada por el usuario.")
 
 def main():
     parser = argparse.ArgumentParser(description="Orquestador S.I.G.A.P. - Proyecto Fénix")
-
-    # Definimos los comandos disponibles
     subparsers = parser.add_subparsers(dest='command', help='Comandos disponibles')
-
-    # Comando: status
+    
     subparsers.add_parser('status', help='Muestra el estado de la base de datos')
-
-    # Comando: reset
     subparsers.add_parser('reset', help='Reinicia la base de datos (Factory Reset)')
 
-    # Leemos los argumentos
     args = parser.parse_args()
 
-    # Ejecutamos según el comando
     if args.command == 'status':
         show_status()
     elif args.command == 'reset':

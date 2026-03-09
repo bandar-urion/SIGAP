@@ -16,11 +16,13 @@ def cargar_configuracion():
         print(f"❌ CRÍTICO: No se encontró el archivo de configuración en {CONFIG_FILE}")
         raise FileNotFoundError(f"Falta {CONFIG_FILE}")
 
-    config.read(CONFIG_FILE)
+    config.read('SIGAP.cfg')
     
     # 1. Configurar Logging Centralizado según sigap.cfg
     log_level_str = config.get('SYSTEM', 'LOG_LEVEL', fallback='INFO')
     log_level = getattr(logging, log_level_str.upper(), logging.INFO)
+
+    os.makedirs('logs', exist_ok=True)
     
     # Reseteamos handlers por si otro script ya inició logging
     for handler in logging.root.handlers[:]:
@@ -28,8 +30,11 @@ def cargar_configuracion():
         
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s.%(msecs)03d | %(levelname)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler("logs/sigap_tecnico.log", encoding='utf-8'),
+            logging.StreamHandler()
+        ]
     )
     
     logging.info("S.I.G.A.P. - Configuración base cargada con éxito.")
@@ -39,7 +44,7 @@ def get_db_path():
     """Construye la ruta absoluta y segura a la base de datos."""
     db_dir = config.get('DATABASE', 'DIR', fallback='data')
     db_name = config.get('DATABASE', 'NAME', fallback='sigap.db')
-    ruta_completa = os.path.join(BASE_DIR, db_dir, db_name)
+    ruta_completa = os.path.join(db_dir, db_name)
     return ruta_completa
 
 def get_path(seccion, clave):
