@@ -1,1 +1,18 @@
-Comprobantes Tramites
+# Credenciales (nunca más)
+*credencial*.json
+*secret*.json
+*key*.json
+
+# Caché Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Datos financieros externos (no son código, ignorar del repo)
+Comprobantes Tramites/
+
+# Descomentá si en algún momento querés excluir estos:
+# *.db
+# logs/
+# data/inbox/
+# data/processed/
