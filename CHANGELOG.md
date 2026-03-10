@@ -12,6 +12,14 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Estandarización de Mocks:** Refactor de la suite de pruebas UI (`test_ui_inbox_movimientos.py`) implementando variables de instancia (`self.`) para garantizar aislamiento entre tests.
 - **Runner Personalizado:** Implementación de descripciones limpias (Docstrings) en la salida de la terminal.
 
+## [v0.7.0-doc3] - 2026-03-10 (Patch: Mapa de Sinergia Humano-IA)
+
+### 📄 Documentación
+- **`VIBE_CODING_SKILLS.md`:** Creado en raíz del proyecto. Mapa personal
+  de patrones de sinergia Humano-IA construido a partir de sesiones reales
+  de SIGAP. 7 patrones activos (5 dominados, 2 en construcción) y
+  4 patrones avanzados pendientes de ejercitar.
+
 ## [v0.7.0-doc2] - 2026-03-10 (Patch: Auditoría de Cobertura QA)
 
 ### 📄 Documentación
