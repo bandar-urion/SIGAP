@@ -159,30 +159,39 @@ La DB real es `data/sigap.db` vía `sigap_config.get_db_path()`.
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-03-09
-**Sesión:** #4 — Gobernanza de Alta de Subcategorías completa
-**Entorno:** Entorno B (Mobile · Termux · S21 Ultra)
+**Sesión:** #5 — Hardening de Seguridad y Limpieza del Repositorio
+**Entorno:** Entorno A (PC Casa · Windows 11 · PowerShell)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Rediseño completo del Panel de Gobernanza para Alta de Subcategorías.
-- Nueva función `evaluar_gobernanza()` con 6 criterios: duplicado exacto, similares,
-  Title Case, descriptividad, frecuencia en lote y frecuencia histórica en DB.
-- Nueva función `render_panel_gobernanza()` con 3 flujos de interacción:
-  directo (ENTER), con similares (numerados + `+`), y con justificación (M/A/R/O).
-- Justificación del usuario grabada en `auditoria_movimientos` con trazabilidad.
-- La justificación cubre el caso de conocimiento del dominio del usuario
-  (ej: "sé que Electricidad es mensual aunque sea la primera vez que aparece").
-- Suite de tests ampliada: `test_gobernanza_similitud.py` → **25/25 ✅**
-  (TestGobernanzaSimilitud 16 tests + TestGobernanzaFrecuencia 9 tests)
-- Se acordó agregar entorno de desarrollo y branch Git al CONTEXTO.md.
+- Fixes críticos del backlog (realizados en Entorno B a la mañana):
+  - `fix(importador)`: corregido NameError `tx→mov` en `import_santander.py`
+  - `fix(core)`: corregida ruta DB en `sigap.py` para usar `sigap_config`
+- Análisis completo del repositorio (zip) para identificar archivos a eliminar.
+- Identificación de `credenciales.json` con Service Account Key de Google Cloud expuesta.
+- Revocación de la key en Google Cloud Console (proyecto `gastos-python-485019`).
+- Limpieza del historial Git completo con `git filter-repo` (35 commits reescritos).
+- Force push a las 3 branches en GitHub (`desarrollo`, `feature/importar-movimiento`, `refactor-modular`).
+- Eliminación de `scripts/_legacy/` (9 archivos de la era pre-SIGAP).
+- Actualización y reestructuración del `.gitignore` con protección de credenciales, caché Python y datos externos.
+- Reestablecimiento del tracking remoto post-filter-repo (`--set-upstream`).
 
 **Archivos modificados:**
-- `scripts/modulos/inbox_movimientos.py` — funciones nuevas + bloque NUEVO reescrito
-- `tests/test_gobernanza_similitud.py` — suite ampliada
+- `scripts/import_santander.py` — fix `tx→mov`
+- `sigap.py` — fix ruta DB
+- `.gitignore` — expandido y reestructurado
+- Eliminados: `scripts/_legacy/` (completo), scripts de migración y parche one-shot
+
+**Pendientes identificados (no atacados esta sesión):**
+- `sigap.db` duplicada en raíz del proyecto (verificar si es residuo)
+- `docs/Gemini.md` y `docs/Gemini_Config.md` (evaluar si tienen valor de referencia)
+- `tests/test_gui_logic.py` y `tests/test_sigap_core.py` (verificar cobertura antes de borrar)
 
 **Próxima sesión sugerida:**
-Atacar los bugs pendientes: `tx→mov` en `import_santander.py` (crítico, rompe en runtime)
-y la ruta DB en `sigap.py`. Son fixes rápidos de alto impacto.
+Revisión y actualización de toda la documentación: `CHANGELOG.md` (agregar entradas
+de fixes v0.7.x y hardening de seguridad), `README.md`, `ROADMAP.md`, `TODO.md`,
+`DOCUMENTACION.md` y este `Contexto.md`. Sesión dedicada a dejar la documentación
+en sincronía con el estado real del proyecto.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #4 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #5 · Proyecto Fénix v0.7.0*
