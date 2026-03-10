@@ -12,6 +12,19 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Estandarización de Mocks:** Refactor de la suite de pruebas UI (`test_ui_inbox_movimientos.py`) implementando variables de instancia (`self.`) para garantizar aislamiento entre tests.
 - **Runner Personalizado:** Implementación de descripciones limpias (Docstrings) en la salida de la terminal.
 
+## [v0.7.0-doc2] - 2026-03-10 (Patch: Auditoría de Cobertura QA)
+
+### 📄 Documentación
+- **`TODO.md`:** FASE 0 cerrada al 100%. Ítem `QA_UI_Checklist.md` actualizado
+  reflejando el documento real (`QA_UI_Checklist_inbox_movimientos.md`) y su
+  cobertura automatizada: Fases 1, 2, 3, 4, 5, 7 y 8 (parcial). Fase 9
+  pendiente de automatización, trazada a FASE 2 (Fábrica de Veneno).
+
+### 🧪 Calidad (QA)
+- **Auditoría de cobertura:** Mapeadas las 9 fases del Protocolo de Certificación
+  UI contra los 10 archivos de tests automatizados. Gaps identificados y
+  documentados en FASE 2 del backlog táctico.
+
 ## [v0.7.0-doc] - 2026-03-10 (Patch: Auditoría Documental)
 
 ### 📄 Documentación

@@ -121,31 +121,19 @@ ControlGastos/
 
 ## BUGS CONOCIDOS (PENDIENTES DE FIX)
 
-### 🐛 BUG CRÍTICO — `import_santander.py` ~línea 95
-```python
-# INCORRECTO (rompe con NameError al grabar):
-elif tx.estado == 'PENDIENTE':
-elif tx.estado == 'DESCARTADO':
-
-# CORRECTO (la variable del loop se llama 'mov'):
-elif mov.estado == 'PENDIENTE':
-elif mov.estado == 'DESCARTADO':
-```
-
-### ⚠️ INCONSISTENCIA — `sigap.py` línea 6
-`DB_FILE = 'control_gastos.db'` apunta a DB incorrecta.
-La DB real es `data/sigap.db` vía `sigap_config.get_db_path()`.
-`sigap.py` debe usar `sigap_config` para obtener la ruta.
+> ✅ Sin bugs críticos conocidos al cierre de Sesión #5.
+> Los bugs `tx → mov` (import_santander.py) y ruta DB (sigap.py) fueron
+> resueltos en sesiones anteriores y verificados en código el 2026-03-10.
 
 ---
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[FIX]** Corregir bug `tx` → `mov` en `import_santander.py` ← CRÍTICO
-2. **[FIX]** Corregir ruta DB en `sigap.py`
-3. **[FEAT]** Agregar `FileHandler` al logging en `sigap_config.py`
-4. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
-5. **[FEAT]** Crear `manage.py` como CLI unificado
+1. **[FEAT]** Agregar `FileHandler` al logging en `sigap_config.py`
+2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+3. **[FEAT]** Crear `manage.py` como CLI unificado
+4. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
+5. **[FEAT]** Parser MercadoPago
 
 ---
 
@@ -162,40 +150,41 @@ La DB real es `data/sigap.db` vía `sigap_config.get_db_path()`.
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-09
-**Sesión:** #5 — Hardening de Seguridad y Limpieza del Repositorio
-**Entorno:** Entorno A (PC Casa · Windows 11 · PowerShell)
+**Fecha:** 2026-03-10
+**Sesión:** #5 — Auditoría y Actualización Documental Completa
+**Entorno:** Entorno B (Mobile · Termux · S21 Ultra)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Fixes críticos del backlog (realizados en Entorno B a la mañana):
-  - `fix(importador)`: corregido NameError `tx→mov` en `import_santander.py`
-  - `fix(core)`: corregida ruta DB en `sigap.py` para usar `sigap_config`
-- Análisis completo del repositorio (zip) para identificar archivos a eliminar.
-- Identificación de `credenciales.json` con Service Account Key de Google Cloud expuesta.
-- Revocación de la key en Google Cloud Console (proyecto `gastos-python-485019`).
-- Limpieza del historial Git completo con `git filter-repo` (35 commits reescritos).
-- Force push a las 3 branches en GitHub (`desarrollo`, `feature/importar-movimiento`, `refactor-modular`).
-- Eliminación de `scripts/_legacy/` (9 archivos de la era pre-SIGAP).
-- Actualización y reestructuración del `.gitignore` con protección de credenciales, caché Python y datos externos.
-- Reestablecimiento del tracking remoto post-filter-repo (`--set-upstream`).
+- Incorporación del copiloto al proyecto mediante zip completo del repositorio.
+- Auditoría completa de toda la documentación del proyecto.
+- Creación de `README.md` desde cero: carta de presentación completa con stack,
+  estructura, inicio rápido, filosofía, estado v0.7.0 y tabla de documentación.
+- Actualización de `TODO.md`: FASE 0 cerrada al 100% (incluyendo análisis de
+  cobertura de QA_UI_Checklist vs suite de tests automatizados).
+  FASE 1 marcada como completada (6 checks de Gobernanza + Trazabilidad).
+- Actualización de `ROADMAP.md`: registrado `test_gobernanza_similitud.py`
+  (25 tests) como completado con referencia a Sesión #4.
+- Corrección de `Contexto.md`: árbol de estructura sincronizado con estado
+  real del repo. Bugs críticos (`tx→mov`, ruta DB) verificados como ya resueltos
+  en código — eliminados de pendientes.
+- Resolución de conflicto Git (divergencia por push --force desde Entorno A)
+  mediante estrategia format-patch / reset --hard / git am.
+- Auditoría de cobertura: mapeadas las 9 fases del QA_UI_Checklist contra
+  los 10 archivos de tests. Fase 9 (Fábrica de Veneno) identificada como
+  única sin cobertura automatizada → ya planificada en TODO FASE 2.
 
 **Archivos modificados:**
-- `scripts/import_santander.py` — fix `tx→mov`
-- `sigap.py` — fix ruta DB
-- `.gitignore` — expandido y reestructurado
-- Eliminados: `scripts/_legacy/` (completo), scripts de migración y parche one-shot
-
-**Pendientes identificados (no atacados esta sesión):**
-- `sigap.db` duplicada en raíz del proyecto (verificar si es residuo)
-- `docs/Gemini.md` y `docs/Gemini_Config.md` (evaluar si tienen valor de referencia)
-- `tests/test_gui_logic.py` y `tests/test_sigap_core.py` (verificar cobertura antes de borrar)
+- `README.md` — Creado desde cero
+- `TODO.md` — FASE 0 y FASE 1 cerradas
+- `ROADMAP.md` — Hito Sesión #4 registrado
+- `Contexto.md` — Tree actualizado + bugs resueltos + este bloque
 
 **Próxima sesión sugerida:**
-Revisión y actualización de toda la documentación: `CHANGELOG.md` (agregar entradas
-de fixes v0.7.x y hardening de seguridad), `README.md`, `ROADMAP.md`, `TODO.md`,
-`DOCUMENTACION.md` y este `Contexto.md`. Sesión dedicada a dejar la documentación
-en sincronía con el estado real del proyecto.
+Arrancar FASE 2 por el ítem de mayor impacto inmediato:
+**Desacoplamiento del Parser** — extraer `parsear_excel_santander()` como
+función aislada en `import_santander.py` para habilitar testing sin UI.
+Es el prerequisito para la Fábrica de Veneno (Fase 9 del QA Checklist).
 
 ---
 *Actualizado por Claude Sonnet · Sesión #5 · Proyecto Fénix v0.7.0*

@@ -5,7 +5,10 @@ Este documento reemplaza temporalmente las listas dispersas y establece el orden
 ## 🧹 FASE 0: DEUDA TÉCNICA DOCUMENTAL (INMEDIATO)
 - [x] **Actualizar `DOCUMENTACION.md`:** Reemplazar toda mención de `carga_gastos.py` y `editor_gastos.py` por `inbox_movimientos.py` (Reflejo del Domain-Driven Design).
 - [x] **Actualizar `CHANGELOG.md`:** Crear la entrada `[v0.7.0] - Refactor Semántico e Inbox`, documentando el paso de "Transacción" a "Movimiento" y la estandarización de Mocks.
-- [ ] **Crear `docs/QA_UI_Checklist.md`:** Documentar las 9 fases de certificación manual (Estrés KVM, Máquina de Estados, Edge Cases).
+- [x] **Crear `docs/QA_UI_Checklist.md`:** Documento creado como
+  `docs/QA_UI_Checklist_inbox_movimientos.md` con 9 fases de certificación.
+  Cobertura automatizada: Fases 1, 2, 3 (parcial), 4 (parcial), 5 (parcial), 7 (parcial), 8 (parcial).
+  Fase 9 pendiente de automatización (ver FASE 2: Fábrica de Veneno).
 
 ## 🛡️ FASE 1: GOBERNANZA DE INBOX Y AUDITORÍA (ACTUAL)
 *Objetivo: Blindar la base de datos (SQLite) contra errores humanos durante la carga rápida en Terminal.*
