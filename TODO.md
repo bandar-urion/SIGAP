@@ -9,14 +9,18 @@ Este documento reemplaza temporalmente las listas dispersas y establece el orden
 
 ## 🛡️ FASE 1: GOBERNANZA DE INBOX Y AUDITORÍA (ACTUAL)
 *Objetivo: Blindar la base de datos (SQLite) contra errores humanos durante la carga rápida en Terminal.*
-- [ ] **Gobernanza de Alta (Tecla `+`):**
-    - [ ] Interceptar tecla `+` en `inbox_movimientos.py` pausando el renderizado de la UI.
-    - [ ] Check 1 (Sintaxis): Aplicar `.strip().title()` para normalizar Nombres.
-    - [ ] Check 2 (Financiero): Validar Umbral de Relevancia (Monto Mínimo).
-    - [ ] Check 3 (Lógico): Consolidación de Identidad (Sugerir Categoría Padre).
-- [ ] **Trazabilidad (Módulo Auditoría):**
-    - [ ] Disparar `INSERT` en `auditoria_movimientos` con precisión de milisegundos tras cada alta exitosa.
-- [ ] **Suite de QA (Robots de Prueba):**
+- [x] **Gobernanza de Alta (Tecla `+`):** *(Sesión #4 — 2026-03-09)*
+    - [x] Interceptar tecla `+` en `inbox_movimientos.py` pausando el renderizado de la UI.
+    - [x] Check 1 (Sintaxis): Aplicar `.strip().title()` para normalizar Nombres.
+    - [x] Check 2 (Similitud): Detección de subcategorías similares.
+    - [x] Check 3 (Descriptividad): Validar longitud y calidad del nombre.
+    - [x] Check 4 (Frecuencia en lote): Detectar si el término ya aparece en el lote actual.
+    - [x] Check 5 (Frecuencia histórica): Consultar DB para detectar patrones históricos.
+    - [x] Check 6 (Duplicado exacto): Bloquear altas de subcategorías ya existentes.
+    - [x] Panel de Gobernanza con 3 flujos: directo (ENTER), con similares, con justificación.
+- [x] **Trazabilidad (Módulo Auditoría):** *(Sesión #4 — 2026-03-09)*
+    - [x] Disparar `INSERT` en `auditoria_movimientos` con justificación del usuario tras cada alta.
+- [ ] **Suite de QA (Robots de Prueba):** *(pendiente)*
     - [ ] Crear `test_robot_crear_subcategoria_nueva`.
     - [ ] Crear `test_robot_rechazo_por_gobernanza`.
 

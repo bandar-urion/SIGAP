@@ -16,6 +16,7 @@ Actúa como la única fuente de verdad sobre el estado de las tareas y la planif
     - [ ] Crear `manage.py` (CLI unificado para administrar el sistema).
     - [ ] Integrar funciones de reset y test en el orquestador.
     - [x] Suite de Tests Unitarios (`tests/`).
+    - [x] `test_gobernanza_similitud.py` — 25 tests (Sesión #4 · 2026-03-09).
 
 ---
 

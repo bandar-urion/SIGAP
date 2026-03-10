@@ -12,6 +12,19 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Estandarización de Mocks:** Refactor de la suite de pruebas UI (`test_ui_inbox_movimientos.py`) implementando variables de instancia (`self.`) para garantizar aislamiento entre tests.
 - **Runner Personalizado:** Implementación de descripciones limpias (Docstrings) en la salida de la terminal.
 
+## [v0.7.0-doc] - 2026-03-10 (Patch: Auditoría Documental)
+
+### 📄 Documentación
+- **`README.md`:** Creado desde cero. Carta de presentación completa del proyecto
+  con stack, estructura de directorios, guía de inicio rápido, filosofía,
+  tabla de estado de módulos v0.7.0 y tabla de documentación.
+- **`TODO.md`:** FASE 1 (Gobernanza de Inbox) marcada como completada.
+  Refleja los 6 criterios de Gobernanza y la Trazabilidad implementados en Sesión #4.
+- **`ROADMAP.md`:** Registrado el hito `test_gobernanza_similitud.py` (25/25 ✅)
+  correspondiente a Sesión #4 (2026-03-09).
+- **`Contexto.md`:** Árbol de estructura del proyecto corregido y sincronizado
+  con el estado real del repositorio (agregados `rejected/`, `logs/`, tests completos).
+
 ## [v0.6.5] - 2026-02-02 (Patch: Cross-Platform)
 
 ### 🐧 Infraestructura & Portabilidad

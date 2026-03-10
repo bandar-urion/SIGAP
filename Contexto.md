@@ -66,33 +66,37 @@ los categoriza con un motor de IA propio (diccionario + regex), y los almacena e
 
 ```
 ControlGastos/
-├── sigap.py              # Orquestador CLI (status / reset)
-├── sigap_config.py       # Config centralizada (lee sigap.cfg)
-├── sigap.cfg             # Parámetros: DB, rutas, UI, LOG_LEVEL
-├── CONTEXTO.md           # ← Este archivo
+├── sigap.py                          # Orquestador CLI (status / reset)
+├── sigap_config.py                   # Config centralizada (lee sigap.cfg)
+├── sigap.cfg                         # Parámetros: DB, rutas, UI, LOG_LEVEL
+├── Contexto.md                       # ← Este archivo (guía de sesión IA)
 ├── data/
-│   ├── sigap.db          # Base de datos SQLite (fuente de verdad)
-│   ├── inbox/            # Excel bancarios a procesar
-│   └── processed/        # Excel ya importados
+│   ├── sigap.db                      # Base de datos SQLite (fuente de verdad)
+│   ├── inbox/                        # Excel bancarios a procesar
+│   ├── processed/                    # Excel ya importados
+│   └── rejected/                     # Excel rechazados por validación
 ├── scripts/
-│   ├── import_santander.py       # Parser Excel Santander → Inbox UI
-│   ├── factory_reset_normalized.py
+│   ├── import_santander.py           # Parser Excel Santander → Inbox UI
+│   ├── factory_reset_normalized.py   # Reset + sembrado de DB
 │   ├── factory_reset_preserve_learning.py
-│   └── modulos/
-│       └── inbox_movimientos.py  # ⭐ Motor principal (UI + lógica de negocio)
+│   ├── modulos/
+│   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
 │   └── utils/
-│       ├── config_grafica.py     # Constantes ANSI, colores, dimensiones UI
+│       ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
 │       └── auditar_db.py
 ├── tests/
-│   ├── test_cerebro.py                # Motor IA (regex + matching)
-│   ├── test_importacion.py            # Integridad DB + deduplicación
-│   ├── test_database_init.py          # Esquema SQL
-│   ├── test_avanzado.py               # Casos extremos / tortura
-│   ├── test_ui_inbox_movimientos.py   # UI mocks
-│   └── test_gobernanza_similitud.py   # ⭐ Motor de Gobernanza (25 tests)
-└── docs/
-    ├── ADR-001-Motor-Base-Datos.md
-    └── ADR-002-Modelo-Gobernanza.md
+│   ├── test_cerebro.py               # Motor IA (regex + matching)
+│   ├── test_importacion.py           # Integridad DB + deduplicación
+│   ├── test_database_init.py         # Esquema SQL
+│   ├── test_avanzado.py              # Casos extremos / tortura
+│   ├── test_gobernanza_similitud.py  # ⭐ Motor de Gobernanza (25 tests)
+│   └── test_ui_inbox_movimientos.py  # UI mocks
+├── docs/
+│   ├── ADR-001-Motor-Base-Datos.md
+│   ├── ADR-002-Modelo-Gobernanza.md
+│   └── GUIA_GIT.md
+└── logs/
+    └── sigap_tecnico.log             # Log técnico rotativo
 ```
 
 ---
