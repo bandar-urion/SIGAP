@@ -1,13 +1,16 @@
 # 🦅 VIBE CODING SKILLS
-### Mapa de Sinergia Humano-IA — Proyecto Fénix
+### Estándar de Desarrollo Humano-IA — Proyecto Fénix
 *Martín · Analista de Sistemas · 2026*
 
 > Este documento no es un curso de Python ni un manual de IA.
-> Es el mapa personal de Martín para multiplicar exponencialmente
-> la sinergia con su copiloto técnico en el contexto del Proyecto Fénix.
+> Es el estándar operativo de desarrollo del Proyecto Fénix:
+> los patrones de trabajo y los protocolos de calidad que rigen
+> cada sesión, cada commit y cada decisión de arquitectura.
 >
 > Se construyó a partir de sesiones reales de trabajo sobre S.I.G.A.P.,
 > no de teoría genérica sobre "cómo usar IA".
+> Cada patrón tiene un caso real que lo justifica.
+> Cada protocolo responde a una vulnerabilidad concreta identificada en el proceso.
 
 ---
 
@@ -29,6 +32,106 @@ El Cómo de alto nivel (arquitectura, filosofía, restricciones) es territorio d
 
 La sinergia no es "pedirle cosas a la IA". Es una **conversación técnica entre pares**
 donde uno tiene el dominio del problema y el diseño, y el otro tiene el dominio de la implementación.
+
+---
+
+## 🤝 POR QUÉ UN EQUIPO ES MEJOR QUE UNO SOLO
+
+El VibeCoding no es una metodología de conveniencia. Es una respuesta directa
+a las limitaciones estructurales del AloneCoding: un desarrollador único
+que debe resolver todos los problemas con una sola visión, un solo conjunto
+de recursos y una sola inventiva.
+
+Un equipo tiene ventajas que no son de grado sino de naturaleza.
+Estas son las que aplican concretamente al Proyecto Fénix:
+
+**1. Dos pares de ojos sobre el mismo problema**
+El desarrollador solo tiene puntos ciegos sobre su propio código, no por falta
+de capacidad sino porque conocer el código demasiado bien es en sí una limitación.
+El copiloto no tiene historia emocional con lo que está leyendo: ve sin nostalgia,
+sin el "esto lo escribí yo y funciona" que inhibe la crítica real.
+
+**2. Roles complementarios sin switching cost**
+En un equipo humano, el arquitecto y el implementador raramente son la misma
+persona por una razón: los modos de pensamiento son distintos y a veces
+contradictorios. El AloneCoder tiene que cambiar de modo mental constantemente.
+En el par Humano-IA, Martín opera siempre en modo arquitectónico y el copiloto
+en modo implementación. El costo de ese cambio de contexto es cero.
+
+**3. Code review sin fricción social**
+En equipos humanos, señalar errores tiene consecuencias relacionales.
+El copiloto señala problemas sin agenda, sin jerarquía, sin miedo a ofender.
+Y Martín puede pedirle que sea brutalmente crítico sin que nadie se vaya
+ofendido a su casa. El Patrón D (Abogado del Diablo) existe precisamente
+porque esta ventaja hay que activarla deliberadamente — el copiloto tiene
+un sesgo natural a validar. Cuando ese sesgo se rompe, el resultado es
+una revisión más honesta que la mayoría de los code reviews humanos.
+
+**4. Memoria técnica externa e ilimitada**
+El AloneCoder depende de su memoria para recordar por qué tomó una decisión
+hace tres meses. El par externaliza esa memoria en Contexto.md, ADRs y
+DECISIONES.md. El copiloto puede reconstituir el estado completo del proyecto
+en segundos. Un desarrollador solo que vuelve de dos semanas de vacaciones
+no tiene ese lujo.
+
+**5. Disponibilidad asimétrica**
+Un equipo humano tiene horarios, vacaciones, urgencias personales, días malos.
+El copiloto está disponible a las 2 AM en Termux desde un Samsung S21.
+La productividad no depende de la agenda de nadie más que de Martín.
+
+**6. Especialización on-demand**
+Cuando el proyecto necesita un experto en regex financieros, el copiloto
+es ese experto. Cuando necesita un especialista en SQLite, también.
+Cuando necesita a alguien que conozca las particularidades de raw mode
+en Termux Android, ídem. El AloneCoder aprende todo desde cero o se detiene.
+El par tiene acceso instantáneo al conocimiento especializado en el momento
+exacto en que se necesita.
+
+**7. El rubber duck que responde**
+El rubber duck debugging funciona porque articular el problema en voz alta
+fuerza la claridad que a veces sola resuelve el problema. El copiloto es
+un rubber duck que responde. La combinación de articular más recibir
+una perspectiva externa es cualitativamente superior a cada parte por separado.
+
+**8. Documentación como subproducto natural**
+En equipos humanos, documentar es una tarea separada que siempre se posterga.
+En el par Humano-IA, la conversación técnica ya es documentación en estado bruto.
+El copiloto transforma una discusión en un ADR, un bloque de Contexto.md
+o una entrada de DECISIONES.md sin interrumpir el flujo de trabajo.
+
+**9. Escalada sin fricción ni burocracia**
+Cuando un problema supera la capacidad del equipo, contratar o consultar
+a alguien externo tiene costo, tiempo y burocracia. En el par, la "escalada"
+es cambiar el enfoque de la conversación. El copiloto puede operar como junior
+implementando código repetitivo, como senior revisando arquitectura, o como
+consultor externo cuestionando decisiones estratégicas, según lo que el momento requiera.
+
+**10. El equipo no tiene ego colectivo**
+Los equipos humanos desarrollan inercias y resistencia al cambio por razones
+sociales. Nadie quiere ser quien diga "lo que construimos el año pasado está mal".
+El copiloto no tiene inversión emocional en el código anterior. Puede señalar
+que una decisión de la Sesión #2 fue un error sin que eso amenace la cohesión
+de nadie ni la reputación de nadie.
+
+### La condición para que estas ventajas sean reales
+
+Ninguna de estas ventajas es automática. Todas dependen de que la colaboración
+esté estructurada. Un equipo humano sin metodología produce caos más rápido
+que un desarrollador solo. Lo mismo aplica aquí.
+
+Los Patrones de Trabajo y los Protocolos de Calidad de este documento son
+exactamente eso: la estructura que convierte las ventajas teóricas del equipo
+en práctica de ingeniería concreta y auditable.
+
+**Sin los patrones y protocolos, el VibeCoding es solo velocidad sin dirección.
+Con ellos, es un equipo que produce con la agilidad de uno y la solidez de dos.**
+
+---
+
+# PARTE 1 — PATRONES DE TRABAJO
+
+*Los patrones describen cómo se conduce la colaboración Humano-IA.
+Son hábitos operativos, no reglas abstractas.*
 
 ---
 
@@ -213,24 +316,10 @@ Sesión #N · Entorno A o B · branch: nombre-branch
 
 ---
 
-## 🎯 ESTADO ACTUAL — Sesión #5
+## 🔮 PATRONES AVANZADOS
 
-| Patrón | Estado | Observación |
-|---|---|---|
-| 1 — Briefing Arquitectónico | ✅ Dominado | Natural, sin fricción |
-| 2 — Verificar Antes de Confiar | ✅ Dominado | Detectó discrepancia doc/código en Sesión #5 |
-| 3 — Freno Estratégico | ✅ Dominado | Aplicado instintivamente en el rebase |
-| 4 — Delegación en Capas | ✅ Sólido | Ejercitado en toda la arquitectura de Gobernanza |
-| 5 — El Contexto como Activo | ⚠️ En construcción | El protocolo de mantenimiento se está formalizando |
-| 6 — Detectar Adivinanzas | ⚠️ En construcción | Identificado como área de crecimiento |
-| 7 — Commit como Checkpoint | ✅ Dominado | Conventional Commits aplicados consistentemente |
-
----
-
-## 🔮 PATRONES AVANZADOS (próximas sesiones)
-
-Estos patrones aún no fueron ejercitados en SIGAP pero son fundamentales
-para llevar la sinergia al siguiente nivel. Se incorporan a medida que el proyecto los demande.
+Estos patrones son fundamentales para llevar la sinergia al siguiente nivel.
+Se incorporan a medida que el proyecto los demande.
 
 ---
 
@@ -240,9 +329,9 @@ para llevar la sinergia al siguiente nivel. Se incorporan a medida que el proyec
 de forma independiente, detecte problemas y traiga un informe estructurado
 — sin que vos guíes la búsqueda.
 
-**La diferencia con el trabajo actual:**
-Hoy siempre llegás con el problema identificado. Este patrón es
-"mandame a hacer una auditoría" en lugar de "trabajemos juntos en esto".
+**La diferencia con el trabajo habitual:**
+Normalmente llegás con el problema identificado. Este patrón es
+"hacé una auditoría" en lugar de "trabajemos juntos en esto".
 
 **Cómo se activa:**
 > "Leé `scripts/import_santander.py` completo y traeme:
@@ -250,8 +339,8 @@ Hoy siempre llegás con el problema identificado. Este patrón es
 > 2. Deuda técnica visible
 > 3. Lo que te generaría dudas antes de tocarlo"
 
-**Por qué es poderoso:** Aprovecha que el copiloto no tiene sesgos
-sobre el código — ve cosas que vos ya no ves porque las conocés de memoria.
+**Por qué es poderoso:** El copiloto no tiene sesgos sobre el código —
+ve cosas que vos ya no ves porque las conocés de memoria.
 
 **Señal de que está bien usado:** El informe te sorprende con al menos
 una observación que no tenías en el radar.
@@ -261,10 +350,10 @@ una observación que no tenías en el radar.
 ### PATRÓN B — El Límite de la IA (Saber Cuándo NO Usarla)
 
 **Qué es:** Reconocer las decisiones que el copiloto no debería tomar
-ni influenciar — y tomar esas decisiones solo, antes de involucrarme.
+ni influenciar — y tomarlas solo, antes de involucrar al copiloto.
 
-**Las decisiones que siempre son tuyas:**
-- Qué Centros de Costo crear (tocan tu economía personal y familiar)
+**Las decisiones que siempre son de Martín:**
+- Qué Centros de Costo crear (tocan la economía personal y familiar)
 - Cómo clasificar un gasto con carga ética o emocional
 - Qué información financiera es demasiado sensible para pegar en un chat
 - El alcance real del proyecto (qué entra y qué no entra en SIGAP)
@@ -275,7 +364,7 @@ ni influenciar — y tomar esas decisiones solo, antes de involucrarme.
 > Si la decisión impacta solo el código → podemos deliberar juntos.
 
 **Por qué importa:** El copiloto siempre va a responder con algo plausible.
-No va a decirte "eso no me lo preguntes a mí". Esa discriminación la tenés que hacer vos.
+No va a decir "eso no me lo preguntes a mí". Esa discriminación la tiene que hacer Martín.
 
 ---
 
@@ -284,23 +373,18 @@ No va a decirte "eso no me lo preguntes a mí". Esa discriminación la tenés qu
 **Qué es:** Detectar cuándo el copiloto empezó a "olvidar" el inicio
 de la conversación y actuar antes de que eso genere errores.
 
-**Cómo se degrada el contexto:**
-A medida que una sesión crece, las primeras instrucciones y decisiones
-quedan fuera de mi ventana de atención activa. Empiezo a contradecir
-cosas que acordamos al principio sin darme cuenta.
-
 **Las señales de degradación:**
-- Te propongo algo que ya descartamos antes en la misma sesión
-- Olvido una restricción que mencionaste al inicio
-- Mis respuestas se vuelven más genéricas y menos específicas a SIGAP
-- Repito una pregunta que ya te hice
+- El copiloto propone algo que ya fue descartado en la misma sesión
+- Olvida una restricción mencionada al inicio
+- Las respuestas se vuelven más genéricas y menos específicas a SIGAP
+- Repite una pregunta que ya hizo
 
 **Las acciones correctivas:**
 | Señal | Acción |
 |---|---|
-| Sesión supera ~60 mensajes | Considerá abrir chat nuevo con Contexto.md fresco |
-| Propongo algo ya descartado | "Ya lo descartamos antes — recordá que decidimos X" |
-| Respuesta genérica sospechosa | "¿Estás teniendo en cuenta el stack de SIGAP o estás respondiendo genérico?" |
+| Sesión supera ~60 mensajes | Abrir chat nuevo con Contexto.md fresco |
+| Propone algo ya descartado | "Ya lo descartamos — decidimos X porque Y" |
+| Respuesta genérica sospechosa | "¿Estás considerando el stack de SIGAP o estás respondiendo genérico?" |
 
 **La regla de oro:** Una sesión enfocada en un objetivo concreto
 siempre supera a una sesión larga que abarca todo.
@@ -310,12 +394,11 @@ siempre supera a una sesión larga que abarca todo.
 ### PATRÓN D — El Abogado del Diablo
 
 **Qué es:** Pedirle al copiloto que argumente activamente **en contra**
-de una decisión que vos querés tomar — para verificar si aguanta el escrutinio
-antes de comprometerte con ella.
+de una decisión que se quiere tomar — para verificar si aguanta el escrutinio
+antes de comprometerse con ella.
 
 **Por qué es necesario:**
-El copiloto tiene un sesgo natural a validar lo que proponés.
-Si le decís "quiero hacer X", tiende a encontrar razones por las que X es buena idea.
+El copiloto tiene un sesgo natural a validar lo que se propone.
 Este patrón rompe ese sesgo deliberadamente.
 
 **Cómo se activa:**
@@ -325,19 +408,157 @@ Este patrón rompe ese sesgo deliberadamente.
 **Casos de uso en SIGAP:**
 - Antes de agregar una feature nueva ("¿por qué NO deberíamos hacer esto ahora?")
 - Antes de cambiar una decisión arquitectónica ("¿qué riesgos no estoy viendo?")
-- Antes de un refactor grande ("¿qué puede salir mal que no estoy considerando?")
+- Antes de un refactor grande ("¿qué puede salir mal?")
 
-**Señal de que está funcionando:** La respuesta del copiloto te hace
-dudar aunque sea un momento. Si no dudás nada, o el argumento es débil
-y confirmaste tu decisión con más seguridad, o el copiloto no entró al juego
-y hay que insistir.
+**Señal de que está funcionando:** La respuesta genera al menos un momento de duda genuina.
+Si no hay duda, o el argumento fue débil y confirmó la decisión con más seguridad,
+o el copiloto no entró al juego y hay que insistir.
 
-**Nota importante:** Este patrón requiere que vos estés dispuesto a escuchar
-que tu idea puede estar equivocada. Es el patrón más incómodo — y el más valioso.
+**Nota:** Este patrón requiere disposición real a escuchar que la idea puede estar equivocada.
+Es el patrón más incómodo y el más valioso.
 
 ---
 
-## 🎯 ESTADO ACTUAL — Sesión #5
+# PARTE 2 — PROTOCOLOS DE CALIDAD
+
+*Los protocolos responden a vulnerabilidades concretas del modelo de trabajo Humano-IA.
+No son sugerencias: son estándares operativos. Su ausencia tiene consecuencias conocidas.*
+
+---
+
+## 🛡️ PROTOCOLO 1 — Comentario de Intención
+
+**Vulnerabilidad que resuelve:** Código generado por el copiloto que Martín no puede
+explicar con sus propias palabras. Deuda técnica diferida que se vuelve visible
+recién cuando el sistema falla.
+
+**La regla:**
+Toda función no trivial generada por el copiloto lleva un comentario escrito
+**por Martín**, en su propio lenguaje, antes del merge. No un docstring técnico:
+una declaración de intención de negocio.
+
+```python
+# MARTÍN: Esta función existe porque el banco mezcla fechas con formato
+# de cuota en la misma descripción. El regex limpia primero las fechas
+# conocidas para que no contaminen la detección de cuotas reales.
+def detectar_cuotas_regex(self):
+    ...
+```
+
+**El criterio de cumplimiento:**
+> Si Martín no puede escribir ese comentario, el código no se mergea.
+
+---
+
+## 🛡️ PROTOCOLO 2 — Paridad de Sesión
+
+**Vulnerabilidad que resuelve:** Sesiones que cierran con documentación nueva
+pero sin código ni tests nuevos. La documentación es fácil de generar con IA
+y puede convertirse en un sustituto cómodo del trabajo real.
+
+**La regla:**
+Cada sesión cierra con al menos un entregable en la columna de código:
+
+| Columna Código | Columna Documentación |
+|---|---|
+| Función nueva, bug fix, refactor, o test nuevo | Actualización de estado existente (no documentos nuevos) |
+
+**La excepción controlada:**
+Una sesión puede ser exclusivamente de planificación, pero se registra
+explícitamente como tal en el commit y se limita a **una cada cuatro sesiones**.
+
+**El criterio de cumplimiento:**
+> Antes del commit: ¿hay al menos un archivo `.py` o de test modificado?
+> Si no → la sesión no cierra hasta que lo haya, o se declara Sesión de Planificación.
+
+---
+
+## 🛡️ PROTOCOLO 3 — Definition of Done Financiero
+
+**Vulnerabilidad que resuelve:** Features marcadas como completadas que funcionan
+técnicamente pero no resuelven el problema financiero real que las motivó.
+
+**La regla:**
+Antes de marcar cualquier feature como ✅ en el ROADMAP, debe cumplir
+las tres condiciones sin excepción:
+
+1. **Funciona en producción real:** probado en el entorno donde va a usarse.
+2. **Tiene test de regresión:** existe al menos un test que falla si la lógica se rompe.
+3. **Tiene justificación financiera:** Martín puede explicar en una oración
+   qué problema financiero resuelve — no técnico, **financiero**.
+
+**El criterio de cumplimiento:**
+> "¿Qué problema financiero concreto resuelve esto?"
+> Si la respuesta es técnica en lugar de financiera, la feature no está done.
+
+---
+
+## 🛡️ PROTOCOLO 4 — Diario de Decisiones
+
+**Vulnerabilidad que resuelve:** Dependencia operativa en el copiloto como
+única fuente de memoria del razonamiento detrás de las decisiones arquitectónicas.
+
+**La regla:**
+Martín mantiene `DECISIONES.md` escrito exclusivamente por él, sin asistencia
+del copiloto. Una entrada por decisión arquitectónica relevante.
+
+**Formato mínimo:**
+```
+[Fecha] Decidí X porque Y.
+Consideré Z y lo descarté porque W.
+```
+
+**El test de independencia:**
+> ¿Podría Martín continuar el proyecto sin el copiloto durante una semana,
+> basándose solo en `DECISIONES.md` y los ADRs?
+> Si la respuesta es no, el archivo está desactualizado.
+
+---
+
+## 🛡️ PROTOCOLO 5 — Justificación de Complejidad
+
+**Vulnerabilidad que resuelve:** Capas de abstracción que se acumulan porque
+"parecía necesario en el momento" pero cuya eliminación no rompería nada real.
+
+**La regla:**
+Toda capa de abstracción no trivial debe tener un test que demuestre
+que la complejidad es necesaria — un test que falle si se elimina esa capa.
+
+**Aplicación directa en SIGAP:**
+La capa cross-platform (`leer_byte()`, `leer_input_navegacion()`) existe
+porque el Entorno B es Termux. Si esa justificación desaparece,
+los tests de esa capa deben revisarse antes que el código.
+
+**El criterio de cumplimiento:**
+> "¿Podemos escribir el test que falla si esto no existe?"
+> Si no se puede → la abstracción probablemente no debería existir todavía.
+
+---
+
+## 🛡️ PROTOCOLO 6 — Sesión de Arqueología Trimestral
+
+**Vulnerabilidad que resuelve:** Acumulación silenciosa de código que funciona
+pero que su autor ya no comprende completamente. Deuda de comprensión
+que los tests no detectan porque validan comportamiento, no entendimiento.
+
+**La regla:**
+Una vez por trimestre, una sesión dedicada a leer código de sesiones anteriores
+**sin el copiloto presente**. El objetivo no es refactorizar: es auditar la comprensión.
+
+**Las tres preguntas:**
+1. ¿Entiendo por qué está escrito así?
+2. ¿Lo escribiría igual hoy?
+3. ¿Qué asumiría alguien que lee esto por primera vez?
+
+**El criterio de cumplimiento:**
+> Si después de la sesión no hay ninguna entrada nueva en `DECISIONES.md`,
+> la arqueología no fue honesta.
+
+---
+
+# 🎯 ESTADO ACTUAL — Sesión #6
+
+## Patrones de Trabajo
 
 | Patrón | Estado | Observación |
 |---|---|---|
@@ -345,14 +566,25 @@ que tu idea puede estar equivocada. Es el patrón más incómodo — y el más v
 | 2 — Verificar Antes de Confiar | ✅ Dominado | Detectó discrepancia doc/código en Sesión #5 |
 | 3 — Freno Estratégico | ✅ Dominado | Aplicado instintivamente en el rebase |
 | 4 — Delegación en Capas | ✅ Sólido | Ejercitado en toda la arquitectura de Gobernanza |
-| 5 — El Contexto como Activo | ⚠️ En construcción | El protocolo de mantenimiento se está formalizando |
+| 5 — El Contexto como Activo | ⚠️ En construcción | Protocolo de mantenimiento en formalización |
 | 6 — Detectar Adivinanzas | ⚠️ En construcción | Identificado como área de crecimiento |
 | 7 — Commit como Checkpoint | ✅ Dominado | Conventional Commits aplicados consistentemente |
 | A — Diagnóstico Autónomo | 🔲 Pendiente | No ejercitado aún |
 | B — Límite de la IA | 🔲 Pendiente | No establecido explícitamente aún |
 | C — Gestión Sesiones Largas | 🔲 Pendiente | Será necesario pronto |
-| D — Abogado del Diablo | 🔲 Pendiente | El más desafiante — el más valioso |
+| D — Abogado del Diablo | ✅ Ejercitado | Aplicado en Sesión #6 sobre las bases del VibeCoding |
+
+## Protocolos de Calidad
+
+| Protocolo | Estado | Observación |
+|---|---|---|
+| 1 — Comentario de Intención | 🔲 A implementar | Retroactivo en funciones críticas existentes |
+| 2 — Paridad de Sesión | 🔲 A implementar | Desde Sesión #7 en adelante |
+| 3 — Definition of Done Financiero | 🔲 A implementar | Aplicar al backlog del ROADMAP |
+| 4 — Diario de Decisiones | 🔲 A implementar | Crear `DECISIONES.md` como primer paso |
+| 5 — Justificación de Complejidad | 🔲 A implementar | Auditar capa cross-platform como caso piloto |
+| 6 — Arqueología Trimestral | 🔲 Programar | Primera sesión: Junio 2026 |
 
 ---
 
-*VIBE_CODING_SKILLS.md — Proyecto Fénix · Actualizado Sesión #5 · 2026-03-10*
+*VIBE_CODING_SKILLS.md — Proyecto Fénix · Actualizado Sesión #6 · 2026-03-11*

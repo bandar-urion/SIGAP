@@ -2,6 +2,10 @@
 > **Instrucciones de uso:** Al iniciar una sesión nueva con Claude, pegá este archivo completo.
 > Al cerrar la sesión, pedile a Claude que genere el bloque `## ÚLTIMA SESIÓN` actualizado.
 > **Importante:** indicar siempre en qué entorno se está trabajando hoy.
+>
+> **Nota operativa:** Para cambios de texto simples en el repo (buscar/reemplazar, eliminar
+> palabras, renombrar strings), pedirle al copiloto el comando bash directo en lugar de
+> generar archivos de output. Ejemplo: `sed -i 's/texto_viejo/texto_nuevo/g' archivo.md`
 
 ---
 
@@ -25,7 +29,7 @@ Este proyecto es el **"Proyecto Fénix"**: un programa personal de actualizació
 - **Terminal:** PowerShell / CMD
 - **Particularidades:** Rutas con `\`, sin limitaciones de memoria, pantalla grande.
 
-### 📱 Entorno B — Mobile Empresa
+### 📱 Entorno B — Mobile
 - **Hardware:** Samsung Galaxy S21 Ultra · USB Hub · KVM Switch · HDMI
 - **IDE:** Code-Server (VSCode en browser)
 - **Terminal:** Termux (Linux/Android)
@@ -41,7 +45,8 @@ Este proyecto es el **"Proyecto Fénix"**: un programa personal de actualizació
 **Branches conocidas:**
 - `main` — producción estable
 - `desarrollo` — integración
-- `feature/importar-movimiento` — rama actual, Parser + Inbox UI
+- `feature/importar-movimiento` — Parser + Inbox UI
+- `feature/metodologia-sesiones` — pendiente merge desde Entorno A (ya pusheada a origin)
 
 > Recordatorio: antes de cada commit verificar que estamos en la branch correcta.
 > `git branch --show-current`
@@ -83,7 +88,9 @@ ControlGastos/
 │   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
 │   └── utils/
 │       ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
-│       └── auditar_db.py
+│       ├── auditar_db.py
+│       ├── sesion_inicio.py          # Script de apertura de sesión
+│       └── sesion_cierre.py          # Script de cierre de sesión
 ├── tests/
 │   ├── test_cerebro.py               # Motor IA (regex + matching)
 │   ├── test_importacion.py           # Integridad DB + deduplicación
@@ -94,7 +101,8 @@ ControlGastos/
 ├── docs/
 │   ├── ADR-001-Motor-Base-Datos.md
 │   ├── ADR-002-Modelo-Gobernanza.md
-│   └── GUIA_GIT.md
+│   ├── GUIA_GIT.md
+│   └── SESIONES.md                   # Bitácora de sesiones
 └── logs/
     └── sigap_tecnico.log             # Log técnico rotativo
 ```
@@ -121,7 +129,7 @@ ControlGastos/
 
 ## BUGS CONOCIDOS (PENDIENTES DE FIX)
 
-> ✅ Sin bugs críticos conocidos al cierre de Sesión #5.
+> ✅ Sin bugs críticos conocidos al cierre de Sesión #7.
 > Los bugs `tx → mov` (import_santander.py) y ruta DB (sigap.py) fueron
 > resueltos en sesiones anteriores y verificados en código el 2026-03-10.
 
@@ -129,11 +137,12 @@ ControlGastos/
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[FEAT]** Agregar `FileHandler` al logging en `sigap_config.py`
-2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
-3. **[FEAT]** Crear `manage.py` como CLI unificado
-4. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-5. **[FEAT]** Parser MercadoPago
+1. **[DOC]** Crear `DECISIONES.md` con primeras entradas retroactivas de decisiones clave
+2. **[FEAT]** Agregar `FileHandler` al logging en `sigap_config.py`
+3. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+4. **[FEAT]** Crear `manage.py` como CLI unificado
+5. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
+6. **[FEAT]** Parser MercadoPago
 
 ---
 
@@ -144,43 +153,38 @@ ControlGastos/
 - **Gobernanza antes que features.** No se agrega funcionalidad sin validaciones.
 - **3NF estricta.** No se desnormalizan tablas por conveniencia.
 - **`sigap_config.py` es el punto de entrada de configuración.** Nunca hardcodear rutas.
-- **leer_byte() es el único lector de input.** Nunca usar input() estándar en flujos UI.
+- **`leer_byte()` es el único lector de input.** Nunca usar `input()` estándar en flujos UI.
 
 ---
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-10
-**Sesión:** #5 — Auditoría Documental Completa + Mapa de Sinergia Humano-IA
-**Entorno:** Entorno B (Mobile · Termux · S21 Ultra)
-**Branch:** `feature/importar-movimiento`
+**Fecha:** 2026-03-11
+**Sesión:** #7 — Metodología: Formalización del Estándar VibeCoding
+**Entorno:** B (Samsung S21 Ultra · Termux)
+**Branch:** `feature/metodologia-sesiones`
 
 **Lo que hicimos:**
-- Incorporación del copiloto mediante zip completo del repositorio.
-- Auditoría completa de documentación: README.md creado desde cero,
-  TODO.md FASE 0 y FASE 1 cerradas, ROADMAP.md actualizado con Sesión #4,
-  Contexto.md sincronizado con estado real del código.
-- Bugs críticos (`tx→mov`, ruta DB) verificados como resueltos en código
-  y eliminados de pendientes.
-- Resolución de conflicto Git (divergencia por push --force desde Entorno A)
-  mediante estrategia format-patch / reset --hard / git am.
-- Auditoría de cobertura QA: 9 fases del checklist mapeadas contra 10 archivos
-  de tests. Fase 9 sin cobertura → trazada a TODO FASE 2.
-- Creación de `VIBE_CODING_SKILLS.md`: mapa personal de sinergia Humano-IA
-  con 7 patrones activos y 4 patrones avanzados, basado en sesiones reales de SIGAP.
+- Patrón D (Abogado del Diablo) aplicado sobre el VibeCoding: análisis de las críticas más fuertes al modelo Humano-IA en el contexto específico de SIGAP, con respuestas fundamentadas.
+- Derivación de 6 Protocolos de Calidad a partir de las vulnerabilidades identificadas: Comentario de Intención, Paridad de Sesión, Definition of Done Financiero, Diario de Decisiones, Justificación de Complejidad, Arqueología Trimestral.
+- `VIBE_CODING_SKILLS.md` reestructurado completo: Parte 1 (7 Patrones + 4 Avanzados) y Parte 2 (6 Protocolos nuevos). Apertura reformulada como estándar operativo.
+- 10 ventajas del modelo Humano-IA vs. AloneCoding formalizadas: sección completa en `VIBE_CODING_SKILLS.md` y tabla comparativa en `README.md`.
+- Corrección `Mobile Empresa` → `Mobile` en `Contexto.md`, `CONTEXTO__1_.md` y `README.md`.
+- Nota operativa agregada al Contexto: para cambios simples de texto usar comando bash directo.
 
-**Archivos modificados:**
-- `README.md` — Creado desde cero
-- `TODO.md` — FASE 0 y FASE 1 cerradas al 100%
-- `ROADMAP.md` — Hito Sesión #4 registrado
-- `Contexto.md` — Tree actualizado + bugs resueltos eliminados + este bloque
-- `CHANGELOG.md` — Entradas v0.7.0-doc y v0.7.0-doc2 agregadas
-- `VIBE_CODING_SKILLS.md` — Creado en raíz del proyecto
+**Archivos modificados (listos para integrar al repo):**
+- `VIBE_CODING_SKILLS.md` — reestructurado completo
+- `README.md` — sección Humano-IA vs. AloneCoding agregada, "Empresa" eliminado
+- `Contexto.md` — "Empresa" eliminado, nota operativa agregada, branch y tareas actualizadas
+- `CONTEXTO__1_.md` — "Empresa" eliminado
 
-**Próxima sesión sugerida:**
-- Revisar y aprobar `VIBE_CODING_SKILLS.md` con cabeza fresca
-- Arrancar FASE 2: desacoplar `parsear_excel_santander()` como función
-  aislada y testeable (prerequisito de la Fábrica de Veneno / Fase 9 QA)
+**Pendientes antes del commit:**
+- Crear `DECISIONES.md` (Protocolo 4 lo referencia, el archivo aún no existe)
+
+**Próxima sesión (Entorno B · branch: feature/importar-movimiento):**
+1. Commit de cierre sesión #7 en `feature/importar-movimiento`
+2. `git fetch origin` + merge de `feature/metodologia-sesiones` sobre `feature/importar-movimiento`
+3. Crear `DECISIONES.md` con primeras entradas retroactivas
 
 ---
-*Actualizado por Claude Sonnet · Sesión #5 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #7 · Proyecto Fénix v0.7.0*

@@ -104,6 +104,37 @@ python scripts/import_santander.py
 
 ---
 
+## Modelo de Desarrollo: Humano-IA vs. AloneCoding
+
+SIGAP no es desarrollado por una persona sola ni por una IA sola.
+Es desarrollado por un equipo de dos con roles complementarios e irremplazables.
+
+Este modelo no es una curiosidad metodológica. Es una ventaja de ingeniería concreta
+frente al modelo tradicional de un desarrollador trabajando en solitario (AloneCoding).
+
+| Dimensión | AloneCoding | Par Humano-IA |
+|---|---|---|
+| Puntos ciegos | El desarrollador no ve los suyos | El copiloto no tiene historia emocional con el código |
+| Roles | Arquitecto e implementador en la misma persona | Roles separados, sin switching cost cognitivo |
+| Code review | Con fricción social o inexistente | Crítica directa, sin agenda, sin jerarquía |
+| Memoria de decisiones | Depende de la memoria del desarrollador | Externalizada en Contexto.md, ADRs, DECISIONES.md |
+| Disponibilidad | Limitada por horarios y energía | Asimétrica: el copiloto está disponible siempre |
+| Especialización | El desarrollador aprende o se detiene | On-demand: el equipo tiene el experto que el momento requiere |
+| Documentación | Tarea separada, siempre postergada | Subproducto natural de la conversación técnica |
+| Ego sobre el código | Presente, dificulta la crítica honesta | El copiloto no tiene inversión emocional en el código anterior |
+
+**Lo que este modelo no es:**
+No es "pedirle cosas a la IA". Es una conversación técnica entre pares
+donde uno tiene el dominio del problema y el otro tiene el dominio de la implementación.
+La calidad del resultado depende directamente de la calidad de esa conversación.
+
+**Lo que garantiza la calidad del modelo:**
+Los patrones de trabajo y protocolos de calidad están documentados en `VIBE_CODING_SKILLS.md`.
+Ese documento es el estándar operativo que convierte la ventaja teórica del equipo
+en práctica de ingeniería concreta y auditable.
+
+---
+
 ## Estado Actual — v0.7.0
 
 | Módulo | Estado |
@@ -128,6 +159,7 @@ python scripts/import_santander.py
 |---|---|
 | `DOCUMENTACION.md` | Constitución del sistema: reglas de negocio, arquitectura, UX |
 | `ROADMAP.md` | Hoja de ruta y estado de hitos |
+| `VIBE_CODING_SKILLS.md` | Estándar de desarrollo Humano-IA: patrones y protocolos de calidad |
 | `CHANGELOG.md` | Historial de versiones |
 | `TODO.md` | Backlog táctico unificado |
 | `Contexto.md` | Guía de sesión para el copiloto IA |
@@ -142,7 +174,7 @@ python scripts/import_santander.py
 | Entorno | Hardware | Terminal | Rutas |
 |---|---|---|---|
 | A — PC Casa | Windows 11 · i9-10900KF · 80GB RAM | PowerShell / CMD | `\` |
-| B — Mobile Empresa | Samsung S21 Ultra · USB Hub | Termux (Linux/Android) | `/` |
+| B — Mobile | Samsung S21 Ultra · USB Hub | Termux (Linux/Android) | `/` |
 
 ---
 
