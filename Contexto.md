@@ -151,36 +151,34 @@ ControlGastos/
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-03-10
-**Sesión:** #5 — Auditoría Documental Completa + Mapa de Sinergia Humano-IA
-**Entorno:** Entorno B (Mobile · Termux · S21 Ultra)
-**Branch:** `feature/importar-movimiento`
+**Sesión:** #6 — Metodología: Scripts de Apertura/Cierre de Sesión
+**Entorno:** Entorno A (PC Casa · Windows · VSCode)
+**Branch:** `feature/metodologia-sesiones`
 
 **Lo que hicimos:**
-- Incorporación del copiloto mediante zip completo del repositorio.
-- Auditoría completa de documentación: README.md creado desde cero,
-  TODO.md FASE 0 y FASE 1 cerradas, ROADMAP.md actualizado con Sesión #4,
-  Contexto.md sincronizado con estado real del código.
-- Bugs críticos (`tx→mov`, ruta DB) verificados como resueltos en código
-  y eliminados de pendientes.
-- Resolución de conflicto Git (divergencia por push --force desde Entorno A)
-  mediante estrategia format-patch / reset --hard / git am.
-- Auditoría de cobertura QA: 9 fases del checklist mapeadas contra 10 archivos
-  de tests. Fase 9 sin cobertura → trazada a TODO FASE 2.
-- Creación de `VIBE_CODING_SKILLS.md`: mapa personal de sinergia Humano-IA
-  con 7 patrones activos y 4 patrones avanzados, basado en sesiones reales de SIGAP.
+- Decisión de crear rama paralela `feature/metodologia-sesiones` para no
+  interferir con la sesión pendiente de cierre en Entorno B.
+- Diseño y generación de `scripts/utils/sesion_inicio.py`: detecta automáticamente
+  entorno (Windows/Termux), rama Git activa y timestamp. Solicita solo el objetivo.
+- Diseño y generación de `scripts/utils/sesion_cierre.py`: calcula duración,
+  solicita observaciones opcionales, actualiza `docs/SESIONES.md` y elimina
+  el archivo temporal `.sesion_activa`.
+- Creación de `docs/SESIONES.md`: bitácora de sesiones con entrada inicial
+  para sesiones 1-5 como registro histórico.
+- Aprendizaje documentado: Entorno A requiere `Ctrl+S` explícito antes de
+  `git add`. El `git status` pre-commit detectó el `.gitignore` sin guardar.
+- Commit + push a `origin/feature/metodologia-sesiones`.
 
 **Archivos modificados:**
-- `README.md` — Creado desde cero
-- `TODO.md` — FASE 0 y FASE 1 cerradas al 100%
-- `ROADMAP.md` — Hito Sesión #4 registrado
-- `Contexto.md` — Tree actualizado + bugs resueltos eliminados + este bloque
-- `CHANGELOG.md` — Entradas v0.7.0-doc y v0.7.0-doc2 agregadas
-- `VIBE_CODING_SKILLS.md` — Creado en raíz del proyecto
+- `scripts/utils/sesion_inicio.py` — creado
+- `scripts/utils/sesion_cierre.py` — creado
+- `docs/SESIONES.md` — creado
+- `.gitignore` — `.sesion_activa` agregado
 
-**Próxima sesión sugerida:**
-- Revisar y aprobar `VIBE_CODING_SKILLS.md` con cabeza fresca
-- Arrancar FASE 2: desacoplar `parsear_excel_santander()` como función
-  aislada y testeable (prerequisito de la Fábrica de Veneno / Fase 9 QA)
+**Próxima sesión (Entorno B — mañana):**
+1. Cerrar sesión pendiente de hoy en `feature/importar-movimiento`
+2. `git fetch origin` + merge de `feature/metodologia-sesiones`
+3. Estrenar `sesion_inicio.py` en Termux
 
 ---
-*Actualizado por Claude Sonnet · Sesión #5 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #6 · Proyecto Fénix v0.7.0*
