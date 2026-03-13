@@ -16,7 +16,14 @@ Comprobantes Tramites/
 
 
 # Descomentá si en algún momento querés excluir estos:
-# *.db
+*.db/
 # logs/
 # data/inbox/
 # data/processed/
+
+# Bytecode compilado Python
+__pycache__/
+*.pyc
+*.pyo
+~$*.xlsx
+*.zip

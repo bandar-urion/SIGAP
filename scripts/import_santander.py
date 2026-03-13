@@ -12,7 +12,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 import sigap_config
-from modulos import inbox_movimientos as carga_movimientos
+from scripts.modulos import inbox_movimientos as carga_movimientos
 
 # 2. Rutas dinámicas desde sigap.cfg (Compatibles con Termux S21 y Windows)
 DB_FILE = sigap_config.get_db_path()
@@ -30,6 +30,7 @@ def main():
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys = ON")
 
     try:
         # 2. IDENTIFICAR MEDIO DE PAGO

@@ -44,7 +44,7 @@ def get_db_path():
     """Construye la ruta absoluta y segura a la base de datos."""
     db_dir = config.get('DATABASE', 'DIR', fallback='data')
     db_name = config.get('DATABASE', 'NAME', fallback='sigap.db')
-    ruta_completa = os.path.join(db_dir, db_name)
+    ruta_completa = os.path.join(BASE_DIR, db_dir, db_name)
     return ruta_completa
 
 def get_path(seccion, clave):
