@@ -17,7 +17,7 @@ Comprobantes Tramites/
 
 # Descomentá si en algún momento querés excluir estos:
 *.db/
-# logs/
+logs/
 # data/inbox/
 # data/processed/
 
@@ -27,4 +27,3 @@ __pycache__/
 *.pyo
 ~$*.xlsx
 *.zip
-logs/
