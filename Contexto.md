@@ -119,7 +119,7 @@ ControlGastos/
 | Detección de cuotas (regex financiero) | ✅ Funcional |
 | Cross-platform Termux/Windows | ✅ Funcional |
 | Gobernanza Alta Subcategoría (Panel + 6 criterios) | ✅ Funcional |
-| Sistema de logging (consola) | ⚠️ Parcial (falta FileHandler) |
+| Sistema de logging (consola + archivo) | ✅ Funcional |
 | Auditoría en DB (`auditoria_movimientos`) | ⚠️ Parcial |
 | `manage.py` unificado | ❌ Pendiente |
 | Parser MercadoPago | ❌ Pendiente |
@@ -138,11 +138,10 @@ ControlGastos/
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
 1. **[DOC]** Crear `DECISIONES.md` con primeras entradas retroactivas de decisiones clave
-2. **[FEAT]** Agregar `FileHandler` al logging en `sigap_config.py`
-3. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
-4. **[FEAT]** Crear `manage.py` como CLI unificado
-5. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-6. **[FEAT]** Parser MercadoPago
+2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+3. **[FEAT]** Crear `manage.py` como CLI unificado
+4. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
+5. **[FEAT]** Parser MercadoPago
 
 ---
 
@@ -159,32 +158,64 @@ ControlGastos/
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-11
-**Sesión:** #7 — Metodología: Formalización del Estándar VibeCoding
+**Fecha:** 2026-03-13
+**Sesión:** #8 — Auditoría v2 + Cierre Fase 1
 **Entorno:** B (Samsung S21 Ultra · Termux)
-**Branch:** `feature/metodologia-sesiones`
+**Branch:** `feature/importar-movimiento`
+**Commit:** `7777667`
 
 **Lo que hicimos:**
-- Patrón D (Abogado del Diablo) aplicado sobre el VibeCoding: análisis de las críticas más fuertes al modelo Humano-IA en el contexto específico de SIGAP, con respuestas fundamentadas.
-- Derivación de 6 Protocolos de Calidad a partir de las vulnerabilidades identificadas: Comentario de Intención, Paridad de Sesión, Definition of Done Financiero, Diario de Decisiones, Justificación de Complejidad, Arqueología Trimestral.
-- `VIBE_CODING_SKILLS.md` reestructurado completo: Parte 1 (7 Patrones + 4 Avanzados) y Parte 2 (6 Protocolos nuevos). Apertura reformulada como estándar operativo.
-- 10 ventajas del modelo Humano-IA vs. AloneCoding formalizadas: sección completa en `VIBE_CODING_SKILLS.md` y tabla comparativa en `README.md`.
-- Corrección `Mobile Empresa` → `Mobile` en `Contexto.md`, `CONTEXTO__1_.md` y `README.md`.
-- Nota operativa agregada al Contexto: para cambios simples de texto usar comando bash directo.
 
-**Archivos modificados (listos para integrar al repo):**
-- `VIBE_CODING_SKILLS.md` — reestructurado completo
-- `README.md` — sección Humano-IA vs. AloneCoding agregada, "Empresa" eliminado
-- `Contexto.md` — "Empresa" eliminado, nota operativa agregada, branch y tareas actualizadas
-- `CONTEXTO__1_.md` — "Empresa" eliminado
+- Auditoría completa del proyecto contra documentación (segunda ronda con ZIP actualizado).
+- Diagnóstico de 5 issues: FK desactivadas en runtime, .gitignore roto, lock file trackeado,
+  scripts huérfanos en utils/, y deuda documental (DECISIONES.md inexistente).
+- Fix `.gitignore`: patrón `*.db` corregido (era `# *.db/` — comentado y con barra).
+  Agregados `__pycache__/`, `*.pyc`, `~$*.xlsx`, `*.zip`.
+- `git rm --cached`: sacados `sigap.db` y `data/sigap.db` del tracking.
+- `import_santander.py`: activado `PRAGMA foreign_keys = ON` en runtime.
+- `scripts/utils/ → _legacy/`: movidos `fix_esquema_v2`, `nivelar_data`, `parche_subcategorias`.
+- `scripts/test_parser_santander.py → _legacy/`: reemplazado por Contract Test formal.
+- `docs/DECISIONES.md`: creado con 9 decisiones arquitectónicas retroactivas (D-001 a D-009).
+- Refactor suite de tests: `test_avanzado` + `test_cerebro` + `test_sigap_core` fusionados
+  en `test_config` y `test_motor_clasificacion` (criterio: un archivo por módulo testeado).
+- `tests/test_contrato_santander.py`: Contract Test nuevo, 8 tests, skipeo automático
+  si inbox vacío, diagnóstico integrado. Basado en columnas reales del Excel de Santander Río.
+- Suite final: **66/66 OK** (era 58 al inicio de la sesión).
 
-**Pendientes antes del commit:**
-- Crear `DECISIONES.md` (Protocolo 4 lo referencia, el archivo aún no existe)
+**Archivos clave modificados:**
+- `.gitignore` — corregido
+- `sigap_config.py` — `get_db_path()` ruta absoluta (fix sesión #8)
+- `scripts/import_santander.py` — FK activas
+- `docs/DECISIONES.md` — nuevo
+- `tests/test_config.py` — nuevo
+- `tests/test_motor_clasificacion.py` — nuevo
+- `tests/test_contrato_santander.py` — nuevo
 
-**Próxima sesión (Entorno B · branch: feature/importar-movimiento):**
-1. Commit de cierre sesión #7 en `feature/importar-movimiento`
-2. `git fetch origin` + merge de `feature/metodologia-sesiones` sobre `feature/importar-movimiento`
-3. Crear `DECISIONES.md` con primeras entradas retroactivas
+**Estado del proyecto al cierre:**
+
+| Módulo | Estado |
+|---|---|
+| Parser Santander (XLS → Inbox) | ✅ Funcional |
+| Inbox UI (viewport, navegación, edición) | ✅ Funcional |
+| Motor IA (diccionario + regex) | ✅ Funcional |
+| Detección de cuotas (regex financiero) | ✅ Funcional |
+| Cross-platform Termux/Windows | ✅ Funcional |
+| Gobernanza Alta Subcategoría (Panel + 6 criterios) | ✅ Funcional |
+| Foreign Keys activas en runtime | ✅ Funcional |
+| Sistema de logging (consola + FileHandler) | ✅ Funcional |
+| Auditoría en DB (`auditoria_movimientos`) | ⚠️ Parcial |
+| Contract Test Santander (formato Excel) | ✅ Funcional |
+| `manage.py` unificado | ❌ Pendiente |
+| Parser MercadoPago | ❌ Pendiente |
+
+**Próximas tareas (en orden de prioridad):**
+
+1. **[DOC]** Actualizar `Contexto.md` y hacer push a origin
+2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+3. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
+4. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada para testing
+5. **[FEAT]** Crear `manage.py` como CLI unificado
+6. **[FEAT]** Parser MercadoPago
 
 ---
-*Actualizado por Claude Sonnet · Sesión #7 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #8 · Proyecto Fénix v0.7.0*
