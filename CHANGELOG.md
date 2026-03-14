@@ -12,6 +12,69 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 - **Estandarización de Mocks:** Refactor de la suite de pruebas UI (`test_ui_inbox_movimientos.py`) implementando variables de instancia (`self.`) para garantizar aislamiento entre tests.
 - **Runner Personalizado:** Implementación de descripciones limpias (Docstrings) en la salida de la terminal.
 
+## [v0.7.2] - 2026-03-14 (Patch: Seguridad y Migración de Repo)
+
+### 🔐 Seguridad
+- **Limpieza de historial:** Eliminado `scripts/credenciales.json` y
+  `scripts/_legacy/credenciales.json` de los 61 commits históricos mediante
+  `git filter-branch`. Las credenciales de Google Cloud (service account
+  `gastos-python-485019`) fueron revocadas antes de la operación.
+- **Decisión D-010:** Formalizada la regla "credenciales nunca en el repo"
+  en `docs/DECISIONES.md` con contexto, acciones tomadas y regla operativa.
+
+### 🏗️ Infraestructura
+- **Migración de repo:** Repositorio remoto renombrado de `ControlGastos`
+  a `SIGAP` en GitHub (`github.com/bandar-urion/SIGAP`), alineando el nombre
+  del repo con la carpeta local y el nombre del sistema.
+- **Credential helper:** Configurado `git credential.helper store` en Termux
+  para eliminar la dependencia del socket de Code-Server (que causaba 403).
+- **`logs/` fuera del tracking:** `logs/sigap_tecnico.log` sacado del índice
+  de Git (`git rm --cached`) y agregado al `.gitignore`.
+
+
+## [v0.7.1] - 2026-03-13 (Patch: Cierre Fase 1 — Deuda Técnica)
+
+### 🛡️ Integridad & Seguridad
+- **Foreign Keys activas:** Agregado `PRAGMA foreign_keys = ON` en
+  `scripts/import_santander.py`. Las FK estaban declaradas en el schema
+  pero inactivas en runtime (SQLite las desactiva por defecto).
+- **`sigap_config.py`:** Corregido `get_db_path()` para retornar ruta
+  absoluta. Antes retornaba ruta relativa, causando "DB fantasma" según
+  desde qué directorio se ejecutara el script.
+
+### 🧹 Limpieza & Organización
+- **`.gitignore` corregido:** Patrón `*.db` estaba comentado y con barra
+  (`# *.db/`). Corregido a `*.db`. Agregados `__pycache__/`, `*.pyc`,
+  `~$*.xlsx` (lock files de Windows) y `*.zip`.
+- **`__pycache__` sacados del repo:** 32 archivos `.pyc` y directorios
+  de caché eliminados del tracking con `git rm --cached`.
+- **Scripts huérfanos → `_legacy/`:** Movidos `fix_esquema_v2.py`
+  (apuntaba a `control_gastos.db`, nombre viejo), `nivelar_data.py` y
+  `parche_subcategorias.py` (migraciones ya aplicadas).
+- **`test_parser_santander.py` → `_legacy/`:** Reemplazado por el
+  Contract Test formal `tests/test_contrato_santander.py`.
+
+### 📄 Documentación
+- **`docs/DECISIONES.md`:** Creado con 9 decisiones arquitectónicas
+  retroactivas (D-001 a D-009), cubriendo SQLite, Gobernanza Data-Driven,
+  Terminal pura, `leer_byte()`, `sigap_config`, HyperFlux, renombrado
+  Transaccion→Movimiento, 3NF y Gobernanza de Alta de Subcategoría.
+
+### 🧪 Calidad (QA)
+- **Refactor de suite:** `test_avanzado.py` + `test_cerebro.py` +
+  `test_sigap_core.py` fusionados en dos archivos con criterio por módulo:
+  - `tests/test_config.py` — valida `sigap_config.py` (rutas, normalización)
+  - `tests/test_motor_clasificacion.py` — valida regex de cuotas, limpieza
+    de texto e inferencia de contexto (6 clases, 18 tests)
+- **`tests/test_contrato_santander.py`:** Contract Test nuevo para validar
+  el formato del Excel de Santander Río antes de procesarlo. 8 tests,
+  skipeo automático si inbox vacío, diagnóstico integrado. Basado en
+  columnas reales del extracto (`Fecha`, `Descripción`, `Referencia`,
+  `Caja de Ahorro`, `Cuenta Corriente`).
+- **Suite final: 66/66 OK** (era 58 al inicio de la sesión)
+
+
+
 ## [v0.7.0-doc3] - 2026-03-10 (Patch: Mapa de Sinergia Humano-IA)
 
 ### 📄 Documentación

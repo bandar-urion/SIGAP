@@ -158,64 +158,38 @@ ControlGastos/
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-13
-**Sesión:** #8 — Auditoría v2 + Cierre Fase 1
+**Fecha:** 2026-03-14
+**Sesión:** #9 — Limpieza de repo, migración a SIGAP y seguridad
 **Entorno:** B (Samsung S21 Ultra · Termux)
 **Branch:** `feature/importar-movimiento`
-**Commit:** `7777667`
 
 **Lo que hicimos:**
 
-- Auditoría completa del proyecto contra documentación (segunda ronda con ZIP actualizado).
-- Diagnóstico de 5 issues: FK desactivadas en runtime, .gitignore roto, lock file trackeado,
-  scripts huérfanos en utils/, y deuda documental (DECISIONES.md inexistente).
-- Fix `.gitignore`: patrón `*.db` corregido (era `# *.db/` — comentado y con barra).
-  Agregados `__pycache__/`, `*.pyc`, `~$*.xlsx`, `*.zip`.
-- `git rm --cached`: sacados `sigap.db` y `data/sigap.db` del tracking.
-- `import_santander.py`: activado `PRAGMA foreign_keys = ON` en runtime.
-- `scripts/utils/ → _legacy/`: movidos `fix_esquema_v2`, `nivelar_data`, `parche_subcategorias`.
-- `scripts/test_parser_santander.py → _legacy/`: reemplazado por Contract Test formal.
-- `docs/DECISIONES.md`: creado con 9 decisiones arquitectónicas retroactivas (D-001 a D-009).
-- Refactor suite de tests: `test_avanzado` + `test_cerebro` + `test_sigap_core` fusionados
-  en `test_config` y `test_motor_clasificacion` (criterio: un archivo por módulo testeado).
-- `tests/test_contrato_santander.py`: Contract Test nuevo, 8 tests, skipeo automático
-  si inbox vacío, diagnóstico integrado. Basado en columnas reales del Excel de Santander Río.
-- Suite final: **66/66 OK** (era 58 al inicio de la sesión).
+- Push inicial al nuevo repo `SIGAP` en GitHub (migración desde `ControlGastos`).
+- Resolución de autenticación Git en Termux: credential helper `store` configurado.
+- GitHub Secret Scanning bloqueó el push: detectó `scripts/credenciales.json`
+  (service account key de Google Cloud, commiteada en enero 2026).
+- Service account revocada en Google Cloud Console (proyecto `gastos-python-485019`).
+- Historial reescrito con `git filter-branch` — eliminado `credenciales.json`
+  de ambas rutas (`scripts/` y `scripts/_legacy/`) en los 61 commits históricos.
+- Push forzado `--all --force` — las 3 branches subidas limpias: `main`,
+  `desarrollo`, `feature/importar-movimiento`.
+- `logs/sigap_tecnico.log` y `data/sigap.db` sacados del índice de Git
+  (`git rm --cached`).
+- `docs/DECISIONES.md`: agregada D-010 — credenciales nunca en el repo.
 
-**Archivos clave modificados:**
-- `.gitignore` — corregido
-- `sigap_config.py` — `get_db_path()` ruta absoluta (fix sesión #8)
-- `scripts/import_santander.py` — FK activas
-- `docs/DECISIONES.md` — nuevo
-- `tests/test_config.py` — nuevo
-- `tests/test_motor_clasificacion.py` — nuevo
-- `tests/test_contrato_santander.py` — nuevo
-
-**Estado del proyecto al cierre:**
-
-| Módulo | Estado |
-|---|---|
-| Parser Santander (XLS → Inbox) | ✅ Funcional |
-| Inbox UI (viewport, navegación, edición) | ✅ Funcional |
-| Motor IA (diccionario + regex) | ✅ Funcional |
-| Detección de cuotas (regex financiero) | ✅ Funcional |
-| Cross-platform Termux/Windows | ✅ Funcional |
-| Gobernanza Alta Subcategoría (Panel + 6 criterios) | ✅ Funcional |
-| Foreign Keys activas en runtime | ✅ Funcional |
-| Sistema de logging (consola + FileHandler) | ✅ Funcional |
-| Auditoría en DB (`auditoria_movimientos`) | ⚠️ Parcial |
-| Contract Test Santander (formato Excel) | ✅ Funcional |
-| `manage.py` unificado | ❌ Pendiente |
-| Parser MercadoPago | ❌ Pendiente |
+**Estado del repo al cierre:**
+- Repo GitHub: `github.com/bandar-urion/SIGAP` ✅
+- Historial limpio (sin credenciales en ningún commit) ✅
+- Suite: 66/66 OK ✅
 
 **Próximas tareas (en orden de prioridad):**
 
-1. **[DOC]** Actualizar `Contexto.md` y hacer push a origin
-2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
-3. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-4. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada para testing
-5. **[FEAT]** Crear `manage.py` como CLI unificado
-6. **[FEAT]** Parser MercadoPago
+1. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+2. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
+3. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada
+4. **[FEAT]** Crear `manage.py` como CLI unificado
+5. **[FEAT]** Parser MercadoPago
 
 ---
-*Actualizado por Claude Sonnet · Sesión #8 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #9 · Proyecto Fénix v0.7.0*
