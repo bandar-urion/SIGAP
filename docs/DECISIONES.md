@@ -209,3 +209,40 @@
 ---
 
 *DECISIONES.md — Proyecto Fénix · Martín · Creado Sesión #8 · 2026-03-13*
+
+---
+
+## D-010 — Archivos de credenciales nunca en el repositorio
+
+**Fecha:** 2026-03-14
+**Sesión:** #8 (cierre)
+**Contexto emergente:** Durante el push inicial al repo `SIGAP` en GitHub, el Secret
+Scanning de GitHub bloqueó el push porque el historial contenía
+`scripts/credenciales.json` — una service account key de Google Cloud commiteada
+en los primeros commits del proyecto (enero 2026), cuando el proyecto usaba
+Google Sheets como backend.
+
+El archivo había sido movido a `scripts/_legacy/` en un refactor posterior,
+pero seguía presente en el historial de Git en ambas rutas.
+
+**Acciones tomadas:**
+1. Service account revocada en Google Cloud Console (proyecto `gastos-python-485019`)
+2. Historial reescrito con `git filter-branch` para eliminar el archivo de los 61 commits
+3. Push forzado (`--force`) a todas las branches del repo `SIGAP`
+
+**Decisión:** Ningún archivo de credenciales, tokens, API keys o secrets
+se commitea al repositorio bajo ninguna circunstancia. El patrón
+`*credencial*.json` ya estaba en `.gitignore` — la falla ocurrió antes
+de que ese patrón existiera.
+
+**Regla operativa:** Antes de hacer el primer commit de un archivo nuevo,
+verificar que no contenga ningún tipo de credencial o secret. Si hay dudas:
+`git diff --cached` antes de `git commit`.
+
+**Consecuencias:**
+- Positiva: historial limpio, credencial revocada, GitHub Secret Scanning activo como guardia
+- Negativa: los hashes de todos los commits cambiaron por la reescritura — cualquier
+  referencia externa a commits anteriores queda inválida
+
+*Nota: el repo anterior `ControlGastos` en GitHub fue reemplazado por `SIGAP`
+como parte de esta sesión.*
