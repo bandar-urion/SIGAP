@@ -189,6 +189,8 @@ ControlGastos/
 3. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada
 4. **[FEAT]** Crear `manage.py` como CLI unificado
 5. **[FEAT]** Parser MercadoPago
+6. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías) — parte de manage.py. Contexto distinto al alta en caliente de inbox_movimientos.py. Las reglas de gobernanza aplican igual en ambos contextos.
+7. **[DOC]** Crear diagrama/mapa de la suite de tests — qué módulo cubre cada archivo, qué flujos cubren los robots de QA. Puede vivir en docs/ o como sección en DOCUMENTACION.md.
 
 ---
 *Actualizado por Claude Sonnet · Sesión #9 · Proyecto Fénix v0.7.0*

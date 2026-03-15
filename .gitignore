@@ -27,3 +27,4 @@ __pycache__/
 *.pyo
 ~$*.xlsx
 *.zip
+.claude/settings.local.json
