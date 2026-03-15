@@ -151,38 +151,35 @@ SIGAP/
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-03-15
-**Sesión:** #10 — Auditoría de importación y robots de QA
+**Sesión:** #11 — Revisión documental y sincronización v0.8.0
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-
-- Instalación de Claude Code nativo en Entorno A (Windows 11 · VSCode); generación de `CLAUDE.md`.
-- Sincronización del repo desde Entorno B.
-- Completado el flujo de `auditoria_movimientos` en `scripts/import_santander.py`:
-  - Caso OK: movimiento insertado → `resultado='OK'`, `id_movimiento_ref=lastrowid`.
-  - Caso SKIP: duplicado silencioso (`rowcount=0`) → `resultado='SKIP_DUPLICADO'`.
-  - Caso DESCARTADO: descarte por usuario → `resultado='DESCARTADO_USUARIO'`.
-  - Los tres INSERTs ocurren antes del `conn.commit()`.
-- Creados 5 robots de QA en `tests/test_robots_gobernanza.py`:
-  - `test_robot_crear_subcategoria_nueva`
-  - `test_robot_rechazo_duplicado_exacto`
-  - `test_robot_alerta_similitud`
-  - `test_robot_justificacion_requerida`
-  - `test_robot_cancelacion_por_usuario`
+- Revisión y sincronización completa de documentación con estado real del proyecto.
+- CHANGELOG.md: entrada v0.8.0 agregada (auditoría completa + robots QA).
+- DOCUMENTACION.md: corregido `control_gastos.db` → `sigap.db`, sección 4.3 actualizada, hito obsoleto eliminado.
+- ROADMAP.md: sección `✅ HITOS COMPLETADOS` creada con Hito 4.0.
+- TODO.md: FASE 1 robots QA marcados completos.
+- Contexto.md: versión, árbol y tabla de módulos sincronizados.
+- VIBE_CODING_SKILLS.md movido de raíz a `docs/`.
+- `docs/Gemini.md` y `docs/Gemini_Config.md` eliminados (LLM anterior).
+- `CLAUDE.md` incorporado al tracking de Git.
+- Decisión: `manage.py` renombrado a `sigap.py` (ya existe como orquestador base).
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅
+- Documentación sincronizada con v0.8.0 ✅
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`: identifica el módulo origen del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`), no una persona. Agregar a `DOCUMENTACION.md` sección Reglas de Negocio y crear entrada en `docs/DECISIONES.md`
-2. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada
-3. **[FEAT]** Crear `manage.py` como CLI unificado
-4. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías) — parte de manage.py. Contexto distinto al alta en caliente de inbox_movimientos.py. Las reglas de gobernanza aplican igual en ambos contextos.
-5. **[FEAT]** Parser MercadoPago
-6. **[DOC]** Crear diagrama/mapa de la suite de tests — qué módulo cubre cada archivo, qué flujos cubren los robots de QA. Puede vivir en docs/ o como sección en DOCUMENTACION.md.
-7. **[DOC]** Revisión estructural completa de `ROADMAP.md` — hitos completados sin marcar, jerarquía inconsistente, notas temporales obsoletas.
+1. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
+2. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos` → `DOCUMENTACION.md` + `docs/DECISIONES.md`.
+3. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada.
+4. **[FEAT]** Expandir `sigap.py` como CLI unificado (reemplaza `manage.py`).
+5. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías).
+6. **[FEAT]** Parser MercadoPago.
+7. **[DOC]** Diagrama/mapa de la suite de tests.
 
 ---
 *Actualizado por Claude Sonnet · Sesión #11 · Proyecto Fénix v0.8.0*
