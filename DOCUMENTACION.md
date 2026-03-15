@@ -72,7 +72,7 @@ La justificación final del desarrollo no es reemplazar a la IA, sino **potencia
 
 # **3. PRINCIPIOS DE DISEÑO Y DOCTRINA UX**
 
-* **Persistencia:** Todo vive en SQLite local (control_gastos.db).
+* **Persistencia:** Todo vive en SQLite local (`sigap.db`).
 * **Integridad:** No se permite redundancia. Uso estricto de IDs y Foreign Keys (3NF).
 * **Gobernanza:** Reglas claras para evitar la "granulación excesiva" (micro-management).
 
@@ -126,10 +126,11 @@ Para garantizar la calidad y evitar la degradación del código (Spaghetti Code)
 5.  **Debriefing (Doc Update):** Se actualiza la documentación para reflejar cambios.
 
 ### **4.3. STACK DE HERRAMIENTAS**
-* **Gestión de Versiones:** Git (Local en Termux).
-* **IDE:** VS Code (Code-Server sobre Android).
+* **Gestión de Versiones:** Git.
+* **IDE:** VS Code.
 * **Motor de Base de Datos:** SQLite 3.
 * **Lenguaje de Scripting:** Python 3.
+* **Entornos de desarrollo:** Ver `Contexto.md` (Entorno A — Windows · Entorno B — Termux/Android).
 
 ### **4.4. ESTÁNDARES DE VERSIONADO**
 El proyecto adhiere estrictamente a **Conventional Commits** y **Semantic Versioning**.
@@ -239,14 +240,3 @@ Prohibido `DELETE` físico. Uso de `activo = False`.
 Definición de Topes de Gasto y alertas de desvío presupuestario.
 
 ---
-
-## [2026-02-01] Hito 4.0: Doctrina UX & IntelliSense (Planificación)
-**Estado:** EN DISEÑO
-**Cambios:**
-- Definición de la "Doctrina UX v4.0" (Flow State).
-- Renombrado de `inbox_movimientos.py` a `inbox_movimientos.py`.
-- Diseño de arquitectura de pantalla dividida (Dashboard Estático / Input Dinámico).
-- Especificación de IntelliSense con feedback auditivo.
-**Próximos Pasos:**
-- Refactorizar `inbox_movimientos.py` implementando la nueva UI.
-- Implementar búsqueda incremental en base de datos.

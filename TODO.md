@@ -23,9 +23,9 @@ Este documento reemplaza temporalmente las listas dispersas y establece el orden
     - [x] Panel de Gobernanza con 3 flujos: directo (ENTER), con similares, con justificación.
 - [x] **Trazabilidad (Módulo Auditoría):** *(Sesión #4 — 2026-03-09)*
     - [x] Disparar `INSERT` en `auditoria_movimientos` con justificación del usuario tras cada alta.
-- [ ] **Suite de QA (Robots de Prueba):** *(pendiente)*
-    - [ ] Crear `test_robot_crear_subcategoria_nueva`.
-    - [ ] Crear `test_robot_rechazo_por_gobernanza`.
+- [x] **Suite de QA (Robots de Prueba):** *(Sesión #10 — 2026-03-15)*
+    - [x] Crear `test_robot_crear_subcategoria_nueva`. *(Sesión #10 — 2026-03-15)*
+    - [x] Crear `test_robot_rechazo_por_gobernanza`. *(Sesión #10 — 2026-03-15)*
 
 ## 🧠 FASE 2: INTELIGENCIA Y PROYECCIÓN (PRÓXIMO HITO)
 *Objetivo: Dotar al sistema de inferencia financiera y ampliar la ingesta de datos.*

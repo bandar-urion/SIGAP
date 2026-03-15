@@ -70,10 +70,11 @@ los categoriza con un motor de IA propio (diccionario + regex), y los almacena e
 ## ESTRUCTURA DEL PROYECTO
 
 ```
-ControlGastos/
+SIGAP/
 ├── sigap.py                          # Orquestador CLI (status / reset)
 ├── sigap_config.py                   # Config centralizada (lee sigap.cfg)
 ├── sigap.cfg                         # Parámetros: DB, rutas, UI, LOG_LEVEL
+├── CLAUDE.md                         # Configuración para Claude Code
 ├── Contexto.md                       # ← Este archivo (guía de sesión IA)
 ├── data/
 │   ├── sigap.db                      # Base de datos SQLite (fuente de verdad)
@@ -96,20 +97,23 @@ ControlGastos/
 │   ├── test_importacion.py           # Integridad DB + deduplicación
 │   ├── test_database_init.py         # Esquema SQL
 │   ├── test_avanzado.py              # Casos extremos / tortura
-│   ├── test_gobernanza_similitud.py  # ⭐ Motor de Gobernanza (25 tests)
-│   └── test_ui_inbox_movimientos.py  # UI mocks
+│   ├── test_gobernanza_similitud.py  # Motor de Gobernanza (25 tests)
+│   ├── test_ui_inbox_movimientos.py  # UI mocks
+│   └── test_robots_gobernanza.py     # ⭐ Robots de QA (5 robots)
 ├── docs/
 │   ├── ADR-001-Motor-Base-Datos.md
 │   ├── ADR-002-Modelo-Gobernanza.md
 │   ├── GUIA_GIT.md
-│   └── SESIONES.md                   # Bitácora de sesiones
+│   ├── DECISIONES.md                 # Decisiones arquitectónicas (D-001 a D-010)
+│   ├── SESIONES.md                   # Bitácora de sesiones
+│   └── VIBE_CODING_SKILLS.md
 └── logs/
     └── sigap_tecnico.log             # Log técnico rotativo
 ```
 
 ---
 
-## VERSIÓN ACTUAL: v0.7.0
+## VERSIÓN ACTUAL: v0.8.0
 
 | Módulo | Estado |
 |---|---|
@@ -120,7 +124,7 @@ ControlGastos/
 | Cross-platform Termux/Windows | ✅ Funcional |
 | Gobernanza Alta Subcategoría (Panel + 6 criterios) | ✅ Funcional |
 | Sistema de logging (consola + archivo) | ✅ Funcional |
-| Auditoría en DB (`auditoria_movimientos`) | ⚠️ Parcial |
+| Auditoría en DB (`auditoria_movimientos`) | ✅ Funcional |
 | `manage.py` unificado | ❌ Pendiente |
 | Parser MercadoPago | ❌ Pendiente |
 | Dashboard Streamlit | 🔮 Backlog |
@@ -178,8 +182,7 @@ ControlGastos/
 4. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías) — parte de manage.py. Contexto distinto al alta en caliente de inbox_movimientos.py. Las reglas de gobernanza aplican igual en ambos contextos.
 5. **[FEAT]** Parser MercadoPago
 6. **[DOC]** Crear diagrama/mapa de la suite de tests — qué módulo cubre cada archivo, qué flujos cubren los robots de QA. Puede vivir en docs/ o como sección en DOCUMENTACION.md.
-7. Estructura del proyecto — todavía dice ControlGastos/ en el árbol y le faltan archivos nuevos (tests/test_robots_gobernanza.py, CLAUDE.md, docs/DECISIONES.md).
-8. Versión — la auditoría ya está completa pero figura como ⚠️ Parcial.
+7. **[DOC]** Revisión estructural completa de `ROADMAP.md` — hitos completados sin marcar, jerarquía inconsistente, notas temporales obsoletas.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #10 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #11 · Proyecto Fénix v0.8.0*

@@ -2,6 +2,33 @@
 
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
+
+## [v0.8.0] - 2026-03-15 (Hito: Auditoría Completa y Robots de QA)
+
+### 🛡️ Auditoría & Trazabilidad
+- **Flujo de `auditoria_movimientos` completado** en `scripts/import_santander.py`.
+  Tres casos cubiertos con registro atómico (antes del `conn.commit()`):
+  - `resultado='OK'` — movimiento insertado, `id_movimiento_ref=lastrowid`.
+  - `resultado='SKIP_DUPLICADO'` — duplicado silencioso (`rowcount=0`).
+  - `resultado='DESCARTADO_USUARIO'` — descarte explícito por el operador.
+- **Campo `usuario`** en `auditoria_movimientos`: identifica el módulo origen
+  del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`),
+  no una persona física.
+
+### 🧪 Calidad (QA)
+- **`tests/test_robots_gobernanza.py`:** 5 robots de QA para el flujo
+  de alta de subcategoría:
+  - `test_robot_crear_subcategoria_nueva`
+  - `test_robot_rechazo_duplicado_exacto`
+  - `test_robot_alerta_similitud`
+  - `test_robot_justificacion_requerida`
+  - `test_robot_cancelacion_por_usuario`
+- **Suite final: 71/71 OK** (era 66 al inicio de la sesión).
+
+### 🛠️ Tooling
+- **Claude Code** instalado en Entorno A (Windows 11 · VSCode).
+  Generado `CLAUDE.md` con configuración del proyecto para el agente.
+
 ## [v0.7.0] - 2026-03-05 (Hito: Refactor Semántico e Inbox)
 
 ### 🚀 Arquitectura y Dominio
