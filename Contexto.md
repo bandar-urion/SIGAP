@@ -129,18 +129,7 @@ ControlGastos/
 
 ## BUGS CONOCIDOS (PENDIENTES DE FIX)
 
-> ✅ Sin bugs críticos conocidos al cierre de Sesión #7.
-> Los bugs `tx → mov` (import_santander.py) y ruta DB (sigap.py) fueron
-> resueltos en sesiones anteriores y verificados en código el 2026-03-10.
-
----
-
-## PRÓXIMAS TAREAS (en orden de prioridad)
-
-1. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`: identifica el módulo origen del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`), no una persona. Agregar a `DOCUMENTACION.md` sección Reglas de Negocio y crear entrada en `docs/DECISIONES.md`
-2. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-3. **[FEAT]** Crear `manage.py` como CLI unificado
-4. **[FEAT]** Parser MercadoPago
+> ✅ Sin bugs críticos conocidos al cierre de Sesión #10.
 
 ---
 
@@ -157,40 +146,40 @@ ControlGastos/
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-14
-**Sesión:** #9 — Limpieza de repo, migración a SIGAP y seguridad
-**Entorno:** B (Samsung S21 Ultra · Termux)
+**Fecha:** 2026-03-15
+**Sesión:** #10 — Auditoría de importación y robots de QA
+**Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
 
-- Push inicial al nuevo repo `SIGAP` en GitHub (migración desde `ControlGastos`).
-- Resolución de autenticación Git en Termux: credential helper `store` configurado.
-- GitHub Secret Scanning bloqueó el push: detectó `scripts/credenciales.json`
-  (service account key de Google Cloud, commiteada en enero 2026).
-- Service account revocada en Google Cloud Console (proyecto `gastos-python-485019`).
-- Historial reescrito con `git filter-branch` — eliminado `credenciales.json`
-  de ambas rutas (`scripts/` y `scripts/_legacy/`) en los 61 commits históricos.
-- Push forzado `--all --force` — las 3 branches subidas limpias: `main`,
-  `desarrollo`, `feature/importar-movimiento`.
-- `logs/sigap_tecnico.log` y `data/sigap.db` sacados del índice de Git
-  (`git rm --cached`).
-- `docs/DECISIONES.md`: agregada D-010 — credenciales nunca en el repo.
+- Instalación de Claude Code nativo en Entorno A (Windows 11 · VSCode); generación de `CLAUDE.md`.
+- Sincronización del repo desde Entorno B.
+- Completado el flujo de `auditoria_movimientos` en `scripts/import_santander.py`:
+  - Caso OK: movimiento insertado → `resultado='OK'`, `id_movimiento_ref=lastrowid`.
+  - Caso SKIP: duplicado silencioso (`rowcount=0`) → `resultado='SKIP_DUPLICADO'`.
+  - Caso DESCARTADO: descarte por usuario → `resultado='DESCARTADO_USUARIO'`.
+  - Los tres INSERTs ocurren antes del `conn.commit()`.
+- Creados 5 robots de QA en `tests/test_robots_gobernanza.py`:
+  - `test_robot_crear_subcategoria_nueva`
+  - `test_robot_rechazo_duplicado_exacto`
+  - `test_robot_alerta_similitud`
+  - `test_robot_justificacion_requerida`
+  - `test_robot_cancelacion_por_usuario`
 
 **Estado del repo al cierre:**
-- Repo GitHub: `github.com/bandar-urion/SIGAP` ✅
-- Historial limpio (sin credenciales en ningún commit) ✅
-- Suite: 66/66 OK ✅
+- Suite: 71/71 OK ✅
 
-**Próximas tareas (en orden de prioridad):**
+## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
-2. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-3. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada
-4. **[FEAT]** Crear `manage.py` como CLI unificado
+1. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`: identifica el módulo origen del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`), no una persona. Agregar a `DOCUMENTACION.md` sección Reglas de Negocio y crear entrada en `docs/DECISIONES.md`
+2. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada
+3. **[FEAT]** Crear `manage.py` como CLI unificado
+4. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías) — parte de manage.py. Contexto distinto al alta en caliente de inbox_movimientos.py. Las reglas de gobernanza aplican igual en ambos contextos.
 5. **[FEAT]** Parser MercadoPago
-6. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías) — parte de manage.py. Contexto distinto al alta en caliente de inbox_movimientos.py. Las reglas de gobernanza aplican igual en ambos contextos.
-7. **[DOC]** Crear diagrama/mapa de la suite de tests — qué módulo cubre cada archivo, qué flujos cubren los robots de QA. Puede vivir en docs/ o como sección en DOCUMENTACION.md.
+6. **[DOC]** Crear diagrama/mapa de la suite de tests — qué módulo cubre cada archivo, qué flujos cubren los robots de QA. Puede vivir en docs/ o como sección en DOCUMENTACION.md.
+7. Estructura del proyecto — todavía dice ControlGastos/ en el árbol y le faltan archivos nuevos (tests/test_robots_gobernanza.py, CLAUDE.md, docs/DECISIONES.md).
+8. Versión — la auditoría ya está completa pero figura como ⚠️ Parcial.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #9 · Proyecto Fénix v0.7.0*
+*Actualizado por Claude Sonnet · Sesión #10 · Proyecto Fénix v0.7.0*
