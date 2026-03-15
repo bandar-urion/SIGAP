@@ -137,11 +137,10 @@ ControlGastos/
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Crear `DECISIONES.md` con primeras entradas retroactivas de decisiones clave
-2. **[FEAT]** Completar flujo de auditoría (`auditoria_movimientos`) en importación
+1. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`: identifica el módulo origen del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`), no una persona. Agregar a `DOCUMENTACION.md` sección Reglas de Negocio y crear entrada en `docs/DECISIONES.md`
+2. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
 3. **[FEAT]** Crear `manage.py` como CLI unificado
-4. **[FEAT]** Robots de QA: `test_robot_crear_subcategoria_nueva` y `test_robot_rechazo_por_gobernanza`
-5. **[FEAT]** Parser MercadoPago
+4. **[FEAT]** Parser MercadoPago
 
 ---
 
