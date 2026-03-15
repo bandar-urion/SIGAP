@@ -98,7 +98,14 @@ def main():
             n_pendientes = 0
             n_descartados = 0
 
+            _AUDIT_SQL = """
+                INSERT INTO auditoria_movimientos (accion, usuario, id_movimiento_ref, estado_previo, estado_nuevo, resultado)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """
+
             for mov in lista_movs:
+                _estado_nuevo = f'ref:{mov.referencia} | fecha:{mov.fecha_fmt} | monto:{mov.monto} | desc:{mov.descripcion_final}'
+
                 if mov.estado in ['LISTO', 'AUTO']:
                     cursor.execute("""
                         INSERT OR IGNORE INTO movimientos
@@ -109,14 +116,19 @@ def main():
                     # Verificamos si se insertó realmente (rowcount > 0)
                     if cursor.rowcount > 0:
                         n_guardados += 1
+                        _mov_id = cursor.lastrowid
                         if mov.nuevo_sinonimo:
                             try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (mov.nuevo_sinonimo, mov.id_subcat))
                             except: pass
+                        cursor.execute(_AUDIT_SQL, ('IMPORTAR_MOV', 'SIGAP_IMPORT', _mov_id, 'INEXISTENTE', _estado_nuevo, 'OK'))
+                    else:
+                        cursor.execute(_AUDIT_SQL, ('IMPORTAR_MOV', 'SIGAP_IMPORT', None, 'EXISTENTE', _estado_nuevo, 'SKIP_DUPLICADO'))
 
                 elif mov.estado == 'PENDIENTE':
                     n_pendientes += 1
                 elif mov.estado == 'DESCARTADO':
                     n_descartados += 1
+                    cursor.execute(_AUDIT_SQL, ('IMPORTAR_MOV', 'SIGAP_IMPORT', None, 'PENDIENTE', _estado_nuevo, 'DESCARTADO_USUARIO'))
 
             conn.commit()
 
