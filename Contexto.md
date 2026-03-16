@@ -148,32 +148,62 @@ SIGAP/
 
 ---
 
+## PROTOCOLO DE CIERRE DE SESIÓN
+
+> Ejecutar en orden al finalizar cada sesión de trabajo.
+
+### 1. Revisión documental (copiloto)
+El copiloto revisa el trabajo de la sesión y determina qué documentos requieren actualización:
+
+| Documento          | Actualizar cuando...                                       |
+| ------------------ | ---------------------------------------------------------- |
+| `Contexto.md`      | **Siempre** — bloque ÚLTIMA SESIÓN + PRÓXIMAS TAREAS       |
+| `docs/SESIONES.md` | **Siempre** — entrada de la sesión                         |
+| `CHANGELOG.md`     | Se agregó feature, fix o cambio de versión                 |
+| `DOCUMENTACION.md` | Cambió arquitectura, esquema DB o comportamiento de módulo |
+| `ROADMAP.md`       | Se completó un hito o cambió la planificación              |
+| `TODO.md`          | Se completaron o agregaron tareas                          |
+| `CLAUDE.md`        | Cambió configuración relevante para Claude Code            |
+
+### 2. Generación de bloques de cierre
+El copiloto genera el texto actualizado para cada documento que corresponda.
+
+### 3. Commit de cierre
+Mensaje estándar:
+```
+docs: cierre Sesión #NN — <resumen de una línea>
+```
+
+### 4. Verificar sync a Drive
+Confirmar que el hook `post-commit` disparó correctamente en el entorno activo.
+
+---
+
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-03-16
-**Sesión:** #12 — Infraestructura de sincronización Drive + rclone
-**Entorno:** B (Samsung S21 Ultra · Termux · Code-Server)
+**Sesión:** #12 y #13 — Pipeline sync Drive (Entorno B + Entorno A)
+**Entornos:** B (Termux · Code-Server) → A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
 - Instalación y configuración de `rclone` en Termux con autenticación OAuth a Google Drive.
-- Creación de carpeta `gdrive:SIGAP` en Google Drive como espejo del repo.
-- Sincronización manual inicial exitosa del repo completo (sin `.git`).
-- Implementación de Git hook `post-commit` en `.git/hooks/post-commit` para sync automático tras cada commit.
-- Verificación del hook desde terminal y desde Code-Server — ambos funcionales.
+- Creación de carpeta `gdrive:SIGAP` como espejo del repo en Drive.
+- Hook `post-commit` en Entorno B: `rclone copy` automático tras cada commit.
+- Hook `post-commit` en Entorno A: `robocopy` con flags `//` para compatibilidad Git Bash/Windows.
 - Activación del conector "Búsqueda en Drive" en el Project Fénix de Claude.ai.
-- Reset limpio de branch local tras divergencia con origin (7 commits de origin, 2 locales de prueba).
-- TODO identificado: retomar branch `remotes/origin/refactor-modular` (refactor atómico de .py por función).
-- Pendiente Entorno A: configurar hook equivalente en PowerShell (Drive for Desktop ya instalado).
+- Protocolo de cierre de sesión formalizado y agregado al `Contexto.md`.
+- Reset limpio de branch local por divergencia con origin (sesión #12).
+- TODO identificado: retomar `remotes/origin/refactor-modular`.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅ (sin cambios de código en esta sesión)
-- Pipeline Drive sync operativo ✅
+- Suite: 71/71 OK ✅ (sin cambios de código en estas sesiones)
+- Pipeline Drive sync operativo en ambos entornos ✅
 - Branch sincronizada con origin ✅
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[INFRA]** Configurar hook `post-commit` en Entorno A (Windows/PowerShell).
+1. **[INFRA]** Verificar indexación Drive en Claude.ai al inicio de próxima sesión.
 2. **[REFACTOR]** Retomar `refactor-modular`: descomposición atómica de módulos .py por función.
 3. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
 4. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos` → `DOCUMENTACION.md` + `docs/DECISIONES.md`.
@@ -184,4 +214,4 @@ SIGAP/
 9. **[DOC]** Diagrama/mapa de la suite de tests.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #12 · Proyecto Fénix v0.8.0*
+*Actualizado por Claude Sonnet · Sesión #13 · Proyecto Fénix v0.8.0*

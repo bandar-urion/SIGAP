@@ -23,3 +23,18 @@ automático al código fuente del proyecto. Reset de branch por divergencia con 
 **Pendiente para próxima sesión:**
 - Hook equivalente en Entorno A (Windows).
 - Retomar refactor-modular.
+
+---
+
+### Sesión #13 — 2026-03-16
+**Entorno:** A (Windows 11 · VSCode)
+**Foco:** Infraestructura — hook post-commit Drive en Windows
+
+**Resumen:**
+Configuración del hook post-commit en Entorno A usando robocopy con flags //
+para compatibilidad Git Bash/Windows. Pipeline sync completo y operativo en
+ambos entornos. Protocolo de cierre de sesión formalizado en Contexto.md.
+```
+
+---
+
