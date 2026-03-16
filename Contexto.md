@@ -150,36 +150,38 @@ SIGAP/
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-15
-**Sesión:** #11 — Revisión documental y sincronización v0.8.0
-**Entorno:** A (Windows 11 · VSCode)
+**Fecha:** 2026-03-16
+**Sesión:** #12 — Infraestructura de sincronización Drive + rclone
+**Entorno:** B (Samsung S21 Ultra · Termux · Code-Server)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Revisión y sincronización completa de documentación con estado real del proyecto.
-- CHANGELOG.md: entrada v0.8.0 agregada (auditoría completa + robots QA).
-- DOCUMENTACION.md: corregido `control_gastos.db` → `sigap.db`, sección 4.3 actualizada, hito obsoleto eliminado.
-- ROADMAP.md: sección `✅ HITOS COMPLETADOS` creada con Hito 4.0.
-- TODO.md: FASE 1 robots QA marcados completos.
-- Contexto.md: versión, árbol y tabla de módulos sincronizados.
-- VIBE_CODING_SKILLS.md movido de raíz a `docs/`.
-- `docs/Gemini.md` y `docs/Gemini_Config.md` eliminados (LLM anterior).
-- `CLAUDE.md` incorporado al tracking de Git.
-- Decisión: `manage.py` renombrado a `sigap.py` (ya existe como orquestador base).
+- Instalación y configuración de `rclone` en Termux con autenticación OAuth a Google Drive.
+- Creación de carpeta `gdrive:SIGAP` en Google Drive como espejo del repo.
+- Sincronización manual inicial exitosa del repo completo (sin `.git`).
+- Implementación de Git hook `post-commit` en `.git/hooks/post-commit` para sync automático tras cada commit.
+- Verificación del hook desde terminal y desde Code-Server — ambos funcionales.
+- Activación del conector "Búsqueda en Drive" en el Project Fénix de Claude.ai.
+- Reset limpio de branch local tras divergencia con origin (7 commits de origin, 2 locales de prueba).
+- TODO identificado: retomar branch `remotes/origin/refactor-modular` (refactor atómico de .py por función).
+- Pendiente Entorno A: configurar hook equivalente en PowerShell (Drive for Desktop ya instalado).
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅
-- Documentación sincronizada con v0.8.0 ✅
+- Suite: 71/71 OK ✅ (sin cambios de código en esta sesión)
+- Pipeline Drive sync operativo ✅
+- Branch sincronizada con origin ✅
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
-2. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos` → `DOCUMENTACION.md` + `docs/DECISIONES.md`.
-3. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada.
-4. **[FEAT]** Expandir `sigap.py` como CLI unificado (reemplaza `manage.py`).
-5. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías).
-6. **[FEAT]** Parser MercadoPago.
-7. **[DOC]** Diagrama/mapa de la suite de tests.
+1. **[INFRA]** Configurar hook `post-commit` en Entorno A (Windows/PowerShell).
+2. **[REFACTOR]** Retomar `refactor-modular`: descomposición atómica de módulos .py por función.
+3. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
+4. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos` → `DOCUMENTACION.md` + `docs/DECISIONES.md`.
+5. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada.
+6. **[FEAT]** Expandir `sigap.py` como CLI unificado (reemplaza `manage.py`).
+7. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías).
+8. **[FEAT]** Parser MercadoPago.
+9. **[DOC]** Diagrama/mapa de la suite de tests.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #11 · Proyecto Fénix v0.8.0*
+*Actualizado por Claude Sonnet · Sesión #12 · Proyecto Fénix v0.8.0*
