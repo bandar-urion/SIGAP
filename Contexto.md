@@ -181,37 +181,38 @@ Confirmar que el hook `post-commit` disparó correctamente en el entorno activo.
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-16
-**Sesión:** #12 y #13 — Pipeline sync Drive (Entorno B + Entorno A)
-**Entornos:** B (Termux · Code-Server) → A (Windows 11 · VSCode)
+**Fecha:** 2026-03-17
+**Sesión:** #12, #13 y #14 — Pipeline Drive + Conector GitHub + Baja hooks
+**Entornos:** B → A → B
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
 - Instalación y configuración de `rclone` en Termux con autenticación OAuth a Google Drive.
 - Creación de carpeta `gdrive:SIGAP` como espejo del repo en Drive.
-- Hook `post-commit` en Entorno B: `rclone copy` automático tras cada commit.
-- Hook `post-commit` en Entorno A: `robocopy` con flags `//` para compatibilidad Git Bash/Windows.
-- Activación del conector "Búsqueda en Drive" en el Project Fénix de Claude.ai.
-- Protocolo de cierre de sesión formalizado y agregado al `Contexto.md`.
-- Reset limpio de branch local por divergencia con origin (sesión #12).
-- TODO identificado: retomar `remotes/origin/refactor-modular`.
+- Hook `post-commit` en Entorno B y A: creados y luego dados de baja.
+- Skill `sigap` creada y empaquetada como `sigap.skill` (209 líneas).
+- Conector GitHub habilitado en Claude para el proyecto SIGAP.
+- Hook GDrive dado de baja en Entorno A y Entorno B. ✅
+- `refactor-modular` diagnosticada: branch sucia, solo referencia de diseño.
+- Confirmado: repo local limpio. Carpetas `.git (1)/.git (2)` en GitHub son artefacto visual.
+- Protocolo de cierre de sesión formalizado.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅ (sin cambios de código en estas sesiones)
-- Pipeline Drive sync operativo en ambos entornos ✅
-- Branch sincronizada con origin ✅
+- Suite: 71/71 OK ✅
+- Hook GDrive eliminado en ambos entornos ✅
+- Conector GitHub activo e indexando ✅
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[INFRA]** Verificar indexación Drive en Claude.ai al inicio de próxima sesión.
+1. **[INFRA]** Verificar indexación GitHub en Claude.ai al inicio de próxima sesión.
 2. **[REFACTOR]** Retomar `refactor-modular`: descomposición atómica de módulos .py por función.
 3. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
-4. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos` → `DOCUMENTACION.md` + `docs/DECISIONES.md`.
-5. **[FEAT]** Desacoplamiento del parser: función `parsear_excel_santander()` aislada.
-6. **[FEAT]** Expandir `sigap.py` como CLI unificado (reemplaza `manage.py`).
-7. **[FEAT]** Módulo ABM standalone de catálogo (CC, MP, Categorías, Subcategorías).
+4. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`.
+5. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada.
+6. **[FEAT]** Expandir `sigap.py` como CLI unificado.
+7. **[FEAT]** Módulo ABM standalone de catálogo.
 8. **[FEAT]** Parser MercadoPago.
 9. **[DOC]** Diagrama/mapa de la suite de tests.
 
 ---
-*Actualizado por Claude Sonnet · Sesión #13 · Proyecto Fénix v0.8.0*
+*Actualizado por Claude Sonnet · Sesión #14 · Proyecto Fénix v0.8.0*
