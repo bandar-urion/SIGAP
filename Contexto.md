@@ -51,6 +51,9 @@ Este proyecto es el **"Proyecto Fénix"**: un programa personal de actualizació
 > Recordatorio: antes de cada commit verificar que estamos en la branch correcta.
 > `git branch --show-current`
 
+- `refactor-modular` — branch sucia del refactor anterior (otro LLM).
+  No hacer merge. Usar solo como referencia de diseño modular.
+
 ---
 
 ## QUÉ ES S.I.G.A.P.
@@ -181,38 +184,33 @@ Confirmar que el hook `post-commit` disparó correctamente en el entorno activo.
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-17
-**Sesión:** #12, #13 y #14 — Pipeline Drive + Conector GitHub + Baja hooks
-**Entornos:** B → A → B
+**Fecha:** 2026-03-16
+**Sesión:** #12 — Conector GitHub + Limpieza de hooks
+**Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Instalación y configuración de `rclone` en Termux con autenticación OAuth a Google Drive.
-- Creación de carpeta `gdrive:SIGAP` como espejo del repo en Drive.
-- Hook `post-commit` en Entorno B y A: creados y luego dados de baja.
 - Skill `sigap` creada y empaquetada como `sigap.skill` (209 líneas).
-- Conector GitHub habilitado en Claude para el proyecto SIGAP.
-- Hook GDrive dado de baja en Entorno A y Entorno B. ✅
-- `refactor-modular` diagnosticada: branch sucia, solo referencia de diseño.
-- Confirmado: repo local limpio. Carpetas `.git (1)/.git (2)` en GitHub son artefacto visual.
-- Protocolo de cierre de sesión formalizado.
+- Conector GitHub habilitado en Claude para el proyecto SIGAP (indexando).
+- Hook GDrive (`post-commit`) dado de baja en Entorno A — reemplazado por conector GitHub.
+- `refactor-modular` diagnosticada: branch sucia (pycache, credenciales, desktop.ini),
+  útil solo como referencia de diseño para el refactor modular futuro.
+- Confirmado: repo local limpio. Carpetas `.git (1)/.git (2)` visibles en GitHub
+  son artefacto visual de esa branch, no existen en disco.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅
-- Hook GDrive eliminado en ambos entornos ✅
+- Suite: 71/71 OK ✅ (sin cambios)
+- Hook GDrive eliminado ✅
 - Conector GitHub activo e indexando ✅
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[INFRA]** Verificar indexación GitHub en Claude.ai al inicio de próxima sesión.
-2. **[REFACTOR]** Retomar `refactor-modular`: descomposición atómica de módulos .py por función.
-3. **[DOC]** Revisión estructural completa de `ROADMAP.md`.
-4. **[DOC]** Documentar convención del campo `usuario` en `auditoria_movimientos`.
-5. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada.
-6. **[FEAT]** Expandir `sigap.py` como CLI unificado.
-7. **[FEAT]** Módulo ABM standalone de catálogo.
-8. **[FEAT]** Parser MercadoPago.
-9. **[DOC]** Diagrama/mapa de la suite de tests.
-
----
-*Actualizado por Claude Sonnet · Sesión #14 · Proyecto Fénix v0.8.0*
+0. **[INFRA] 🔴 URGENTE — Entorno B:** Eliminar hook GDrive post-commit en Termux
+   `rm ~/.../SIGAP/.git/hooks/post-commit`
+1. **[DOC]** Revisión estructural completa de `ROADMAP.md`
+2. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
+3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
+4. **[FEAT]** Expandir `sigap.py` como CLI unificado
+5. **[FEAT]** Módulo ABM standalone de catálogo
+6. **[FEAT]** Parser MercadoPago
+7. **[DOC]** Diagrama/mapa de la suite de tests
