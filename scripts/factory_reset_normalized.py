@@ -3,10 +3,14 @@ import os
 import sys
 
 # =============================================================================
-# 1. CONFIGURACIÓN DE RUTAS Y ENTORNO
+# 1. CONFIGURACIÓN DE RUTAS Y ENTORNO (via sigap_config.py)
 # =============================================================================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.path.join(BASE_DIR, 'control_gastos.db')
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+import sigap_config
+DB_FILE = sigap_config.get_db_path()
 
 def ejecutar_sql(cursor, sql, params=()):
     try:
@@ -26,7 +30,7 @@ def factory_reset_normalized():
     # =============================================================================
     print("🧹 Borrando estructuras antiguas y legacy...")
     cursor.execute("PRAGMA foreign_keys = OFF;")
-    
+
     tablas_a_borrar = [
         # Tablas Operativas
         'movimientos', 'movimientos_v2', 'agenda_pagos', 'auditoria_compliance', 'auditoria_movimientos',
@@ -51,7 +55,7 @@ def factory_reset_normalized():
         cursor.execute("DELETE FROM sqlite_sequence;")
     except sqlite3.OperationalError:
         pass
-    
+
     cursor.execute("PRAGMA foreign_keys = ON;")
 
     # =============================================================================
@@ -79,7 +83,7 @@ def factory_reset_normalized():
 
     # B. PARAMETRICAS (CC, Medios, Categorías)
     cursor.execute("CREATE TABLE param_centros_costo (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL UNIQUE);")
-    
+
     cursor.execute("""
     CREATE TABLE param_medios_pago (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,7 +138,7 @@ def factory_reset_normalized():
         FOREIGN KEY (id_centro_costo) REFERENCES param_centros_costo(id)
     );""")
 
-    # D. INTELIGENCIA Y AUDITORÍA 
+    # D. INTELIGENCIA Y AUDITORÍA
     cursor.execute("""
     CREATE TABLE diccionario_terminos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,13 +253,11 @@ def factory_reset_normalized():
     # Inteligencia - diccionario_terminos
     print("   🔹 Cargando Inteligencia de Términos (Sinónimos)...")
 
-    # Helper interno para obtener el ID de la subcategoría por su nombre
     def get_subcat_id(nombre_sub):
         cursor.execute("SELECT id FROM param_subcategorias WHERE nombre = ?", (nombre_sub,))
         res = cursor.fetchone()
         return res[0] if res else None
 
-    # Mapa de Sinónimos -> Subcategoría
     sinonimos_data = [
         ('Comida Preparada', ['Sushi', 'Rotiseria', 'Delivery', 'PedidosYa', 'Pizza']),
         ('Supermercado', ['Despensa', 'Verduleria', 'Almacen', 'Carniceria', 'Chino', 'La Anonima', 'Coto', 'El coyita', 'el coyita']),
@@ -271,7 +273,6 @@ def factory_reset_normalized():
         if sid:
             for term in terminos:
                 try:
-                    # INSERT OR IGNORE para evitar duplicados.
                     cursor.execute(
                         "INSERT OR IGNORE INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)",
                         (term, sid)
@@ -289,5 +290,4 @@ def factory_reset_normalized():
     print(f"\n✅ PROTOCOLO FINALIZADO. La estructura de {DB_FILE} es ahora 100% compatible.")
 
 if __name__ == "__main__":
-    # Si se ejecuta directo, corre la función
     factory_reset_normalized()

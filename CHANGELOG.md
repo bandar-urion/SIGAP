@@ -3,6 +3,18 @@
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [v0.8.1] — 2026-04-09
+
+### Fixed
+- `scripts/factory_reset_normalized.py`: ruta de DB hardcodeada a nombre legacy
+  `control_gastos.db` corregida. Ahora usa `sigap_config.get_db_path()`.
+- `scripts/factory_reset_preserve_learning.py`: mismo fix de ruta. Ambos scripts
+  son ahora compatibles con `sigap.cfg` como única fuente de configuración.
+
+### Infra
+- Conector GitHub de Claude.ai deshabilitado. Claude Code cubre lectura,
+  escritura y ejecución en tiempo real sobre el repo local.
+
 ## [v0.8.0] - 2026-03-15 (Hito: Auditoría Completa y Robots de QA)
 
 ### 🛡️ Auditoría & Trazabilidad

@@ -3,6 +3,7 @@
 Este documento reemplaza temporalmente las listas dispersas y establece el orden estricto de ejecución para evitar el "Overkill" arquitectónico.
 
 ## 🧹 FASE 0: DEUDA TÉCNICA DOCUMENTAL (INMEDIATO)
+- [x] **Fix rutas hardcodeadas en factory_reset scripts** *(Sesión #16 — 2026-04-09)* `control_gastos.db` → `sigap_config.get_db_path()` en ambos scripts.
 - [x] **Actualizar `DOCUMENTACION.md`:** Reemplazar toda mención de `carga_gastos.py` y `editor_gastos.py` por `inbox_movimientos.py` (Reflejo del Domain-Driven Design).
 - [x] **Actualizar `CHANGELOG.md`:** Crear la entrada `[v0.7.0] - Refactor Semántico e Inbox`, documentando el paso de "Transacción" a "Movimiento" y la estandarización de Mocks.
 - [x] **Crear `docs/QA_UI_Checklist.md`:** Documento creado como

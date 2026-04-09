@@ -27,6 +27,7 @@ automático al código fuente del proyecto. Reset de branch por divergencia con 
 ---
 
 ### Sesión #13 — 2026-03-16
+
 **Entorno:** A (Windows 11 · VSCode)
 **Foco:** Infraestructura — hook post-commit Drive en Windows
 
@@ -34,7 +35,23 @@ automático al código fuente del proyecto. Reset de branch por divergencia con 
 Configuración del hook post-commit en Entorno A usando robocopy con flags //
 para compatibilidad Git Bash/Windows. Pipeline sync completo y operativo en
 ambos entornos. Protocolo de cierre de sesión formalizado en Contexto.md.
-```
 
 ---
 
+## Sesión #16 — 2026-04-09 — Entorno A
+
+**Branch:** `feature/importar-movimiento`
+
+**Resumen:**
+Sesión de higiene y corrección de bug crítico. Auditoría de archivos obsoletos
+identificó el Showstopper: ambos `factory_reset_*.py` tenían la ruta de DB
+hardcodeada al nombre legacy `control_gastos.db`. Corregidos para usar
+`sigap_config.get_db_path()`. Se deshabilitó el Conector GitHub de Claude.ai
+por ser redundante con Claude Code.
+
+**Cambios:**
+- Fix: `scripts/factory_reset_normalized.py` — ruta DB vía sigap_config
+- Fix: `scripts/factory_reset_preserve_learning.py` — ruta DB vía sigap_config
+- Infra: Conector GitHub de Claude.ai deshabilitado
+- Pendiente borrado: `scripts/migration_v0_6_1_reglas_gas.py`
+- Pendiente limpieza: `__pycache__` en todo el árbol

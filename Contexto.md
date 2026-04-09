@@ -180,39 +180,49 @@ Mensaje estándar:
 docs: cierre Sesión #NN — <resumen de una línea>
 ```
 
-### 4. Verificar sync a Drive
-Confirmar que el hook `post-commit` disparó correctamente en el entorno activo.
+### 4. Verificar push a GitHub
+Confirmar que el push al remoto fue exitoso:
+```
+git push origin feature/importar-movimiento
+```
 
 ---
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-04-08
-**Sesión:** #15 — Auditoría post-pausa + Fix Unicode + Limpieza
-**Entorno:** A (Windows 11 · VSCode · Claude Code)
+**Fecha:** 2026-04-09
+**Sesión:** #16 — Limpieza de repo + Fix Showstopper rutas hardcodeadas + Infraestructura
+**Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Auditoría completa del proyecto con Claude Code tras pausa de ~3 semanas.
-- Fix regresión Unicode: Python 3.14 + CP1252 rompía 6 tests con emojis en stdout.
-  Solución: `sys.stdout.reconfigure(encoding='utf-8')` con guard hasattr en 5 archivos.
-- Eliminado archivo suelto en raíz: `Ahora si Segunda Verificacion Entorno A.prue`.
-- Corregido typo en sigap.py:26: `SIGAP.py` → `sigap.py`.
-- Documentada excepción arquitectónica en sigap.py:63: `input()` permitido en
-  comandos admin destructivos fuera del flujo UI.
-- Mapa de tests en Contexto.md sincronizado con disco (eliminados test_cerebro.py
-  y test_avanzado.py; agregados test_aislamiento_cuotas.py, test_config.py,
-  test_contrato_santander.py, test_gui_logic.py, test_motor_clasificacion.py).
-- D-011 agregada a docs/DECISIONES.md (Unicode stdout fix).
-- Commit: c55f4b6 | Push: OK.
+- Auditoría de archivos obsoletos/huérfanos del proyecto.
+- Identificado para borrado: `scripts/migration_v0_6_1_reglas_gas.py`
+  (migración v0.6.1 ya aplicada, estamos en v0.8.0).
+- Identificado caché huérfano: `tests/__pycache__/test_sigap_core.cpython-314.pyc`
+  sin fuente `.py` correspondiente. Pendiente limpieza de `__pycache__`.
+- `Comprobantes Tramites/*.csv` cubiertos en `.gitignore` (aplicado por Martín).
+- Confirmada funcionalidad de `factory_reset_preserve_learning.py`:
+  wrapper correcto sobre normalized, preserva `diccionario_terminos` vía RAM.
+- **Showstopper detectado y corregido:** ambos `factory_reset_*.py` tenían
+  `DB_FILE` hardcodeado a `'control_gastos.db'` (nombre legacy, DB inexistente).
+  Fix: migrados a `sigap_config.get_db_path()` según ADR de configuración.
+- **Conector GitHub deshabilitado:** redundante con Claude Code + Project files.
+  No era "live" como se creía — indexación periódica, no en tiempo real.
+  Decisión documentada: Claude Code cubre lectura/escritura/ejecución real.
+- Protocolo de Cierre actualizado: paso 4 reemplaza "sync a Drive" por
+  verificación de push a GitHub.
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅
-- Repo limpio, sincronizado con origin ✅
-- Python activo en Entorno A: 3.14 (distinto a sesiones anteriores — monitorear)
+- Pendiente commit de cierre
+- Pendiente borrado: `scripts/migration_v0_6_1_reglas_gas.py`
+- Pendiente limpieza: todos los `__pycache__`
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
+0. **[LIMPIEZA]** Commit de cierre Sesión #16 + borrar `migration_v0_6_1_reglas_gas.py`
+   + limpiar todos los `__pycache__` del proyecto
 1. **[DOC]** Revisión estructural completa de `ROADMAP.md`
 2. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
 3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
