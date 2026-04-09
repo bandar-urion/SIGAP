@@ -187,29 +187,32 @@ Confirmar que el hook `post-commit` disparó correctamente en el entorno activo.
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-03-16
-**Sesión:** #12 — Conector GitHub + Limpieza de hooks
-**Entorno:** A (Windows 11 · VSCode)
+**Fecha:** 2026-04-08
+**Sesión:** #15 — Auditoría post-pausa + Fix Unicode + Limpieza
+**Entorno:** A (Windows 11 · VSCode · Claude Code)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Skill `sigap` creada y empaquetada como `sigap.skill` (209 líneas).
-- Conector GitHub habilitado en Claude para el proyecto SIGAP (indexando).
-- Hook GDrive (`post-commit`) dado de baja en Entorno A — reemplazado por conector GitHub.
-- `refactor-modular` diagnosticada: branch sucia (pycache, credenciales, desktop.ini),
-  útil solo como referencia de diseño para el refactor modular futuro.
-- Confirmado: repo local limpio. Carpetas `.git (1)/.git (2)` visibles en GitHub
-  son artefacto visual de esa branch, no existen en disco.
+- Auditoría completa del proyecto con Claude Code tras pausa de ~3 semanas.
+- Fix regresión Unicode: Python 3.14 + CP1252 rompía 6 tests con emojis en stdout.
+  Solución: `sys.stdout.reconfigure(encoding='utf-8')` con guard hasattr en 5 archivos.
+- Eliminado archivo suelto en raíz: `Ahora si Segunda Verificacion Entorno A.prue`.
+- Corregido typo en sigap.py:26: `SIGAP.py` → `sigap.py`.
+- Documentada excepción arquitectónica en sigap.py:63: `input()` permitido en
+  comandos admin destructivos fuera del flujo UI.
+- Mapa de tests en Contexto.md sincronizado con disco (eliminados test_cerebro.py
+  y test_avanzado.py; agregados test_aislamiento_cuotas.py, test_config.py,
+  test_contrato_santander.py, test_gui_logic.py, test_motor_clasificacion.py).
+- D-011 agregada a docs/DECISIONES.md (Unicode stdout fix).
+- Commit: c55f4b6 | Push: OK.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅ (sin cambios)
-- Hook GDrive eliminado ✅
-- Conector GitHub activo e indexando ✅
+- Suite: 71/71 OK ✅
+- Repo limpio, sincronizado con origin ✅
+- Python activo en Entorno A: 3.14 (distinto a sesiones anteriores — monitorear)
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-0. **[INFRA] 🔴 URGENTE — Entorno B:** Eliminar hook GDrive post-commit en Termux
-   `rm ~/.../SIGAP/.git/hooks/post-commit`
 1. **[DOC]** Revisión estructural completa de `ROADMAP.md`
 2. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
 3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
