@@ -3,6 +3,9 @@ import os
 import sqlite3
 import sys
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # Truco para importar módulos superiores
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 

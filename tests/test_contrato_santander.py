@@ -28,9 +28,13 @@ CONTRATO ESPERADO (Santander Río — formato vigente):
 
 import unittest
 import os
+import sys
 import glob
 import pandas as pd
 from datetime import datetime
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 # Ruta relativa al inbox (compatible con ejecución desde raíz del proyecto)
 INBOX_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'inbox')

@@ -22,7 +22,7 @@ def show_status():
     # 2. 🏛️ USAMOS RUTA_DB EN LUGAR DEL HARDCODEO
     if not os.path.exists(RUTA_DB):
         print(f"⚠️ La base de datos '{RUTA_DB}' NO existe.")
-        print("💡 Tip: Ejecuta 'python SIGAP.py reset' para inicializarla.")
+        print("💡 Tip: Ejecuta 'python sigap.py reset' para inicializarla.")
         return
 
     try:
@@ -59,6 +59,9 @@ def show_status():
 def run_reset():
     """Ejecuta el protocolo de reseteo de fábrica."""
     print("⚠️ ATENCIÓN: Estás a punto de ejecutar el PROTOCOLO DE REINICIO.")
+    # EXCEPCIÓN ARQUITECTÓNICA: input() permitido aquí.
+    # run_reset() es comando admin destructivo, fuera del flujo UI.
+    # leer_byte() aplica solo a flujos de inbox/viewport. Ver DECISIONES.md.
     confirm = input(" ¿Confirmar borrado total y reconstrucción? (si/no): ")
 
     if confirm.lower() == 'si':

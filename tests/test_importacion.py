@@ -1,6 +1,10 @@
 import unittest
 import sqlite3
 import os
+import sys
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 class TestIntegridadBancaria(unittest.TestCase):
 

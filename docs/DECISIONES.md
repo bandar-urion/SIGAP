@@ -28,6 +28,8 @@
 | D-007 | Renombrado semántico: Transaccion → Movimiento | 2026-03-05 | ✅ Activa |
 | D-008 | 3NF estricta: no desnormalizar por conveniencia | 2026-01-28 | ✅ Activa |
 | D-009 | Gobernanza de Alta de Subcategoría (6 criterios) | 2026-03-09 | ✅ Activa |
+| D-010 | Archivos de credenciales nunca en el repositorio | 2026-03-14 | ✅ Activa |
+| D-011 | Fix Unicode stdout en tests (Windows + Python 3.14+) | 2026-04-08 | ✅ Activa |
 
 ---
 
@@ -246,3 +248,36 @@ verificar que no contenga ningún tipo de credencial o secret. Si hay dudas:
 
 *Nota: el repo anterior `ControlGastos` en GitHub fue reemplazado por `SIGAP`
 como parte de esta sesión.*
+
+---
+
+## D-011 — Fix Unicode stdout en tests (Windows + Python 3.14+)
+
+**Fecha:** 2026-04-08
+**Sesión:** #15
+
+**Contexto:** Al correr la suite en Entorno A con Python 3.14 y terminal CP1252,
+6 tests fallaban con `UnicodeEncodeError` en `print()` con emojis/unicode.
+La regresión apareció al actualizar Python — versiones anteriores usaban UTF-8
+por defecto o el runner lo forzaba; Python 3.14 en Windows respeta la codificación
+del terminal (CP1252) de forma estricta.
+
+**Decisión:** Agregar `sys.stdout.reconfigure(encoding='utf-8')` al inicio de
+cada archivo de test que use caracteres unicode en output.
+
+**Guarda:** Bloque `if hasattr(sys.stdout, 'reconfigure')` para compatibilidad
+con Termux/Linux donde el issue no existe (el método puede no estar disponible
+o ya estar configurado correctamente).
+
+**Alcance:** Solo archivos de tests. El código de producción no se modifica.
+
+**Archivos modificados:**
+- `tests/test_contrato_santander.py`
+- `tests/test_database_init.py`
+- `tests/test_gui_logic.py`
+- `tests/test_importacion.py`
+- `tests/test_ui_inbox_movimientos.py`
+
+**Consecuencias:**
+- Positiva: suite verde en Python 3.14 + Windows CP1252 sin modificar lógica de tests
+- Negativa: ninguna — el guard `hasattr` hace el fix inerte en plataformas que no lo necesitan

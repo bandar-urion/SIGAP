@@ -96,11 +96,14 @@ SIGAP/
 │       ├── sesion_inicio.py          # Script de apertura de sesión
 │       └── sesion_cierre.py          # Script de cierre de sesión
 ├── tests/
-│   ├── test_cerebro.py               # Motor IA (regex + matching)
-│   ├── test_importacion.py           # Integridad DB + deduplicación
+│   ├── test_aislamiento_cuotas.py    # Aislamiento lógica de cuotas
+│   ├── test_config.py                # Configuración centralizada
+│   ├── test_contrato_santander.py    # Contrato formato Excel Santander
 │   ├── test_database_init.py         # Esquema SQL
-│   ├── test_avanzado.py              # Casos extremos / tortura
 │   ├── test_gobernanza_similitud.py  # Motor de Gobernanza (25 tests)
+│   ├── test_gui_logic.py             # Lógica UI (mocks)
+│   ├── test_importacion.py           # Integridad DB + deduplicación
+│   ├── test_motor_clasificacion.py   # Motor IA (reemplaza test_cerebro.py)
 │   ├── test_ui_inbox_movimientos.py  # UI mocks
 │   └── test_robots_gobernanza.py     # ⭐ Robots de QA (5 robots)
 ├── docs/
