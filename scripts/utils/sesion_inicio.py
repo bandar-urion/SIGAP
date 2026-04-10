@@ -70,7 +70,7 @@ def solicitar_objetivo():
     print(f"  #️⃣  Sesión     : #{n_sesion}")
     print()
 
-    objetivo = input("  🎯 Objetivo de la sesión: ").strip()
+    objetivo = input("  🎯 Objetivo de la sesión: ").strip()  # EXCEPCIÓN ARQUITECTÓNICA: input() permitido en scripts standalone de utilidad (no flujo UI).
     if not objetivo:
         objetivo = "(sin definir)"
 

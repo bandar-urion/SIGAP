@@ -30,6 +30,7 @@
 | D-009 | Gobernanza de Alta de Subcategoría (6 criterios) | 2026-03-09 | ✅ Activa |
 | D-010 | Archivos de credenciales nunca en el repositorio | 2026-03-14 | ✅ Activa |
 | D-011 | Fix Unicode stdout en tests (Windows + Python 3.14+) | 2026-04-08 | ✅ Activa |
+| D-012 | Rutas hardcodeadas en factory_reset (Incidente) | 2026-04-09 | ✅ Activa |
 
 ---
 
@@ -281,3 +282,29 @@ o ya estar configurado correctamente).
 **Consecuencias:**
 - Positiva: suite verde en Python 3.14 + Windows CP1252 sin modificar lógica de tests
 - Negativa: ninguna — el guard `hasattr` hace el fix inerte en plataformas que no lo necesitan
+
+---
+
+## D-012 — Rutas hardcodeadas en scripts factory_reset (Incidente)
+
+**Fecha:** 2026-04-09
+**Sesión:** #16
+
+**Contexto:** Durante auditoría de Sesión #16 se detectó que ambos `factory_reset_*.py`
+tenían `DB_FILE = 'control_gastos.db'` hardcodeado (nombre legacy, DB inexistente).
+El sistema habría fallado silenciosamente en cualquier ejecución de reset, apuntando
+a una base de datos que no existe desde v0.7.0.
+
+**Decisión:** Refuerzo de D-005. Toda referencia a rutas de DB en scripts activos
+debe usar `sigap_config.get_db_path()`. Las rutas hardcodeadas son un bug silencioso
+garantizado: el sistema arranca sin error pero opera sobre la DB equivocada o inexistente.
+
+**Fix aplicado:** Ambos scripts migrados a `sigap_config.get_db_path()` en commit `4107860`.
+
+**Archivos corregidos:**
+- `scripts/factory_reset_normalized.py`
+- `scripts/factory_reset_preserve_learning.py`
+
+**Consecuencias:**
+- Positiva: cualquier renombrado futuro de la DB se propaga automáticamente desde `sigap.cfg`
+- Negativa: ninguna — el fix es mecánico y sin efecto colateral

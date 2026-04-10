@@ -119,7 +119,7 @@ SIGAP/
 
 ---
 
-## VERSIÓN ACTUAL: v0.8.0
+## VERSIÓN ACTUAL: v0.8.1
 
 | Módulo | Estado |
 |---|---|
@@ -131,7 +131,7 @@ SIGAP/
 | Gobernanza Alta Subcategoría (Panel + 6 criterios) | ✅ Funcional |
 | Sistema de logging (consola + archivo) | ✅ Funcional |
 | Auditoría en DB (`auditoria_movimientos`) | ✅ Funcional |
-| `manage.py` unificado | ❌ Pendiente |
+| `sigap.py` como CLI unificado | ❌ Pendiente |
 | Parser MercadoPago | ❌ Pendiente |
 | Dashboard Streamlit | 🔮 Backlog |
 
@@ -139,7 +139,7 @@ SIGAP/
 
 ## BUGS CONOCIDOS (PENDIENTES DE FIX)
 
-> ✅ Sin bugs críticos conocidos al cierre de Sesión #10.
+> ✅ Sin bugs críticos conocidos al cierre de Sesión #16.
 
 ---
 
@@ -191,38 +191,33 @@ git push origin feature/importar-movimiento
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-04-09
-**Sesión:** #16 — Limpieza de repo + Fix Showstopper rutas hardcodeadas + Infraestructura
-**Entorno:** A (Windows 11 · VSCode)
+**Sesión:** #17 — Auditoría de Integridad + Fix D-004 + Fix D-005
+**Entorno:** A (Windows 11 · VSCode · Claude Code)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Auditoría de archivos obsoletos/huérfanos del proyecto.
-- Identificado para borrado: `scripts/migration_v0_6_1_reglas_gas.py`
-  (migración v0.6.1 ya aplicada, estamos en v0.8.0).
-- Identificado caché huérfano: `tests/__pycache__/test_sigap_core.cpython-314.pyc`
-  sin fuente `.py` correspondiente. Pendiente limpieza de `__pycache__`.
-- `Comprobantes Tramites/*.csv` cubiertos en `.gitignore` (aplicado por Martín).
-- Confirmada funcionalidad de `factory_reset_preserve_learning.py`:
-  wrapper correcto sobre normalized, preserva `diccionario_terminos` vía RAM.
-- **Showstopper detectado y corregido:** ambos `factory_reset_*.py` tenían
-  `DB_FILE` hardcodeado a `'control_gastos.db'` (nombre legacy, DB inexistente).
-  Fix: migrados a `sigap_config.get_db_path()` según ADR de configuración.
-- **Conector GitHub deshabilitado:** redundante con Claude Code + Project files.
-  No era "live" como se creía — indexación periódica, no en tiempo real.
-  Decisión documentada: Claude Code cubre lectura/escritura/ejecución real.
-- Protocolo de Cierre actualizado: paso 4 reemplaza "sync a Drive" por
-  verificación de push a GitHub.
+- Auditoría de integridad completa del proyecto post-Sesión #16.
+- Suite: 71/71 OK confirmada como baseline antes de cualquier cambio.
+- FIX CRÍTICO D-004: `input()` en `inbox_movimientos.py:789` reemplazado
+  por `leer_linea_inline()` — violación en el flujo UI principal del motor.
+- FIX CRÍTICO D-005: `auditar_db.py` tenía rutas hardcodeadas a
+  `control_gastos.db` (nombre legacy, DB inexistente). Migrado a
+  `sigap_config.get_db_path()`.
+- D-012 agregada a `docs/DECISIONES.md` (incidente rutas hardcodeadas
+  en factory_reset, detectado en Sesión #16).
+- `Contexto.md`: `manage.py` → `sigap.py` en tabla de módulos.
+- `Contexto.md`: versión actualizada a v0.8.1.
+- Comentario de excepción arquitectónica agregado en
+  `sesion_inicio.py` y `sesion_cierre.py`.
+- Suite post-fix: 71/71 OK ✅
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅
-- Pendiente commit de cierre
-- Pendiente borrado: `scripts/migration_v0_6_1_reglas_gas.py`
-- Pendiente limpieza: todos los `__pycache__`
+- Pendiente commit de cierre de sesión
+- Repo sin bugs críticos conocidos
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-0. **[LIMPIEZA]** Commit de cierre Sesión #16 + borrar `migration_v0_6_1_reglas_gas.py`
-   + limpiar todos los `__pycache__` del proyecto
 1. **[DOC]** Revisión estructural completa de `ROADMAP.md`
 2. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
 3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada

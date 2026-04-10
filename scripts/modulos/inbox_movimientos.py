@@ -785,9 +785,9 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
             while True:
                 print(ANSI_CLEAR_LINE, end='\r')
                 print(f"{C_GRAY}   (Original: {clave_sugerida}){C_RESET}")
-                print(f"{C_YELLOW}✏️ Escribe nueva clave: {C_RESET}", end='')
-                custom_clave = input().strip()
+                custom_clave = leer_linea_inline(f"{C_YELLOW}✏️ Escribe nueva clave: {C_RESET}")
                 if not custom_clave: break
+                custom_clave = custom_clave.strip()
                 desc_real_lower = limpiar_texto_visual(tx.descripcion_final).lower()
                 if custom_clave.lower() in desc_real_lower:
                     tx.nuevo_sinonimo = custom_clave

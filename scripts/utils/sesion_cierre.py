@@ -65,7 +65,7 @@ def solicitar_observaciones(datos_apertura, hora_fin):
     print(f"  ⌛ Duración   : {duracion}")
     print()
 
-    obs = input("  📝 Observaciones (Enter para omitir): ").strip()
+    obs = input("  📝 Observaciones (Enter para omitir): ").strip()  # EXCEPCIÓN ARQUITECTÓNICA: input() permitido en scripts standalone de utilidad (no flujo UI).
     if not obs:
         obs = "—"
 

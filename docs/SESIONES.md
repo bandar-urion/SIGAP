@@ -9,6 +9,37 @@
 | 6 | 2026-03-10 | 22:20 | 22:38 | 18m | A — PC Casa (Windows) | feature/metodologia-sesiones | Implementar registro de sesiones + scripts de apertura/cierre | LF/CRLF warnings normales en Windows. Guardado manual en VSCode crítico pre-commit. |
 
 
+### Sesión #17 — 2026-04-09
+
+**Entorno:** A (Windows 11 · VSCode · Claude Code)
+**Branch:** `feature/importar-movimiento`
+**Duración estimada:** Media sesión
+**Tipo:** Auditoría de integridad + Fix de bugs
+
+**Resumen:**
+Auditoría completa post-Sesión #16. Baseline 71/71 OK confirmado.
+Detectados y corregidos dos bugs críticos encontrados durante la auditoría
+automatizada (Claude Code). Suite post-fix: 71/71 OK.
+
+**Cambios realizados:**
+- **FIX CRÍTICO (D-004):** `input()` en `inbox_movimientos.py:789`
+  reemplazado por `leer_linea_inline()`. Era una violación directa
+  en el flujo UI principal del motor.
+- **FIX CRÍTICO (D-005):** `auditar_db.py` tenía rutas hardcodeadas
+  a `control_gastos.db` (DB legacy inexistente). Migrado a
+  `sigap_config.get_db_path()`.
+- **D-012** agregada a `docs/DECISIONES.md`.
+- `Contexto.md`: `manage.py` → `sigap.py` en tabla de módulos.
+- `Contexto.md`: versión sincronizada a v0.8.1.
+- Comentario de excepción arquitectónica documentado en
+  `sesion_inicio.py` y `sesion_cierre.py`.
+
+**Estado al cierre:**
+- Suite: 71/71 OK ✅
+- Repo: pendiente commit de cierre
+
+---
+
 ### Sesión #12 — 2026-03-16
 **Entorno:** B (Termux · Code-Server)
 **Duración estimada:** ~2hs
