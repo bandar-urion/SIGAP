@@ -174,29 +174,23 @@ SIGAP/
 
 > Ejecutar en orden al finalizar cada sesión de trabajo.
 
-### 1. Revisión documental (copiloto)
+### 1. Ejecutar tareas pendientes (Martín)
+Antes de generar ningún bloque de cierre, ejecutar todas las tareas pendientes del repo
+(borrados, limpiezas, commits intermedios). El Contexto.md se commitea **último**.
+
+### 2. Revisión documental (copiloto)
 El copiloto revisa el trabajo de la sesión y determina qué documentos requieren actualización:
 
-| Documento          | Actualizar cuando...                                       |
-| ------------------ | ---------------------------------------------------------- |
-| `Contexto.md`      | **Siempre** — bloque ÚLTIMA SESIÓN + PRÓXIMAS TAREAS       |
-| `docs/SESIONES.md` | **Siempre** — entrada de la sesión                         |
-| `CHANGELOG.md`     | Se agregó feature, fix o cambio de versión                 |
-| `DOCUMENTACION.md` | Cambió arquitectura, esquema DB o comportamiento de módulo |
-| `ROADMAP.md`       | Se completó un hito o cambió la planificación              |
-| `TODO.md`          | Se completaron o agregaron tareas                          |
-| `CLAUDE.md`        | Cambió configuración relevante para Claude Code            |
-
-### 2. Generación de bloques de cierre
+### 3. Generación de bloques de cierre
 El copiloto genera el texto actualizado para cada documento que corresponda.
 
-### 3. Commit de cierre
+### 4. Commit de cierre
 Mensaje estándar:
 ```
 docs: cierre Sesión #NN — <resumen de una línea>
 ```
 
-### 4. Verificar push a GitHub
+### 5. Verificar push a GitHub
 Confirmar que el push al remoto fue exitoso:
 ```
 git push origin feature/importar-movimiento
