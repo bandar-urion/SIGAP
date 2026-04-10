@@ -1,117 +1,126 @@
-# 🗺️ ROADMAP S.I.G.A.P.
+# 🗺️ ROADMAP — S.I.G.A.P.
+> **Proyecto Fénix** · Última actualización: 2026-04-10 · Versión actual: v0.8.1
 
-Este documento rastrea el progreso del desarrollo del Proyecto Fénix.
-Actúa como la única fuente de verdad sobre el estado de las tareas y la planificación futura.
+Este documento es la fuente de verdad sobre el estado de desarrollo y la planificación futura.
+Se actualiza al cierre de cada sesión de trabajo.
+
+---
 
 ## ✅ HITOS COMPLETADOS
 
-### [2026-02-01] Hito 4.0: Doctrina UX & IntelliSense
-**Estado:** ✅ COMPLETADO (implementado en v0.5.0)
-- Definición de la "Doctrina UX v4.0" (Flow State).
-- Diseño de arquitectura de pantalla dividida (Dashboard Estático / Input Dinámico).
-- Especificación de IntelliSense con feedback auditivo.
-- Renombrado del módulo a `inbox_movimientos.py`.
+### [v0.1.0] — 2026-01-28 · Infraestructura Base
+- Modelo relacional SQLite en 3NF. Tablas core: `movimientos`, `agenda_pagos`, `centros_costo`.
+- Tablas paramétricas: `categorias`, `subcategorias`, `medios_pago`.
+- Tablas de gobernanza: `reglas_catalogo`, `reglas_vinculos`.
+- `factory_reset_normalized.py` para despliegue y sembrado de DB.
+- Documentación fundacional: `DOCUMENTACION.md`, `ROADMAP.md`, `ADR-001`, `ADR-002`.
+
+### [v0.1.1] — 2026-01-30 · Modelo de Datos
+- Tabla `diccionario_terminos` para mapeo de sinónimos (base del Motor IA).
+- Normalización de subcategorías. Soporte de billeteras virtuales y cuentas de terceros.
+
+### [v0.4.0] — 2026-02-01 · Torre de Control (UX Flow State)
+- Filosofía Flow State: edición continua sin perder el Dashboard.
+- Smart Fit Dual, Accounting View, Matrix View.
+- Motor IA: Pattern Mining + Auto-Promoción PENDIENTE → AUTO.
+- Gobernanza Poka-Yoke: Anti-Inercia, validación de integridad, feedback auditivo.
+
+### [v0.5.0] — 2026-02-01 · HyperFlux & Calidad
+- Viewport Deslizante: navegación vectorial por flechas, sin paginado estático.
+- HUD con métricas en tiempo real. Feedback semántico por etiquetas de estado.
+- Smart Import: persistencia iterativa, Deep Match, Auto-Advance.
+- Suite de tests unitarios inicial (`unittest`).
+
+### [v0.6.4] — 2026-02-01 · Financiación Inteligente
+- Regex financiero para detección de cuotas (`01/12`, `Cta 3`).
+- Date Guard (Negative Lookahead) para no confundir fechas con cuotas.
+- Smart Suggestion para servicios sin cuotas explícitas.
+
+### [v0.6.5] — 2026-02-02 · Cross-Platform
+- Soporte Linux/Termux: detección automática de OS.
+- Wrappers `leer_byte()` y `beep_confirmacion()` cross-platform.
+- Parser ANSI para flechas de dirección en terminales Unix/Linux.
+
+### [v0.7.0] — 2026-03-05 · Refactor Semántico e Inbox
+- Transición completa Transacciones → Movimientos (Domain-Driven Design).
+- `inbox_movimientos.py` como único punto de entrada de datos.
+- Estandarización de mocks en suite UI. Runner personalizado con docstrings.
+
+### [v0.7.1] — 2026-03-13 · Deuda Técnica Fase 1
+- Foreign Keys activas en runtime (`PRAGMA foreign_keys = ON`).
+- `sigap_config.get_db_path()` corregido a ruta absoluta (fix "DB fantasma").
+- `.gitignore` corregido. `__pycache__` sacados del tracking.
+- Scripts huérfanos movidos a `_legacy/`. Suite: 66/66 OK.
+
+### [v0.7.2] — 2026-03-14 · Seguridad & Migración de Repo
+- Limpieza de historial Git: credenciales removidas de los 61 commits históricos.
+- Decisión D-010 formalizada: "credenciales nunca en el repo".
+- Migración de repo remoto: `ControlGastos` → `SIGAP` en GitHub.
+- `git credential.helper store` configurado en Termux.
+
+### [v0.8.0] — 2026-03-15 · Auditoría Completa & Robots de QA
+- Flujo `auditoria_movimientos` completo: OK, SKIP_DUPLICADO, DESCARTADO_USUARIO.
+- Campo `usuario` documenta el módulo origen del evento (no persona física).
+- `test_robots_gobernanza.py`: 5 robots de QA para el flujo de alta de subcategoría.
+- Claude Code instalado en Entorno A. `CLAUDE.md` generado.
+- Suite: 71/71 OK.
+
+### [v0.8.1] — 2026-04-09 · Fix Rutas Legacy
+- `factory_reset_normalized.py` y `factory_reset_preserve_learning.py`:
+  ruta de DB hardcodeada a `control_gastos.db` corregida → `sigap_config.get_db_path()`.
+- Conector GitHub de Claude.ai deshabilitado (reemplazado por Claude Code).
 
 ---
 
-- [x] **Documentación Core**
-    - [x] Manifiesto y Filosofía.
-    - [x] Metodología de Desarrollo (Protocolo Fénix).
-    - [x] Reglas de Negocio detalladas.
-- [x] **Control de Versiones (Git Local)** ⬅️ *PRIORIDAD ALTA*
-    - [x] Inicializar repositorio (`git init`).
-    - [x] Configurar `.gitignore` (Ignorar DBs, temporales y sensibles).
-    - [x] Primer Commit (Base Line).
-- [ ] **Orquestación (Tooling)**
-    - [ ] Crear `manage.py` (CLI unificado para administrar el sistema).
-    - [ ] Integrar funciones de reset y test en el orquestador.
-    - [x] Suite de Tests Unitarios (`tests/`).
-    - [x] `test_gobernanza_similitud.py` — 25 tests (Sesión #4 · 2026-03-09).
+## 🚧 EN CURSO — feature/importar-movimiento
+
+### Validación Atómica de Importación
+Un movimiento se considera exitosamente importado solo si se cumplen los tres pasos:
+- [ ] Guardado en DB (`movimientos`).
+- [ ] Registrado en log técnico (`sigap_tecnico.log`).
+- [ ] Registrado en `auditoria_movimientos` con antes/después.
+
+> **Nota:** Los dos primeros pasos están implementados. Falta la validación que los trate como unidad atómica y revierta si alguno falla.
+
+### CLI Unificado (expansión de `sigap.py`)
+- [ ] Unificar comandos: `status`, `reset`, `test`, `import` bajo `sigap.py` como único punto de entrada.
+- [ ] Reemplazar scripts dispersos por subcomandos del CLI.
 
 ---
 
-## [Requisito] Sistema de Trazabilidad y Control
-- [ ] **Módulo Logging (Registro Tecnico):**
+## 📋 PRÓXIMOS HITOS (en orden de prioridad)
 
-    <u>*Alcance</u>:* sistema - funcional/administrativo - tecnico/desarrollador.
-    <u>*Implementacion</u>:* modular.
-    <u>*Objetivo</u>:* capturar el comportamiento interno del software para facilitar el mantenimiento y la resolución de errores técnicos.
-    <u>*​Valor para el Proyecto</u>:* elimina la "incertidumbre" ante un fallo. En lugar de adivinar por qué no cargó un archivo, el log brinda la causa técnica.
-    <u>*Funcionalidades Clave</u>:*
-    - [ ] ​Niveles de Gravedad: diferenciar entre información general (INFO), advertencias (WARNING) y errores críticos (ERROR).
-    - [ ] Persistencia: guardado automático en un archivo físico (.log) con rotación (para que el archivo no crezca infinitamente).
-    - [ ] ​Contexto de Ejecución: registrar la hora exacta, el módulo donde ocurrió el evento y la línea de código (si es un error).
+### [DOC] Documentación pendiente
+- [ ] Documentar convención del campo `usuario` en `auditoria_movimientos` (ya implementado, falta doc formal).
+- [ ] Diagrama/mapa de la suite de tests (qué cubre cada archivo).
+- [ ] Revisión de `DOCUMENTACION.md` para sincronizar con estado real v0.8.1.
 
-- [ ] **Módulo Auditoría (Funcional):**
+### [FEAT] Desacoplar Parser Santander
+- [ ] Extraer `parsear_excel_santander()` como función aislada, testeable independientemente del flujo de importación completo.
 
-    <u>​*Alcance</u>*: sistema - funcional/administrativo - usuario final.
-    <u>*​Objetivo</u>*: mantener un historial inalterable de las acciones realizadas sobre los datos del sistema.
-    <u>*Implementacion</u>:* modular.
-    <u>*​Valor para el Proyecto</u>:* seguridad y transparencia. Es lo que te permite reconstruir la historia de tus finanzas o agenda si algo parece no cuadrar.
-    <u>*Funcionalidades Clave</u>:*
-    - [ ] Crear tabla `auditoria_movimientos` para registrar cada proceso de importación y acciones del usuario en SIGAP V2.
-    - [ ] ​Trazabilidad de Movimientos: Registrar quién, cuándo y qué se modificó (ej: "Importación de 50 registros desde Excel realizada con éxito").
-    - [ ] ​Integridad de Datos: Guardar el estado "antes" y "después" en caso de ediciones críticas.
-    - [ ] ​Reporte de Discrepancias: Si un movimiento no pudo ser auditado o importado por reglas de negocio, debe quedar marcado en una tabla específica de la base de datos.
-    - [ ] Validación en Importar_Movimiento: el módulo debe reportar éxito/falla tanto en el log técnico como en la exacto (incluyendo milisegundos) de cada entrada para asegurar el orden cronológico absoluto, vital en procesos de importación masiva.
+### [FEAT] Módulo ABM de Catálogo
+- [ ] Alta, Baja y Modificación standalone de: Centros de Costo, Categorías, Subcategorías, Medios de Pago.
+- [ ] Actualmente solo se pueden gestionar vía `factory_reset` o acceso directo a DB.
+
+### [FEAT] Parser MercadoPago
+- [ ] Equivalente al parser Santander para extractos de MercadoPago.
+- [ ] Referencia: `Comprobantes Tramites/MercadoPago Gastos.csv` y `MercadoPago Mastercard.csv`.
 
 ---
 
----
+## 🔮 BACKLOG
 
-## 🚀 HITO 2: OPERATORIA MANUAL (v0.2 - MVP)
-**Objetivo:** Lograr que el sistema sea funcional para la carga y consulta diaria vía Terminal.
+### Gobernanza Futura
+- [ ] **Integridad Histórica:** migrar `DELETE` físicos a `UPDATE activo=false`. Adaptar consultas SQL para filtrar por `activo=true`.
+- [ ] **Soporte Multimoneda:** columna `cotizacion_ref` en `movimientos`. Consultas históricas de Dólar/UVA.
+- [ ] **Gestión de Tarjetas Avanzada:** tabla `calendario_cierres`. Algoritmo de fecha de pago real.
+- [ ] **Presupuestos:** tabla `presupuestos_mensuales`. Reporte de desvío de gastos.
 
-- [ ] **Carga de Datos (Input)**
-    - [ ] Desarrollar función de alta de Movimiento (INSERT).
-    - [ ] Implementar validaciones de Gobernanza en tiempo real (Python).
-- [ ] **Consultas Básicas (Output)**
-    - [ ] Reporte: "Últimos 10 movimientos".
-    - [ ] Reporte: "Saldos por Centro de Costo".
-    - [ ] Reporte: "Alerta de Vencimientos (Agenda)".
-- ​[ ] **Implementar carga inteligente con sinónimos (diccionario_terminos)**
+### Reportes & Consultas
+- [ ] Reporte: "Últimos N movimientos".
+- [ ] Reporte: "Saldos por Centro de Costo".
+- [ ] Reporte: "Alerta de Vencimientos (Agenda)".
+- [ ] Backup: exportación automática a JSON/SQL.
 
----
-
-## ⚙️ HITO 3: AUTOMATIZACIÓN & MASIVIDAD (v0.3 - v0.5)
-**Objetivo:** Reducir la carga manual procesando archivos bancarios.
-
-- [ ] **Branch: feature/importar-movimiento**
-    - [ ] Definir formato estándar de importación (CSV Intermedio).
-    - [x] Parser para Santander (XLS/CSV -> DB).
-    - [ ] Parser para MercadoPago.
-    - [x] Lógica de Deduplicación (`num_referencia`).
-    - [x] Lógica de "Smart Archive" (Gestión de Pendientes).
-    - [ ] Validacion atomica de carga de movimientos:
-    el proceso de importación no se dará por "exitoso" si para cada movimiento no se cumplieron tres pasos:
-        - [ ] se guardó el movimiento en la DB.
-        - [ ] se registró el evento en el archivo de Log (técnico).
-        - [ ] se guardó el "antes y después" en la tabla "auditoria_movimientos" (funcional).
-    - [ ] **Portabilidad**
-    - [ ] Soporte Cross-Platform (Windows/Linux/Termux).
-    - [ ] Carga de CC - C - SC si no existen para el movimiento actual?
-    ​
-
----
-
-## 🔮 BACKLOG (Ideas Futuras)
-- [ ] **Interfaz Gráfica:** migrar de Terminal a Web (Streamlit o Flask local).
-- [ ] **Inteligencia Artificial:** asistente para categorización automática de gastos.
-- [ ] **Auditoría Presupuestaria:** reporte de desvíos de presupuesto.
-- [ ] **Backup:** script de exportación automática a JSON/SQL.
-
-## 🔮 BACKLOG (Gobernanza Futura)
-*Implementación técnica de las reglas definidas en la Sección 6 de DOCUMENTACION.md*
-
-- [ ] **Soporte Multimoneda (Regla 6.1)**
-    - [ ] Agregar columna `cotizacion_ref` en tabla movimientos.
-    - [ ] Integrar API de Dólar/UVA para consultas históricas.
-- [ ] **Gestión de Tarjetas Avanzada (Regla 6.2)**
-    - [ ] Crear tabla `calendario_cierres`.
-    - [ ] Algoritmo de cálculo de fecha de pago real.
-- [ ] **Integridad Histórica (Regla 6.3)**
-    - [ ] Migrar `DELETE` físicos a `UPDATE activo=false`.
-    - [ ] Adaptar todas las consultas SQL para filtrar por `activo=true`.
-- [ ] **Presupuestos (Regla 6.4)**
-    - [ ] Crear tabla `presupuestos_mensuales`.
-    - [ ] Reporte de desvío de gastos.
+### Interfaz (post-core)
+- [ ] Dashboard web local (Streamlit o Flask). Solo cuando el core esté blindado.
