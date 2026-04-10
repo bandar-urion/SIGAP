@@ -9,6 +9,25 @@
 | 6 | 2026-03-10 | 22:20 | 22:38 | 18m | A — PC Casa (Windows) | feature/metodologia-sesiones | Implementar registro de sesiones + scripts de apertura/cierre | LF/CRLF warnings normales en Windows. Guardado manual en VSCode crítico pre-commit. |
 
 
+## Sesión #18 — 2026-04-10
+**Entorno:** A (Windows 11 · VSCode)
+**Branch:** `feature/importar-movimiento`
+**Duración estimada:** 1.5 hs
+
+### Trabajo realizado
+- Fix de protocolo de cierre: nuevo paso 1 para ejecutar tareas pendientes antes
+  de generar bloques de cierre. Soluciona el problema recurrente de estado
+  desincronizado en `Contexto.md`.
+- Auditoría y corrección del árbol de estructura del proyecto en `Contexto.md`.
+- Decisión: `sigap.py` como CLI unificado (descartado `manage.py` por ser
+  convención exclusiva de Django).
+- `ROADMAP.md` reescrito estructuralmente: sincronizado con v0.8.1, estructura
+  limpia en cuatro secciones, sin deuda documental.
+
+### Estado al cierre
+- Suite: 71/71 OK ✅
+- Sin bugs introducidos
+
 ## Sesión #17 — 2026-04-09
 
 **Entorno:** A (Windows 11 · VSCode · Claude Code)

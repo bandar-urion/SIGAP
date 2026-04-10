@@ -204,46 +204,34 @@ git push origin feature/importar-movimiento
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-04-09
-**Sesión:** #17 — Auditoría de Integridad + Fix D-004 + Fix D-005 + Auditoría de Cobertura
-**Entorno:** A (Windows 11 · VSCode · Claude Code)
+**Fecha:** 2026-04-10
+**Sesión:** #17 — Documentación: protocolo cierre + árbol estructura + ROADMAP
+**Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Auditoría de integridad completa del proyecto post-Sesión #16.
-- Suite baseline: 71/71 OK antes de cualquier cambio.
-- FIX CRÍTICO D-004: `input()` en `inbox_movimientos.py:789` reemplazado
-  por `leer_linea_inline()` — violación en el flujo UI principal del motor.
-- FIX CRÍTICO D-005: `auditar_db.py` tenía rutas hardcodeadas a
-  `control_gastos.db` (DB legacy inexistente). Migrado a
-  `sigap_config.get_db_path()`.
-- D-012 agregada a `docs/DECISIONES.md` (incidente rutas hardcodeadas
-  en factory_reset, detectado en Sesión #16).
-- `Contexto.md`: `manage.py` → `sigap.py` en tabla de módulos.
-- `Contexto.md`: versión sincronizada a v0.8.1.
-- Comentario de excepción arquitectónica en `sesion_inicio.py` y
-  `sesion_cierre.py`.
-- Suite post-fix: 71/71 OK ✅
-- **Anexo — Auditoría de cobertura (primera ejecución trimestral):**
-  - `sigap_config.py`: 90% ✅
-  - `inbox_movimientos.py`: 68% ⚠️ — gaps documentados en TODO.md
-  - `import_santander.py`: 0% ⚠️ — estructuralmente requiere refactor
-  - `auditar_db.py`: 0% ⚠️ — testeable con SQLite en memoria
-  - Protocolo 6 de VIBE_CODING_SKILLS.md actualizado: auditoría de
-    cobertura incorporada como herramienta obligatoria trimestral.
-    Próxima ejecución: Julio 2026.
+- Diagnóstico y fix del problema recurrente de cierre de sesión: tareas pendientes
+  se commiteaban antes de ejecutarse. Fix: nuevo paso 1 en el protocolo
+  ("ejecutar tareas pendientes antes de generar bloques de cierre").
+- Auditoría del árbol de estructura en `Contexto.md` contra `Get-ChildItem` real:
+  eliminado `data/rejected/` (inexistente), agregados `_legacy/`, `CHANGELOG.md`,
+  `README.md`, `TODO.md`, `docs/QA_UI_Checklist_inbox_movimientos.md`.
+- Decisión de nomenclatura: `manage.py` → `sigap.py` como CLI unificado.
+  `manage.py` es convención Django, no estándar Python standalone.
+- `ROADMAP.md` reescrito desde cero: estructura Completados/En Curso/Próximos/Backlog,
+  sincronizado con estado real v0.8.1, sin items `[ ]` para features ya implementadas,
+  sin HTML, sin referencias a versiones legacy.
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅
-- Pendiente commit de cierre de sesión
-- Repo sin bugs críticos conocidos
+- `ROADMAP.md` commiteado y pusheado ✅
+- Pendiente commit de cierre de esta sesión
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Revisión estructural completa de `ROADMAP.md`
-2. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
+1. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
+2. **[DOC]** Diagrama/mapa de la suite de tests
 3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
 4. **[FEAT]** Expandir `sigap.py` como CLI unificado
 5. **[FEAT]** Módulo ABM standalone de catálogo
 6. **[FEAT]** Parser MercadoPago
-7. **[DOC]** Diagrama/mapa de la suite de tests
