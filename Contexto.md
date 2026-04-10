@@ -191,25 +191,33 @@ git push origin feature/importar-movimiento
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-04-09
-**Sesión:** #17 — Auditoría de Integridad + Fix D-004 + Fix D-005
+**Sesión:** #17 — Auditoría de Integridad + Fix D-004 + Fix D-005 + Auditoría de Cobertura
 **Entorno:** A (Windows 11 · VSCode · Claude Code)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
 - Auditoría de integridad completa del proyecto post-Sesión #16.
-- Suite: 71/71 OK confirmada como baseline antes de cualquier cambio.
+- Suite baseline: 71/71 OK antes de cualquier cambio.
 - FIX CRÍTICO D-004: `input()` en `inbox_movimientos.py:789` reemplazado
   por `leer_linea_inline()` — violación en el flujo UI principal del motor.
 - FIX CRÍTICO D-005: `auditar_db.py` tenía rutas hardcodeadas a
-  `control_gastos.db` (nombre legacy, DB inexistente). Migrado a
+  `control_gastos.db` (DB legacy inexistente). Migrado a
   `sigap_config.get_db_path()`.
 - D-012 agregada a `docs/DECISIONES.md` (incidente rutas hardcodeadas
   en factory_reset, detectado en Sesión #16).
 - `Contexto.md`: `manage.py` → `sigap.py` en tabla de módulos.
-- `Contexto.md`: versión actualizada a v0.8.1.
-- Comentario de excepción arquitectónica agregado en
-  `sesion_inicio.py` y `sesion_cierre.py`.
+- `Contexto.md`: versión sincronizada a v0.8.1.
+- Comentario de excepción arquitectónica en `sesion_inicio.py` y
+  `sesion_cierre.py`.
 - Suite post-fix: 71/71 OK ✅
+- **Anexo — Auditoría de cobertura (primera ejecución trimestral):**
+  - `sigap_config.py`: 90% ✅
+  - `inbox_movimientos.py`: 68% ⚠️ — gaps documentados en TODO.md
+  - `import_santander.py`: 0% ⚠️ — estructuralmente requiere refactor
+  - `auditar_db.py`: 0% ⚠️ — testeable con SQLite en memoria
+  - Protocolo 6 de VIBE_CODING_SKILLS.md actualizado: auditoría de
+    cobertura incorporada como herramienta obligatoria trimestral.
+    Próxima ejecución: Julio 2026.
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅

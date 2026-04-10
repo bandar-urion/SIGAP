@@ -550,9 +550,28 @@ Una vez por trimestre, una sesión dedicada a leer código de sesiones anteriore
 2. ¿Lo escribiría igual hoy?
 3. ¿Qué asumiría alguien que lee esto por primera vez?
 
+**Herramienta obligatoria — Auditoría de cobertura:**
+Cada sesión trimestral incluye medición de cobertura de tests con `coverage.py`:
+
+```powershell
+pip install coverage
+coverage run -m unittest discover tests
+coverage report -m --include="scripts/modulos/inbox_movimientos.py,scripts/import_santander.py,sigap_config.py,scripts/utils/auditar_db.py"
+coverage erase
+```
+
+El reporte identifica código activo sin cobertura de test. Los gaps se documentan
+en `TODO.md` como ítems `[QA]` — no se corrigen en la misma sesión salvo que
+sean críticos. El objetivo es visibilidad, no corrección inmediata.
+
+**Incorporado en:** Sesión #17 (2026-04-09). Primera ejecución encontró
+68% de cobertura en `inbox_movimientos.py` y 0% en `import_santander.py`
+y `auditar_db.py`. Gaps documentados en `TODO.md`.
+
 **El criterio de cumplimiento:**
 > Si después de la sesión no hay ninguna entrada nueva en `DECISIONES.md`,
 > la arqueología no fue honesta.
+> Si no se corrió `coverage.py`, la arqueología fue incompleta.
 
 ---
 
@@ -583,7 +602,7 @@ Una vez por trimestre, una sesión dedicada a leer código de sesiones anteriore
 | 3 — Definition of Done Financiero | 🔲 A implementar | Aplicar al backlog del ROADMAP |
 | 4 — Diario de Decisiones | 🔲 A implementar | Crear `DECISIONES.md` como primer paso |
 | 5 — Justificación de Complejidad | 🔲 A implementar | Auditar capa cross-platform como caso piloto |
-| 6 — Arqueología Trimestral | 🔲 Programar | Primera sesión: Junio 2026 |
+| 6 — Arqueología Trimestral | ✅ Activo | Primera ejecución: Sesión #17 (2026-04-09). Próxima: Julio 2026 |
 
 ---
 
