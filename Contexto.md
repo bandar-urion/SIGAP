@@ -94,23 +94,26 @@ SIGAP/
 ├── sigap_config.py                   # Config centralizada (lee sigap.cfg)
 ├── sigap.cfg                         # Parámetros: DB, rutas, UI, LOG_LEVEL
 ├── CLAUDE.md                         # Configuración para Claude Code
+├── CHANGELOG.md                      # Historial de versiones
+├── README.md                         # Documentación pública del proyecto
+├── TODO.md                           # Tareas pendientes
 ├── Contexto.md                       # ← Este archivo (guía de sesión IA)
 ├── data/
 │   ├── sigap.db                      # Base de datos SQLite (fuente de verdad)
 │   ├── inbox/                        # Excel bancarios a procesar
-│   ├── processed/                    # Excel ya importados
-│   └── rejected/                     # Excel rechazados por validación
+│   └── processed/                    # Excel ya importados
 ├── scripts/
 │   ├── import_santander.py           # Parser Excel Santander → Inbox UI
 │   ├── factory_reset_normalized.py   # Reset + sembrado de DB
 │   ├── factory_reset_preserve_learning.py
 │   ├── modulos/
 │   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
-│   └── utils/
-│       ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
-│       ├── auditar_db.py
-│       ├── sesion_inicio.py          # Script de apertura de sesión
-│       └── sesion_cierre.py          # Script de cierre de sesión
+│   ├── utils/
+│   │   ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
+│   │   ├── auditar_db.py
+│   │   ├── sesion_inicio.py          # Script de apertura de sesión
+│   │   └── sesion_cierre.py          # Script de cierre de sesión
+│   └── _legacy/                      # Scripts anteriores a v0.8.0 (solo referencia)
 ├── tests/
 │   ├── test_aislamiento_cuotas.py    # Aislamiento lógica de cuotas
 │   ├── test_config.py                # Configuración centralizada
@@ -128,6 +131,7 @@ SIGAP/
 │   ├── GUIA_GIT.md
 │   ├── DECISIONES.md                 # Decisiones arquitectónicas (D-001 a D-010)
 │   ├── SESIONES.md                   # Bitácora de sesiones
+│   ├── QA_UI_Checklist_inbox_movimientos.md
 │   └── VIBE_CODING_SKILLS.md
 └── logs/
     └── sigap_tecnico.log             # Log técnico rotativo
