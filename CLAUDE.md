@@ -77,3 +77,16 @@ Conventional Commits + Semantic Versioning. See `docs/GUIA_GIT.md`. Main branch 
 | B (secondary) | Samsung S21 · Termux | Code-Server browser | `/` |
 
 Cross-platform bugs are common — check `IS_WINDOWS` flag when debugging terminal I/O or path issues.
+
+## Comportamiento Obligatorio del Agente
+
+El agente activa estos comportamientos por iniciativa propia, sin que Martín los solicite:
+
+| Momento                                | Acción obligatoria                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Al iniciar cualquier tarea**         | Leer `Contexto.md` completo. Confirmar entorno + branch activa.                          |
+| **Al detectar `input()` en flujos UI** | Señalar violación D-004 antes de continuar.                                              |
+| **Al detectar rutas hardcodeadas**     | Señalar violación D-005 antes de continuar.                                              |
+| **Al modificar lógica de negocio**     | Verificar si corresponde nueva entrada en `docs/DECISIONES.md`.                          |
+| **Antes de cada commit**               | Ejecutar `python -m unittest discover tests`. Si falla → no commitear.                   |
+| **Al cierre de sesión**                | Ejecutar el PROTOCOLO DE CIERRE DE SESIÓN de `Contexto.md` completo. Nunca omitir pasos. |

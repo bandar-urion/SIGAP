@@ -9,6 +9,22 @@
 
 ---
 
+## ⚡ COMPORTAMIENTO OBLIGATORIO DEL COPILOTO
+
+> Estos triggers se activan **sin que Martín los solicite**.
+> El copiloto los ejecuta por iniciativa propia en los momentos indicados.
+
+| Momento                                                               | Acción obligatoria                                                      |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Al iniciar sesión**                                                 | Confirmar entorno (A/B) + verificar branch + leer BUGS CONOCIDOS        |
+| **Cuando Martín dice** "cerramos", "listo", "commit", "terminamos"    | Activar PROTOCOLO DE CIERRE DE SESIÓN completo sin esperar que lo pida  |
+| **Cuando hay un fix de código**                                       | Verificar si corresponde nueva entrada en `docs/DECISIONES.md`          |
+| **Cuando hay una decisión arquitectónica nueva**                      | Proponer D-XXX antes de continuar                                       |
+| **Al detectar cualquier inconsistencia** entre código y documentación | Señalarla antes de continuar con la tarea principal                     |
+| **Cada tres meses**                                                   | Recordar que corresponde Sesión de Arqueología Trimestral (Protocolo 6) |
+
+---
+
 ## QUIÉN SOY Y QUÉ ESTAMOS HACIENDO
 
 Soy **Martín**, analista de sistemas en proceso de reactivación técnica.
