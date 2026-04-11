@@ -17,7 +17,8 @@
 | Momento                                                               | Acción obligatoria                                                      |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **Al iniciar sesión**                                                 | Confirmar entorno (A/B) + verificar branch + leer BUGS CONOCIDOS        |
-| **Cuando Martín dice** "cerramos", "listo", "commit", "terminamos"    | Activar PROTOCOLO DE CIERRE DE SESIÓN completo sin esperar que lo pida  |
+| **Cuando Martín dice** "cerramos", "hagamos cierre", "commit",        | Activar PROTOCOLO DE CIERRE DE SESIÓN completo sin esperar que lo pida  |
+| "terminamos"                                                          |                                                                         |
 | **Cuando hay un fix de código**                                       | Verificar si corresponde nueva entrada en `docs/DECISIONES.md`          |
 | **Cuando hay una decisión arquitectónica nueva**                      | Proponer D-XXX antes de continuar                                       |
 | **Al detectar cualquier inconsistencia** entre código y documentación | Señalarla antes de continuar con la tarea principal                     |
@@ -148,7 +149,7 @@ SIGAP/
 │   ├── ADR-001-Motor-Base-Datos.md
 │   ├── ADR-002-Modelo-Gobernanza.md
 │   ├── GUIA_GIT.md
-│   ├── DECISIONES.md                 # Decisiones arquitectónicas (D-001 a D-010)
+│   ├── DECISIONES.md                 # Decisiones arquitectónicas (D-001 a D-013)
 │   ├── SESIONES.md                   # Bitácora de sesiones
 │   ├── QA_UI_Checklist_inbox_movimientos.md
 │   └── VIBE_CODING_SKILLS.md
@@ -193,6 +194,40 @@ SIGAP/
 
 ---
 
+## PROTOCOLO DE INICIO DE SESIÓN
+
+> Ejecutar en orden al comenzar cada sesión de trabajo.
+
+### 1. Actualizar Archivos de Memoria del Proyecto en Claude.ai
+Reemplazar con las últimas versiones commiteadas del repo local:
+
+| Archivo              | Por qué                                                |
+| -------------------- | ------------------------------------------------------ |
+| `Contexto.md`        | Estado del proyecto, entornos, arquitectura, tareas    |
+| `SESIONES.md`        | Número de sesión correcto (fuente de verdad)           |
+| `docs/DECISIONES.md` | Historial de decisiones para no repetir ni contradecir |
+| `ROADMAP.md`         | Estado real de features: qué está hecho, qué no        |
+
+> **Tip:** actualizar la Memoria de Claude *después* de commitear,
+> no antes. La fuente de verdad es siempre Git.
+
+### 2. Adjuntar archivos en el primer mensaje del chat
+Para garantizar que el copiloto pueda leerlos con herramientas,
+adjuntar en el primer mensaje:
+`Contexto.md` · `SESIONES.md` · `ROADMAP.md` · `docs/DECISIONES.md`
+
+### 3. Informar al copiloto al abrir el chat
+En el primer mensaje indicar siempre:
+Sesión #NN — Entorno A|B — Branch: nombre-de-la-branch
+
+### 4. El copiloto confirma al iniciar
+Sin que Martín lo pida, el copiloto debe:
+1. Leer `Contexto.md`, `SESIONES.md`, `ROADMAP.md` y `docs/DECISIONES.md`.
+2. Confirmar entorno y branch activa.
+3. Revisar `BUGS CONOCIDOS` en este archivo.
+4. Listar `PRÓXIMAS TAREAS` y preguntar por dónde arrancamos.
+
+---
 ## PROTOCOLO DE CIERRE DE SESIÓN
 
 > Ejecutar en orden al finalizar cada sesión de trabajo.
@@ -224,33 +259,35 @@ git push origin feature/importar-movimiento
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-04-10
-**Sesión:** #17 — Documentación: protocolo cierre + árbol estructura + ROADMAP
+**Sesión:** #19 — Protocolos de sesión + rename campo auditoria (D-013)
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Diagnóstico y fix del problema recurrente de cierre de sesión: tareas pendientes
-  se commiteaban antes de ejecutarse. Fix: nuevo paso 1 en el protocolo
-  ("ejecutar tareas pendientes antes de generar bloques de cierre").
-- Auditoría del árbol de estructura en `Contexto.md` contra `Get-ChildItem` real:
-  eliminado `data/rejected/` (inexistente), agregados `_legacy/`, `CHANGELOG.md`,
-  `README.md`, `TODO.md`, `docs/QA_UI_Checklist_inbox_movimientos.md`.
-- Decisión de nomenclatura: `manage.py` → `sigap.py` como CLI unificado.
-  `manage.py` es convención Django, no estándar Python standalone.
-- `ROADMAP.md` reescrito desde cero: estructura Completados/En Curso/Próximos/Backlog,
-  sincronizado con estado real v0.8.1, sin items `[ ]` para features ya implementadas,
-  sin HTML, sin referencias a versiones legacy.
+- Redactado e insertado `## PROTOCOLO DE INICIO DE SESIÓN` en `Contexto.md`:
+  pasos para actualizar Memoria de Claude, adjuntar archivos al iniciar chat,
+  e informar entorno/branch. Incluye tabla de 4 archivos clave.
+- Redactado e insertado `## DIVISIÓN DE ROLES: ESTE CHAT vs CLAUDE CODE`:
+  criterio de derivación explícito para no resolver en este chat lo que
+  corresponde a Claude Code (refactors, análisis de impacto, ejecución de tests).
+- Corregido árbol de estructura: `D-001 a D-010` → `D-001 a D-013`.
+- Corregido `BUGS CONOCIDOS`: actualizado al cierre de Sesión #19.
+- Rename campo `usuario` → `modulo` en `auditoria_movimientos` (D-013):
+  análisis de impacto conceptual en este chat, ejecución delegada a Claude Code.
+  Resultado: 4 archivos Python actualizados, script de migración idempotente,
+  71/71 tests OK, commit `68d336f`.
+- Primer uso del patrón "diseño aquí / ejecución en Code": definimos el prompt
+  completo para Claude Code como entregable de este chat.
 
 **Estado del repo al cierre:**
 - Suite: 71/71 OK ✅
-- `ROADMAP.md` commiteado y pusheado ✅
-- Pendiente commit de cierre de esta sesión
+- D-013 commiteado por Claude Code ✅
+- Contexto.md actualizado, pendiente commit de cierre
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DONE]** Renombrar campo `usuario` → `modulo` en `auditoria_movimientos` (D-013, Sesión #19)
-2. **[DOC]** Diagrama/mapa de la suite de tests
-3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
-4. **[FEAT]** Expandir `sigap.py` como CLI unificado
-5. **[FEAT]** Módulo ABM standalone de catálogo
-6. **[FEAT]** Parser MercadoPago
+1. **[DOC]** Diagrama/mapa de la suite de tests
+2. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
+3. **[FEAT]** Expandir `sigap.py` como CLI unificado
+4. **[FEAT]** Módulo ABM standalone de catálogo
+5. **[FEAT]** Parser MercadoPago
