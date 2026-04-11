@@ -60,7 +60,7 @@ Se actualiza al cierre de cada sesión de trabajo.
 
 ### [v0.8.0] — 2026-03-15 · Auditoría Completa & Robots de QA
 - Flujo `auditoria_movimientos` completo: OK, SKIP_DUPLICADO, DESCARTADO_USUARIO.
-- Campo `usuario` documenta el módulo origen del evento (no persona física).
+- Campo `modulo` documenta el módulo origen del evento (no persona física). (Renombrado desde `usuario` en Sesión #19)
 - `test_robots_gobernanza.py`: 5 robots de QA para el flujo de alta de subcategoría.
 - Claude Code instalado en Entorno A. `CLAUDE.md` generado.
 - Suite: 71/71 OK.
@@ -91,7 +91,7 @@ Un movimiento se considera exitosamente importado solo si se cumplen los tres pa
 ## 📋 PRÓXIMOS HITOS (en orden de prioridad)
 
 ### [DOC] Documentación pendiente
-- [ ] Documentar convención del campo `usuario` en `auditoria_movimientos` (ya implementado, falta doc formal).
+- [x] Documentar convención del campo `modulo` en `auditoria_movimientos` — D-013 (Sesión #19).
 - [ ] Diagrama/mapa de la suite de tests (qué cubre cada archivo).
 - [ ] Revisión de `DOCUMENTACION.md` para sincronizar con estado real v0.8.1.
 

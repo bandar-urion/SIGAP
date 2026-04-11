@@ -99,7 +99,7 @@ def main():
             n_descartados = 0
 
             _AUDIT_SQL = """
-                INSERT INTO auditoria_movimientos (accion, usuario, id_movimiento_ref, estado_previo, estado_nuevo, resultado)
+                INSERT INTO auditoria_movimientos (accion, modulo, id_movimiento_ref, estado_previo, estado_nuevo, resultado)
                 VALUES (?, ?, ?, ?, ?, ?)
             """
 

@@ -24,6 +24,25 @@
 | **Cada tres meses**                                                   | Recordar que corresponde Sesión de Arqueología Trimestral (Protocolo 6) |
 
 ---
+## DIVISIÓN DE ROLES: ESTE CHAT vs CLAUDE CODE
+
+| Tarea                                                 | Dónde         |
+| ----------------------------------------------------- | ------------- |
+| Conceptualización, diseño, decisiones de arquitectura | ✅ Este chat   |
+| Redacción de D-XXX, protocolos, documentación         | ✅ Este chat   |
+| Revisión y validación del output de Claude Code       | ✅ Este chat   |
+| Refactors, cambios en código fuente                   | 🤖 Claude Code |
+| Análisis de impacto sobre el repo completo            | 🤖 Claude Code |
+| Generación de archivos, scripts, migraciones          | 🤖 Claude Code |
+| Ejecución de tests                                    | 🤖 Claude Code |
+
+**Criterio de derivación:** si la tarea requiere acceso al repo completo
+para hacerse correctamente → Claude Code.
+Si solo requiere razonamiento, diseño o revisión → este chat.
+
+> El copiloto debe señalar activamente cuando una tarea deriva a Claude Code,
+> en lugar de intentar resolverla parcialmente aquí.
+---
 
 ## QUIÉN SOY Y QUÉ ESTAMOS HACIENDO
 
@@ -229,7 +248,7 @@ git push origin feature/importar-movimiento
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Documentar convención campo `usuario` en `auditoria_movimientos`
+1. **[DONE]** Renombrar campo `usuario` → `modulo` en `auditoria_movimientos` (D-013, Sesión #19)
 2. **[DOC]** Diagrama/mapa de la suite de tests
 3. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
 4. **[FEAT]** Expandir `sigap.py` como CLI unificado

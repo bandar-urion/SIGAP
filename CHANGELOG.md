@@ -23,9 +23,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - `resultado='OK'` — movimiento insertado, `id_movimiento_ref=lastrowid`.
   - `resultado='SKIP_DUPLICADO'` — duplicado silencioso (`rowcount=0`).
   - `resultado='DESCARTADO_USUARIO'` — descarte explícito por el operador.
-- **Campo `usuario`** en `auditoria_movimientos`: identifica el módulo origen
+- **Campo `modulo`** en `auditoria_movimientos`: identifica el módulo origen
   del evento (`SIGAP_IMPORT`, `SIGAP_UI`, `SIGAP_RESET`, `SIGAP_CLI`),
-  no una persona física.
+  no una persona física. (Renombrado desde `usuario` en Sesión #19 — ver D-013)
 
 ### 🧪 Calidad (QA)
 - **`tests/test_robots_gobernanza.py`:** 5 robots de QA para el flujo

@@ -31,6 +31,7 @@
 | D-010 | Archivos de credenciales nunca en el repositorio | 2026-03-14 | ✅ Activa |
 | D-011 | Fix Unicode stdout en tests (Windows + Python 3.14+) | 2026-04-08 | ✅ Activa |
 | D-012 | Rutas hardcodeadas en factory_reset (Incidente) | 2026-04-09 | ✅ Activa |
+| D-013 | Convención del campo `modulo` en `auditoria_movimientos` | 2026-04-10 | ✅ Activa |
 
 ---
 
@@ -308,3 +309,34 @@ garantizado: el sistema arranca sin error pero opera sobre la DB equivocada o in
 **Consecuencias:**
 - Positiva: cualquier renombrado futuro de la DB se propaga automáticamente desde `sigap.cfg`
 - Negativa: ninguna — el fix es mecánico y sin efecto colateral
+
+---
+
+## D-013 — Convención del campo `modulo` en `auditoria_movimientos`
+
+**Fecha:** 2026-04-10
+**Estado:** Vigente
+**Contexto:**
+La tabla `auditoria_movimientos` incluye un campo `modulo TEXT`. En un sistema
+multiusuario este campo identificaría a la persona que ejecutó la acción.
+SIGAP es actualmente monousuario, por lo que no existe sesión ni autenticación.
+
+**Decisión:**
+El campo `modulo` identifica el subsistema SIGAP que originó la acción auditada,
+no a un usuario humano. Los valores válidos son literales fijos definidos por módulo:
+
+| Valor          | Módulo origen          | Significado                          |
+|----------------|------------------------|--------------------------------------|
+| `SISTEMA`      | Scripts de migración   | Operaciones de mantenimiento de DB   |
+| `SIGAP_UI`     | `inbox_movimientos.py` | Acción disparada desde la UI         |
+| `SIGAP_IMPORT` | `import_santander.py`  | Acción disparada desde el parser     |
+
+**Regla:** todo módulo nuevo que escriba en `auditoria_movimientos` debe definir
+su propio literal con prefijo `SIGAP_`, documentado en esta tabla.
+
+**Consecuencias:**
+- Migración de 7 registros en DB (bajo riesgo).
+- Si en el futuro SIGAP se vuelve multiusuario, este campo se reemplaza por FK
+  a tabla `usuarios`, y los valores actuales pasan a ser el usuario de sistema.
+
+**Historial:** campo renombrado desde `usuario` en Sesión #19 (2026-04-10).

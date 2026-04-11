@@ -736,7 +736,7 @@ def flujo_edicion_inteligente(cursor, tx, selector, render_callback, lista_movs,
 
                 cursor.execute(
                     """INSERT INTO auditoria_movimientos
-                    (timestamp, usuario, accion, estado_previo, estado_nuevo, resultado)
+                    (timestamp, modulo, accion, estado_previo, estado_nuevo, resultado)
                     VALUES (?, ?, ?, ?, ?, ?)""",
                     (timestamp_ms, 'SIGAP_UI', 'ALTA_SUBCAT', 'INEXISTENTE', estado_nuevo, 'OK')
                 )

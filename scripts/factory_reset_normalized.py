@@ -162,7 +162,7 @@ def factory_reset_normalized():
     CREATE TABLE auditoria_movimientos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')),
-        usuario TEXT DEFAULT 'SISTEMA',
+        modulo TEXT DEFAULT 'SISTEMA',
         accion TEXT NOT NULL,
         id_movimiento_ref INTEGER,
         estado_previo TEXT,
