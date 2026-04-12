@@ -216,9 +216,17 @@ Reemplazar con las últimas versiones commiteadas del repo local:
 | `SESIONES.md`        | Número de sesión correcto (fuente de verdad)           |
 | `docs/DECISIONES.md` | Historial de decisiones para no repetir ni contradecir |
 | `ROADMAP.md`         | Estado real de features: qué está hecho, qué no        |
+| `CLAUDE.md`          | Verificar consistencia con `Contexto.md` si hubo       |
+|                      | cambios estructurales (arquitectura, entornos,         |
+|                      | constraints). Claude Code lo lee automáticamente — no  |
+|                      | se adjunta aquí.                                       |
 
 > **Tip:** actualizar la Memoria de Claude *después* de commitear,
 > no antes. La fuente de verdad es siempre Git.
+
+> **Nota `CLAUDE.md`:** leído automáticamente por Claude Code al abrir el repo. No requiere
+> acción en este chat. Solo actualizar si cambió arquitectura, comandos clave o constraints.
+> El estado de sesión vive en `Contexto.md`, no aquí.
 
 > **Advertencia sobre `/mnt/project`:** el snapshot montado en el entorno del copiloto
 > puede estar desactualizado o ser parcial. **No es fuente de verdad.**
@@ -229,7 +237,7 @@ Reemplazar con las últimas versiones commiteadas del repo local:
 ### 2. Adjuntar archivos en el primer mensaje del chat
 Para garantizar que el copiloto pueda leerlos con herramientas,
 adjuntar en el primer mensaje:
-`Contexto.md` · `SESIONES.md` · `ROADMAP.md` · `docs/DECISIONES.md`
+`Contexto.md` · `SESIONES.md` · `ROADMAP.md` · `docs/DECISIONES.md` . `CLAUDE.md`
 
 ### 3. Informar al copiloto al abrir el chat
 En el primer mensaje indicar siempre:
@@ -274,28 +282,56 @@ git push origin feature/importar-movimiento
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-04-12
-**Sesión:** #20 — Sincronización SKILL.md + árbol estructura Contexto.md
+**Sesión:** #21 — Mapa de suite de tests
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- SKILL.md sincronizado con estado real del proyecto (v0.8.1, Sesión #19,
-  campo `modulo`, árbol real, próximas tareas, protocolo de sesión reforzado).
-- Árbol ESTRUCTURA DEL PROYECTO en Contexto.md reemplazado con salida real
-  de `tree /F /A` — primera vez que se valida contra el repo, no contra /mnt/project.
-- Advertencia sobre `/mnt/project` incorporada al Protocolo de Inicio de Sesión
-  en Contexto.md: fuente de verdad es Martín o Claude Code, no el snapshot montado.
-- `migrate_auditoria_usuario_to_modulo.py` movido manualmente a `scripts/_legacy/`.
-- Aprendizaje de protocolo: el copiloto no debe inferir estructura ni contenido
-  del repo desde `/mnt/project`.
+- `docs/MAPA_TESTS.md` generado vía Claude Code: mapa completo de la suite
+  (10 archivos, 71 tests), con descripción por método y tabla resumen.
+- Gaps de cobertura identificados y priorizados como próxima tarea:
+  `factory_reset_normalized.py` (sin regresión para fix Sesión #16),
+  `auditar_db.py` (0%), `sigap.py` (0%).
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅ (sin cambios de código)
-- Contexto.md actualizado — pendiente commit de cierre
+- Suite: 71/71 OK ✅
+- `docs/MAPA_TESTS.md` agregado — pendiente commit de cierre
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
-1. **[DOC]** Diagrama/mapa de la suite de tests
+1. **[TEST]** Tests faltantes — generar `tests/test_sigap_cli.py`,
+   `tests/test_auditar_db.py` y `tests/test_factory_reset.py`.
+   Detalle por módulo:
+
+   **`tests/test_factory_reset.py`** — regresión fix Sesión #16:
+   - Verificar que `factory_reset_normalized.py` y
+     `factory_reset_preserve_learning.py` NO hardcodean rutas:
+     el string `"control_gastos.db"` no debe aparecer en el código fuente.
+   - Verificar que la ruta de DB usada en runtime termina en `sigap.db`
+     (obtenida via `sigap_config.get_db_path()`).
+
+   **`tests/test_auditar_db.py`** — cobertura desde cero:
+   - Verificar que `auditar()` usa `sigap_config.get_db_path()` para
+     obtener la ruta (D-005), no rutas hardcodeadas.
+   - Verificar que con una DB en memoria que NO tiene `param_preferencias`,
+     la función no lanza excepción (solo loguea warning).
+   - Verificar que con una ruta inexistente, la función no lanza excepción
+     (rama `os.path.exists() == False`).
+   - Verificar que con una DB que SÍ tiene `param_preferencias`,
+     la función completa sin errores.
+
+   **`tests/test_sigap_cli.py`** — cobertura desde cero:
+   - Verificar que argparse reconoce `status` y `reset` como subcomandos
+     válidos (sin ejecutarlos).
+   - Verificar que `show_status()` con DB inexistente imprime advertencia
+     y retorna sin crashear (mockear `RUTA_DB` a ruta falsa).
+   - Verificar que `show_status()` con DB válida (en memoria con tablas
+     del schema) imprime conteos y retorna sin crashear.
+   - Verificar que `run_reset()` con `input()` mockeado a `"no"` imprime
+     mensaje de cancelación y NO llama a `factory_reset_normalized()`.
+   - Verificar que `RUTA_DB` en `sigap.py` proviene de `sigap_config`
+     y termina en `sigap.db` (no nombre legacy).
+
 2. **[FEAT]** Desacoplar `parsear_excel_santander()` como función aislada
 3. **[FEAT]** Expandir `sigap.py` como CLI unificado
 4. **[FEAT]** Módulo ABM standalone de catálogo

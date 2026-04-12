@@ -92,7 +92,7 @@ Un movimiento se considera exitosamente importado solo si se cumplen los tres pa
 
 ### [DOC] Documentación pendiente
 - [x] Documentar convención del campo `modulo` en `auditoria_movimientos` — D-013 (Sesión #19).
-- [ ] Diagrama/mapa de la suite de tests (qué cubre cada archivo).
+- [x] Diagrama/mapa de la suite de tests → `docs/MAPA_TESTS.md` (Sesión #21)
 - [ ] Revisión de `DOCUMENTACION.md` para sincronizar con estado real v0.8.1.
 
 ### [FEAT] Desacoplar Parser Santander

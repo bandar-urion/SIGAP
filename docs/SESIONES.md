@@ -8,6 +8,21 @@
 | 1 | — | — | — | — | — | — | Sesiones 1-5 (pre-implementación de bitácora) | Historial previo en CHANGELOG.md |
 | 6 | 2026-03-10 | 22:20 | 22:38 | 18m | A — PC Casa (Windows) | feature/metodologia-sesiones | Implementar registro de sesiones + scripts de apertura/cierre | LF/CRLF warnings normales en Windows. Guardado manual en VSCode crítico pre-commit. |
 
+## Sesión #21 — 2026-04-12
+**Entorno:** A (Windows 11 · VSCode)
+**Branch:** `feature/importar-movimiento`
+**Duración estimada:** 0.5 hs
+
+### Trabajo realizado
+- `docs/MAPA_TESTS.md` generado por Claude Code: mapa completo de la suite
+  (10 archivos, 71 tests, descripción por método, tabla resumen).
+- Gaps de cobertura identificados: `sigap.py` (0 tests), `factory_reset_normalized.py`
+  (1 test mínimo, sin regresión para fix de rutas de Sesión #16),
+  `auditar_db.py` (0 tests).
+
+### Estado al cierre
+- Suite: 71/71 OK ✅
+- Sin cambios de código
 
 ## Sesión #18 — 2026-04-10
 **Entorno:** A (Windows 11 · VSCode)
