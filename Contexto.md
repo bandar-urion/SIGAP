@@ -110,51 +110,60 @@ los categoriza con un motor de IA propio (diccionario + regex), y los almacena e
 
 ```
 SIGAP/
+├── .gitignore
 ├── sigap.py                          # Orquestador CLI (status / reset)
 ├── sigap_config.py                   # Config centralizada (lee sigap.cfg)
 ├── sigap.cfg                         # Parámetros: DB, rutas, UI, LOG_LEVEL
 ├── CLAUDE.md                         # Configuración para Claude Code
 ├── CHANGELOG.md                      # Historial de versiones
+├── DOCUMENTACION.md                  # Documentación técnica del sistema
 ├── README.md                         # Documentación pública del proyecto
 ├── TODO.md                           # Tareas pendientes
 ├── Contexto.md                       # ← Este archivo (guía de sesión IA)
+├── ROADMAP.md                        # Planificación y estado de features
+├── Comprobantes Tramites/            # Extractos bancarios de referencia
+│   ├── MercadoPago Gastos.csv
+│   ├── MercadoPago Mastercard.csv
+│   ├── Santander Gastos.csv
+│   ├── Santander Visa.csv
+│   └── Tablero Control.csv
 ├── data/
 │   ├── sigap.db                      # Base de datos SQLite (fuente de verdad)
 │   ├── inbox/                        # Excel bancarios a procesar
 │   └── processed/                    # Excel ya importados
-├── scripts/
-│   ├── import_santander.py           # Parser Excel Santander → Inbox UI
-│   ├── factory_reset_normalized.py   # Reset + sembrado de DB
-│   ├── factory_reset_preserve_learning.py
-│   ├── modulos/
-│   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
-│   ├── utils/
-│   │   ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
-│   │   ├── auditar_db.py
-│   │   ├── sesion_inicio.py          # Script de apertura de sesión
-│   │   └── sesion_cierre.py          # Script de cierre de sesión
-│   └── _legacy/                      # Scripts anteriores a v0.8.0 (solo referencia)
-├── tests/
-│   ├── test_aislamiento_cuotas.py    # Aislamiento lógica de cuotas
-│   ├── test_config.py                # Configuración centralizada
-│   ├── test_contrato_santander.py    # Contrato formato Excel Santander
-│   ├── test_database_init.py         # Esquema SQL
-│   ├── test_gobernanza_similitud.py  # Motor de Gobernanza (25 tests)
-│   ├── test_gui_logic.py             # Lógica UI (mocks)
-│   ├── test_importacion.py           # Integridad DB + deduplicación
-│   ├── test_motor_clasificacion.py   # Motor IA (reemplaza test_cerebro.py)
-│   ├── test_ui_inbox_movimientos.py  # UI mocks
-│   └── test_robots_gobernanza.py     # ⭐ Robots de QA (5 robots)
 ├── docs/
 │   ├── ADR-001-Motor-Base-Datos.md
 │   ├── ADR-002-Modelo-Gobernanza.md
-│   ├── GUIA_GIT.md
 │   ├── DECISIONES.md                 # Decisiones arquitectónicas (D-001 a D-013)
-│   ├── SESIONES.md                   # Bitácora de sesiones
+│   ├── GUIA_GIT.md
 │   ├── QA_UI_Checklist_inbox_movimientos.md
+│   ├── SESIONES.md                   # Bitácora de sesiones
 │   └── VIBE_CODING_SKILLS.md
-└── logs/
-    └── sigap_tecnico.log             # Log técnico rotativo
+├── logs/
+│   └── sigap_tecnico.log             # Log técnico rotativo
+├── scripts/
+│   ├── factory_reset_normalized.py   # Reset + sembrado de DB
+│   ├── factory_reset_preserve_learning.py
+│   ├── import_santander.py           # Parser XLS Santander → Inbox UI
+│   ├── modulos/
+│   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
+│   ├── utils/
+│   │   ├── auditar_db.py
+│   │   ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
+│   │   ├── sesion_inicio.py          # Script de apertura de sesión
+│   │   └── sesion_cierre.py          # Script de cierre de sesión
+│   └── _legacy/                      # Scripts anteriores a v0.8.0 (solo referencia)
+└── tests/
+    ├── test_aislamiento_cuotas.py    # Aislamiento lógica de cuotas
+    ├── test_config.py                # Configuración centralizada
+    ├── test_contrato_santander.py    # Contrato formato Excel Santander
+    ├── test_database_init.py         # Esquema SQL
+    ├── test_gobernanza_similitud.py  # Motor de Gobernanza (25 tests)
+    ├── test_gui_logic.py             # Lógica UI (mocks)
+    ├── test_importacion.py           # Integridad DB + deduplicación
+    ├── test_motor_clasificacion.py   # Motor IA
+    ├── test_robots_gobernanza.py     # ⭐ Robots de QA (5 robots)
+    └── test_ui_inbox_movimientos.py  # UI mocks
 ```
 
 ---
@@ -211,6 +220,12 @@ Reemplazar con las últimas versiones commiteadas del repo local:
 > **Tip:** actualizar la Memoria de Claude *después* de commitear,
 > no antes. La fuente de verdad es siempre Git.
 
+> **Advertencia sobre `/mnt/project`:** el snapshot montado en el entorno del copiloto
+> puede estar desactualizado o ser parcial. **No es fuente de verdad.**
+> Cualquier dato sobre el estado actual del repo (estructura, contenido de archivos,
+> resultado de tests, logs) debe provenir de Martin o ClaudeCode: ejecutar el comando correspondiente
+> y pegar la salida, o adjuntar el archivo directamente en el chat.
+
 ### 2. Adjuntar archivos en el primer mensaje del chat
 Para garantizar que el copiloto pueda leerlos con herramientas,
 adjuntar en el primer mensaje:
@@ -258,31 +273,25 @@ git push origin feature/importar-movimiento
 
 ## ÚLTIMA SESIÓN
 
-**Fecha:** 2026-04-10
-**Sesión:** #19 — Protocolos de sesión + rename campo auditoria (D-013)
+**Fecha:** 2026-04-12
+**Sesión:** #20 — Sincronización SKILL.md + árbol estructura Contexto.md
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- Redactado e insertado `## PROTOCOLO DE INICIO DE SESIÓN` en `Contexto.md`:
-  pasos para actualizar Memoria de Claude, adjuntar archivos al iniciar chat,
-  e informar entorno/branch. Incluye tabla de 4 archivos clave.
-- Redactado e insertado `## DIVISIÓN DE ROLES: ESTE CHAT vs CLAUDE CODE`:
-  criterio de derivación explícito para no resolver en este chat lo que
-  corresponde a Claude Code (refactors, análisis de impacto, ejecución de tests).
-- Corregido árbol de estructura: `D-001 a D-010` → `D-001 a D-013`.
-- Corregido `BUGS CONOCIDOS`: actualizado al cierre de Sesión #19.
-- Rename campo `usuario` → `modulo` en `auditoria_movimientos` (D-013):
-  análisis de impacto conceptual en este chat, ejecución delegada a Claude Code.
-  Resultado: 4 archivos Python actualizados, script de migración idempotente,
-  71/71 tests OK, commit `68d336f`.
-- Primer uso del patrón "diseño aquí / ejecución en Code": definimos el prompt
-  completo para Claude Code como entregable de este chat.
+- SKILL.md sincronizado con estado real del proyecto (v0.8.1, Sesión #19,
+  campo `modulo`, árbol real, próximas tareas, protocolo de sesión reforzado).
+- Árbol ESTRUCTURA DEL PROYECTO en Contexto.md reemplazado con salida real
+  de `tree /F /A` — primera vez que se valida contra el repo, no contra /mnt/project.
+- Advertencia sobre `/mnt/project` incorporada al Protocolo de Inicio de Sesión
+  en Contexto.md: fuente de verdad es Martín o Claude Code, no el snapshot montado.
+- `migrate_auditoria_usuario_to_modulo.py` movido manualmente a `scripts/_legacy/`.
+- Aprendizaje de protocolo: el copiloto no debe inferir estructura ni contenido
+  del repo desde `/mnt/project`.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅
-- D-013 commiteado por Claude Code ✅
-- Contexto.md actualizado, pendiente commit de cierre
+- Suite: 71/71 OK ✅ (sin cambios de código)
+- Contexto.md actualizado — pendiente commit de cierre
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 
