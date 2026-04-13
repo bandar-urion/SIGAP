@@ -32,6 +32,8 @@
 | D-011 | Fix Unicode stdout en tests (Windows + Python 3.14+) | 2026-04-08 | ✅ Activa |
 | D-012 | Rutas hardcodeadas en factory_reset (Incidente) | 2026-04-09 | ✅ Activa |
 | D-013 | Convención del campo `modulo` en `auditoria_movimientos` | 2026-04-10 | ✅ Activa |
+| D-014 | `DB_FILE` se resuelve en tiempo de importación (impacto en mocks) | 2026-04-12 | ✅ Activa |
+| D-015 | Scripts de métricas de sesión descartados (`sesion_inicio/cierre.py`) | 2026-04-12 | ✅ Activa |
 
 ---
 
@@ -340,3 +342,20 @@ su propio literal con prefijo `SIGAP_`, documentado en esta tabla.
   a tabla `usuarios`, y los valores actuales pasan a ser el usuario de sistema.
 
 **Historial:** campo renombrado desde `usuario` en Sesión #19 (2026-04-10).
+
+## D-014 — DB_FILE se resuelve en tiempo de importación
+
+En `factory_reset_normalized.py` y `factory_reset_preserve_learning.py`,
+`DB_FILE = sigap_config.get_db_path()` se evalúa una sola vez al cargar
+el módulo, no en cada llamada. Para mockear correctamente en tests se
+requiere parchear ambos targets:
+- `sigap_config.get_db_path` (forward-compatibility)
+- `scripts.factory_reset_normalized.DB_FILE` (valor ya resuelto en importación)
+Mockear solo el primero no tiene efecto en Windows.
+
+## D-015 — Scripts de métricas de sesión descartados
+
+`sesion_inicio.py` y `sesion_cierre.py` movidos a `_legacy/`. Medían
+tiempo de reloj, no tiempo de trabajo real. Las interrupciones hacen
+la métrica inútil. El registro narrativo en `SESIONES.md` aporta más
+valor que cualquier timestamp automático.

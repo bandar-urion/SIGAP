@@ -27,9 +27,6 @@ python scripts/factory_reset_normalized.py
 # Import Santander Excel (place .xlsx in data/inbox/ first)
 python scripts/import_santander.py
 
-# Session management
-python scripts/utils/sesion_inicio.py
-python scripts/utils/sesion_cierre.py
 ```
 
 No build step. No linter configured.
