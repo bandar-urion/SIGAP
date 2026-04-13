@@ -39,6 +39,9 @@ Este documento reemplaza temporalmente las listas dispersas y establece el orden
 - [ ] - [ ] **[QA]** Cobertura `auditar_db.py`: testear función `auditar()` con SQLite en memoria. Bajo costo, alta visibilidad. *(Sesión #17 — cobertura actual: 0%)*
 - [ ] **[QA]** Ampliar robots de gobernanza: cubrir branches faltantes en `inbox_movimientos.py` líneas 462-642 (prefijo común, justificación libre 'o/O', cancelación por tecla inválida, adopción fuera de rango). *(Sesión #17 — cobertura actual: gaps identificados)*
 - [ ] **[QA]** Robot para flujo Backspace → clave personalizada (`inbox_movimientos.py:784-799`, recién refactorizado de `input()` a `leer_linea_inline()`, sin cobertura de test). *(Sesión #17)*
+- [ ] **[TEST] Contrato mínimo `parsear_excel_santander()`:** Antes del refactor de desacoplamiento, escribir al menos un test que valide el contrato actual de la función (columnas esperadas, tipos, deduplicación).
+  Evita regresiones silenciosas durante el desacoplamiento.
+  Ver descubrimiento Sesión #22.
 
 ## 🚀 FASE 3: S.I.G.A.P. 2.0 (BACKLOG ESTRATÉGICO)
 *Objetivo: Sacar al sistema de la Terminal y conectarlo a la red neuronal externa.*

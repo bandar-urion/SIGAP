@@ -149,10 +149,10 @@ SIGAP/
 │   │   └── inbox_movimientos.py      # ⭐ Motor principal (UI + lógica de negocio)
 │   ├── utils/
 │   │   ├── auditar_db.py
-│   │   ├── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
-│   │   ├── sesion_inicio.py          # Script de apertura de sesión
-│   │   └── sesion_cierre.py          # Script de cierre de sesión
+│   │   └── config_grafica.py         # Constantes ANSI, colores, dimensiones UI
 │   └── _legacy/                      # Scripts anteriores a v0.8.0 (solo referencia)
+        ├── sesion_inicio.py          # Descartado Sesión #22 (D-015)
+        └── sesion_cierre.py          # Descartado Sesión #22 (D-015)
 └── tests/
     ├── test_aislamiento_cuotas.py    # Aislamiento lógica de cuotas
     ├── test_config.py                # Configuración centralizada
@@ -210,16 +210,16 @@ SIGAP/
 ### 1. Actualizar Archivos de Memoria del Proyecto en Claude.ai
 Reemplazar con las últimas versiones commiteadas del repo local:
 
-| Archivo              | Por qué                                                |
-| -------------------- | ------------------------------------------------------ |
-| `Contexto.md`        | Estado del proyecto, entornos, arquitectura, tareas    |
-| `SESIONES.md`        | Número de sesión correcto (fuente de verdad)           |
-| `docs/DECISIONES.md` | Historial de decisiones para no repetir ni contradecir |
-| `ROADMAP.md`         | Estado real de features: qué está hecho, qué no        |
-| `CLAUDE.md`          | Verificar consistencia con `Contexto.md` si hubo       |
-|                      | cambios estructurales (arquitectura, entornos,         |
-|                      | constraints). Claude Code lo lee automáticamente — no  |
-|                      | se adjunta aquí.                                       |
+| Archivo              | Por qué                                                                   |
+| -------------------- | ------------------------------------------------------------------------- |
+| `Contexto.md`        | Estado del proyecto, entornos, arquitectura, tareas                       |
+| `SESIONES.md`        | Número de sesión correcto (fuente de verdad)                              |
+| `docs/DECISIONES.md` | Historial de decisiones para no repetir ni contradecir                    |
+| `ROADMAP.md`         | Estado real de features: qué está hecho, qué no                           |
+| `CLAUDE.md`          | Verificar consistencia con `Contexto.md` si hubo                          |
+|                      | cambios estructurales (arquitectura, entornos, constraints). Claude Code  |
+|                      | lo lee automáticamente — no se adjunta aquí.                              |
+| `TODO.md`            | Backlog táctico: verificar prioridades y registrar descubrimientos nuevos |
 
 > **Tip:** actualizar la Memoria de Claude *después* de commitear,
 > no antes. La fuente de verdad es siempre Git.
@@ -282,20 +282,25 @@ git push origin feature/importar-movimiento
 ## ÚLTIMA SESIÓN
 
 **Fecha:** 2026-04-12
-**Sesión:** #21 — Mapa de suite de tests
+**Sesión:** #22 — Cobertura de tests + higiene de scripts
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
 
 **Lo que hicimos:**
-- `docs/MAPA_TESTS.md` generado vía Claude Code: mapa completo de la suite
-  (10 archivos, 71 tests), con descripción por método y tabla resumen.
-- Gaps de cobertura identificados y priorizados como próxima tarea:
-  `factory_reset_normalized.py` (sin regresión para fix Sesión #16),
-  `auditar_db.py` (0%), `sigap.py` (0%).
+- Generados 4 archivos de tests nuevos (18 tests): `test_factory_reset.py`,
+  `test_auditar_db.py`, `test_sigap_cli.py`, `test_factory_reset_preserve.py`.
+- Fix `.gitignore`: `*.db/` → `*.db` (sigap.db no estaba siendo ignorada).
+- `test_factory_reset_preserve.py`: docstring + mensaje de fallo con diagnóstico
+  diferencial para detectar pérdida silenciosa vs. cambio de seeding.
+- D-014 documentada: `DB_FILE` se resuelve en tiempo de importación — doble
+  mock necesario en tests de Windows.
+- `sesion_inicio.py` y `sesion_cierre.py` movidos a `_legacy/` (D-015):
+  métricas de tiempo de reloj descartadas por no reflejar trabajo real.
+- `CLAUDE.md` y `docs/DECISIONES.md` actualizados.
 
 **Estado del repo al cierre:**
-- Suite: 71/71 OK ✅
-- `docs/MAPA_TESTS.md` agregado — pendiente commit de cierre
+- Suite: 89/89 OK ✅
+- 2 commits pusheados a `feature/importar-movimiento`
 
 ## PRÓXIMAS TAREAS (en orden de prioridad)
 

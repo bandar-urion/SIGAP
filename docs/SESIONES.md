@@ -8,6 +8,25 @@
 | 1 | — | — | — | — | — | — | Sesiones 1-5 (pre-implementación de bitácora) | Historial previo en CHANGELOG.md |
 | 6 | 2026-03-10 | 22:20 | 22:38 | 18m | A — PC Casa (Windows) | feature/metodologia-sesiones | Implementar registro de sesiones + scripts de apertura/cierre | LF/CRLF warnings normales en Windows. Guardado manual en VSCode crítico pre-commit. |
 
+## Sesión #22 — 2026-04-12
+**Entorno:** A (Windows 11 · VSCode)
+**Branch:** `feature/importar-movimiento`
+**Duración estimada:** 2 hs
+
+### Trabajo realizado
+- 4 archivos de tests generados vía Claude Code (89/89 OK):
+  `test_factory_reset.py`, `test_auditar_db.py`, `test_sigap_cli.py`,
+  `test_factory_reset_preserve.py` — cierra gaps identificados en Sesión #21.
+- Fix `.gitignore`: `*.db/` → `*.db` — sigap.db no estaba siendo ignorada.
+- Diagnóstico diferencial documentado en test y mensaje de fallo de
+  `test_ciclo_completo_sin_perdida` (seeding vs. bug real).
+- D-014 y D-015 agregadas a `DECISIONES.md`.
+- `sesion_inicio/cierre.py` → `_legacy/` (métricas de reloj descartadas).
+
+### Estado al cierre
+- Suite: 89/89 OK ✅
+- 2 commits pusheados
+
 ## Sesión #21 — 2026-04-12
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
