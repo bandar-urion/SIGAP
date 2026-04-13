@@ -15,8 +15,10 @@ Comprobantes Tramites/
 .sesion_activa
 
 
+# Base de Datos del Proyecto
+*.db
+
 # Descomentá si en algún momento querés excluir estos:
-*.db/
 logs/
 # data/inbox/
 # data/processed/
