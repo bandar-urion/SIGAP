@@ -573,6 +573,36 @@ y `auditar_db.py`. Gaps documentados en `TODO.md`.
 > la arqueología no fue honesta.
 > Si no se corrió `coverage.py`, la arqueología fue incompleta.
 
+## 🛡️ PROTOCOLO 7 — Economía de Contexto
+
+**Vulnerabilidad que resuelve:** Optimizar el costo de tokens a expensas
+de la calidad del proceso, aplicando métricas de eficiencia diseñadas
+para pipelines de generación masiva a un flujo de ingeniería artesanal
+donde cada decisión tiene consecuencias concretas.
+
+**La regla:**
+La "sobrecomunicación" en el par Humano-IA no es un defecto de eficiencia:
+es una herramienta de calidad. El volumen de comunicación se calibra según
+el riesgo de la operación, no según el costo del token.
+
+**El caso real que lo originó:**
+En Sesión #22, Martín comunicó el output completo de `git status` antes
+de commitear. Eso reveló que `data/sigap.db` estaba en el staging —
+un archivo de producción que no debía entrar al historial de Git.
+La "sobrecomunicación" evitó un error irreversible.
+La optimización de tokens en ese momento hubiera costado más que el token.
+
+**La distinción que importa:**
+La psicosis de tokens tiene sentido cuando se generan contenidos en volumen,
+se automatizan pipelines, o se corren agentes sin supervisión humana.
+En un proyecto donde una decisión mal tomada hoy es deuda técnica mañana,
+la comunicación densa es parte del proceso de calidad, no overhead.
+
+**El criterio de cumplimiento:**
+> Antes de abreviar una comunicación con el copiloto, preguntarse:
+> ¿el riesgo de esta operación justifica la información que estoy omitiendo?
+> Si la operación es irreversible → comunicar completo, siempre.
+
 ---
 
 # 🎯 ESTADO ACTUAL — Sesión #6
@@ -603,7 +633,8 @@ y `auditar_db.py`. Gaps documentados en `TODO.md`.
 | 4 — Diario de Decisiones | 🔲 A implementar | Crear `DECISIONES.md` como primer paso |
 | 5 — Justificación de Complejidad | 🔲 A implementar | Auditar capa cross-platform como caso piloto |
 | 6 — Arqueología Trimestral | ✅ Activo | Primera ejecución: Sesión #17 (2026-04-09). Próxima: Julio 2026 |
+| 7 — Economía de Contexto | ✅ Activo | Originado en Sesión #22 (2026-04-12). sigap.db fuera del historial. |
 
 ---
 
-*VIBE_CODING_SKILLS.md — Proyecto Fénix · Actualizado Sesión #6 · 2026-03-11*
+*VIBE_CODING_SKILLS.md — Proyecto Fénix · Actualizado Sesión #22 · 2026-04-12*
