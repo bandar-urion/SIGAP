@@ -359,3 +359,12 @@ Mockear solo el primero no tiene efecto en Windows.
 tiempo de reloj, no tiempo de trabajo real. Las interrupciones hacen
 la métrica inútil. El registro narrativo en `SESIONES.md` aporta más
 valor que cualquier timestamp automático.
+
+## D-016 — Claude Code no commitea
+
+Claude Code opera con alcance acotado al archivo que nombra la consigna,
+deja los cambios en el working tree y termina con la suite en verde.
+La revisión del diff y el commit se hacen en el chat con el copiloto y
+desde la terminal. Un agente que commitea solo quita el punto de control
+humano antes de que el cambio entre al historial. Reglas en `CLAUDE.md`,
+sección "Límites de operación".

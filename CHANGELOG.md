@@ -3,6 +3,26 @@
 Todas las modificaciones notables a este proyecto serán documentadas en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [v0.8.2] — 2026-10-27
+
+### Changed
+- `scripts/import_santander.py`: parseo del Excel extraído a
+  `parsear_excel_santander(ruta_archivo) -> DataFrame`. Sin acceso a DB,
+  sin salida por consola, sin deduplicación. `main()` delega en ella.
+
+### Fixed
+- `scripts/import_santander.py`: el alta de sinónimo en `diccionario_terminos`
+  ya no silencia errores. Captura solo `sqlite3.IntegrityError` (término
+  duplicado) y registra warning; el resto se propaga.
+
+### Added
+- `tests/test_import_santander.py` (2 tests). Suite: 91.
+- `requirements.txt`: pytest.
+
+### Infra
+- `CLAUDE.md`: sección "Límites de operación" para Claude Code.
+  Entornos renombrados a PC / S21.
+
 ## [v0.8.1] — 2026-04-09
 
 ### Fixed

@@ -8,6 +8,24 @@
 | 1 | — | — | — | — | — | — | Sesiones 1-5 (pre-implementación de bitácora) | Historial previo en CHANGELOG.md |
 | 6 | 2026-03-10 | 22:20 | 22:38 | 18m | A — PC Casa (Windows) | feature/metodologia-sesiones | Implementar registro de sesiones + scripts de apertura/cierre | LF/CRLF warnings normales en Windows. Guardado manual en VSCode crítico pre-commit. |
 
+## Sesión #23 — 2026-10-27
+**Entorno:** S21 (Termux · DeX · Claude Code)
+**Branch:** `feature/importar-movimiento`
+**Duración estimada:** 2 hs
+
+### Trabajo realizado
+- Entorno S21: Python 3.14, pytest instalado, `requirements.txt` + pytest.
+- `parsear_excel_santander()` desacoplada en `import_santander.py` (sin DB,
+  sin prints). Tests nuevos: `tests/test_import_santander.py` (2).
+- Fix: `except: pass` en alta de sinónimo → `sqlite3.IntegrityError` + warning.
+- `CLAUDE.md`: límites de operación de Claude Code (no commitea) y entornos PC/S21.
+- D-016. Versión v0.8.2.
+- Termux:API operativo para pasar salidas al chat.
+
+### Estado al cierre
+- Suite: 91/91 OK ✅
+- Todo pusheado a `feature/importar-movimiento`
+
 ## Sesión #22 — 2026-04-12
 **Entorno:** A (Windows 11 · VSCode)
 **Branch:** `feature/importar-movimiento`
