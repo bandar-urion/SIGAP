@@ -34,6 +34,7 @@
 | D-013 | Convención del campo `modulo` en `auditoria_movimientos` | 2026-04-10 | ✅ Activa |
 | D-014 | `DB_FILE` se resuelve en tiempo de importación (impacto en mocks) | 2026-04-12 | ✅ Activa |
 | D-015 | Scripts de métricas de sesión descartados (`sesion_inicio/cierre.py`) | 2026-04-12 | ✅ Activa |
+| D-016 | Claude Code no commitea | 2026-10-27 | ✅ Activa |
 
 ---
 
