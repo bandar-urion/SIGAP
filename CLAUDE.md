@@ -70,8 +70,8 @@ Conventional Commits + Semantic Versioning. See `docs/GUIA_GIT.md`. Main branch 
 
 | Env | Platform | Terminal | Path separator |
 |-----|----------|----------|----------------|
-| A (primary) | Windows 11 · VSCode | PowerShell/CMD | `\` |
-| B (secondary) | Samsung S21 · Termux | Code-Server browser | `/` |
+| Entorno PC (primary) | Windows 11 · VSCode | PowerShell/CMD | `\` |
+| Entorno S21 (secondary) | Samsung S21 · Termux | Code-Server browser | `/` |
 
 Cross-platform bugs are common — check `IS_WINDOWS` flag when debugging terminal I/O or path issues.
 
@@ -85,5 +85,13 @@ El agente activa estos comportamientos por iniciativa propia, sin que Martín lo
 | **Al detectar `input()` en flujos UI** | Señalar violación D-004 antes de continuar.                                              |
 | **Al detectar rutas hardcodeadas**     | Señalar violación D-005 antes de continuar.                                              |
 | **Al modificar lógica de negocio**     | Verificar si corresponde nueva entrada en `docs/DECISIONES.md`.                          |
-| **Antes de cada commit**               | Ejecutar `python -m unittest discover tests`. Si falla → no commitear.                   |
-| **Al cierre de sesión**                | Ejecutar el PROTOCOLO DE CIERRE DE SESIÓN de `Contexto.md` completo. Nunca omitir pasos. |
+| **Al terminar una tarea**              | Ejecutar `python -m pytest -q`. Si falla → revertir y reportar. Nunca commitear.          |
+| **Al cierre de sesión**                | No ejecutar el protocolo de cierre: lo hace Martín con el copiloto de chat. Reportar cambios pendientes. |
+
+## Límites de operación
+
+- Alcance acotado: tocar solo los archivos que la consigna nombra. Si hace falta otro, preguntar antes.
+- No commitear ni pushear. Dejar los cambios en working tree; Martín revisa `git diff` y commitea.
+- Antes de dar por terminada una tarea: `python -m pytest -q` en verde.
+- Si la suite falla y no es trivial: revertir con `git checkout -- <archivo>` y reportar.
+- Un cambio por consigna. No refactorizar "de paso".
