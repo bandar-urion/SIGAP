@@ -4,6 +4,7 @@ import os
 import sys
 import glob
 import shutil
+import logging
 from datetime import datetime
 
 # 1. Aseguramos que Python encuentre el módulo sigap_config en la raíz
@@ -130,8 +131,13 @@ def main():
                         n_guardados += 1
                         _mov_id = cursor.lastrowid
                         if mov.nuevo_sinonimo:
-                            try: cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (mov.nuevo_sinonimo, mov.id_subcat))
-                            except: pass
+                            try:
+                                cursor.execute("INSERT INTO diccionario_terminos (termino, id_subcategoria) VALUES (?, ?)", (mov.nuevo_sinonimo, mov.id_subcat))
+                            except sqlite3.IntegrityError:
+                                logging.warning(
+                                    f"Término ya existente en diccionario_terminos: "
+                                    f"'{mov.nuevo_sinonimo}' (id_subcategoria={mov.id_subcat})"
+                                )
                         cursor.execute(_AUDIT_SQL, ('IMPORTAR_MOV', 'SIGAP_IMPORT', _mov_id, 'INEXISTENTE', _estado_nuevo, 'OK'))
                     else:
                         cursor.execute(_AUDIT_SQL, ('IMPORTAR_MOV', 'SIGAP_IMPORT', None, 'EXISTENTE', _estado_nuevo, 'SKIP_DUPLICADO'))
