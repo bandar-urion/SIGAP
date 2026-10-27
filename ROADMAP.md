@@ -1,5 +1,5 @@
 # 🗺️ ROADMAP — S.I.G.A.P.
-> **Proyecto Fénix** · Última actualización: 2026-04-10 · Versión actual: v0.8.1
+> **Proyecto Fénix** · Última actualización: 2026-10-27 · Versión actual: v0.8.2
 
 Este documento es la fuente de verdad sobre el estado de desarrollo y la planificación futura.
 Se actualiza al cierre de cada sesión de trabajo.
@@ -70,6 +70,12 @@ Se actualiza al cierre de cada sesión de trabajo.
   ruta de DB hardcodeada a `control_gastos.db` corregida → `sigap_config.get_db_path()`.
 - Conector GitHub de Claude.ai deshabilitado (reemplazado por Claude Code).
 
+### [v0.8.2] — 2026-10-27 · Parser Santander Desacoplado
+- `parsear_excel_santander()` extraída como función pura, con tests propios.
+- Fix: alta de sinónimo ya no silencia errores (solo `IntegrityError` + warning).
+- D-016: Claude Code no commitea. Límites de operación en `CLAUDE.md`.
+- Suite: 91/91 OK.
+
 ---
 
 ## 🚧 EN CURSO — feature/importar-movimiento
@@ -98,7 +104,7 @@ Un movimiento se considera exitosamente importado solo si se cumplen los tres pa
 - [ ] Revisión de `DOCUMENTACION.md` para sincronizar con estado real v0.8.1.
 
 ### [FEAT] Desacoplar Parser Santander
-- [ ] Extraer `parsear_excel_santander()` como función aislada, testeable independientemente del flujo de importación completo.
+- [x] Extraer `parsear_excel_santander()` como función aislada, testeable independientemente del flujo de importación completo. (Sesión #23)
 
 ### [FEAT] Módulo ABM de Catálogo
 - [ ] Alta, Baja y Modificación standalone de: Centros de Costo, Categorías, Subcategorías, Medios de Pago.
