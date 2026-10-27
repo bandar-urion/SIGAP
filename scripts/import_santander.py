@@ -21,6 +21,25 @@ PROCESSED_DIR = sigap_config.get_path('PATHS', 'PROCESSED')
 # -----------------------------------------------------
 
 
+def parsear_excel_santander(ruta_archivo: str) -> pd.DataFrame:
+    """
+    Parsea un Excel de resumen Santander Río y devuelve un DataFrame listo
+    para importar, con la columna Monto_Real calculada y las filas con
+    Monto_Real == 0 ya filtradas.
+
+    No accede a la DB, no imprime, no deduplica: esas responsabilidades
+    quedan en el flujo principal (main).
+    """
+    df = pd.read_excel(ruta_archivo, skiprows=13, engine='openpyxl')
+    df = df.dropna(how='all', axis=1)
+    if 'Caja de Ahorro' not in df.columns: df['Caja de Ahorro'] = 0
+    if 'Cuenta Corriente' not in df.columns: df['Cuenta Corriente'] = 0
+    df = df.fillna(0)
+    df['Monto_Real'] = df['Caja de Ahorro'] + df['Cuenta Corriente']
+    df = df[df['Monto_Real'] != 0].reset_index(drop=True)
+    return df
+
+
 def main():
     # 1. SETUP
     os.makedirs(PROCESSED_DIR, exist_ok=True)
@@ -42,20 +61,13 @@ def main():
 
         # 3. PARSEO
         print(f"📂 Procesando: {os.path.basename(archivo_input)}...")
-        df = pd.read_excel(archivo_input, skiprows=13, engine='openpyxl')
-        df = df.dropna(how='all', axis=1)
-        if 'Caja de Ahorro' not in df.columns: df['Caja de Ahorro'] = 0
-        if 'Cuenta Corriente' not in df.columns: df['Cuenta Corriente'] = 0
-        df = df.fillna(0)
-        df['Monto_Real'] = df['Caja de Ahorro'] + df['Cuenta Corriente']
+        df = parsear_excel_santander(archivo_input)
 
         lista_movs = []
         idx = 1
         skipped_count = 0
 
         for _, row in df.iterrows():
-            if row['Monto_Real'] == 0: continue
-
             referencia = str(row['Referencia'])
 
             # Chequeo previo en la DB
